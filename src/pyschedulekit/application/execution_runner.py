@@ -9,6 +9,7 @@ from pyschedulekit.application.execution_service import (
     ExecutionService,
 )
 from pyschedulekit.domain.execution import AttemptId, Execution, ExecutionId
+from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.ports.executor import Executor, ExecutorOutcome
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
@@ -71,7 +72,7 @@ class ExecutionRunner:
             outcome=outcome,
         )
 
-    def _load_target(self, execution_id: ExecutionId):
+    def _load_target(self, execution_id: ExecutionId) -> TargetRef:
         with self._uow_factory() as uow:
             execution = uow.executions.get(execution_id)
             if execution is None:

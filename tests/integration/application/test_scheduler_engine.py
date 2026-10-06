@@ -306,9 +306,7 @@ def test_conflict_on_one_schedule_does_not_block_another_schedule() -> None:
         uow.requests.add(collision)
         uow.commit()
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(hour=10)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(hour=10))
 
     assert result.conflicts == (ScheduleId("schedule-a"),)
     assert [request.occurrence_key.schedule_id for request in result.requests] == [

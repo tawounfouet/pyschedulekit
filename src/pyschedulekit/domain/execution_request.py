@@ -73,7 +73,7 @@ class ExecutionRequest:
     def __init__(
         self,
         *,
-        request_id: RequestId,
+        id: RequestId,
         occurrence_key: OccurrenceKey,
         target: TargetRef,
         created_at: Instant,
@@ -83,7 +83,7 @@ class ExecutionRequest:
         if version < 0:
             raise ValueError("ExecutionRequest version must be non-negative.")
 
-        self._id = request_id
+        self._id = id
         self._occurrence_key = occurrence_key
         self._target = target
         self._created_at = created_at
@@ -99,7 +99,7 @@ class ExecutionRequest:
         created_at: Instant,
     ) -> ExecutionRequest:
         return cls(
-            request_id=RequestId.for_occurrence(occurrence.key),
+            id=RequestId.for_occurrence(occurrence.key),
             occurrence_key=occurrence.key,
             target=target,
             created_at=created_at,

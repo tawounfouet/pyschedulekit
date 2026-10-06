@@ -50,16 +50,14 @@ class UnitOfWork(Protocol):
 
     schedules: ScheduleRepository
 
-    def __enter__(self) -> UnitOfWork:
-        ...
+    def __enter__(self) -> UnitOfWork: ...
 
     def __exit__(
         self,
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
         traceback: TracebackType | None,
-    ) -> bool | None:
-        ...
+    ) -> bool | None: ...
 
     def commit(self) -> None:
         """Atomically publish staged changes."""
@@ -73,5 +71,4 @@ class UnitOfWork(Protocol):
 class UnitOfWorkFactory(Protocol):
     """Callable factory producing independent UnitOfWork instances."""
 
-    def __call__(self) -> UnitOfWork:
-        ...
+    def __call__(self) -> UnitOfWork: ...

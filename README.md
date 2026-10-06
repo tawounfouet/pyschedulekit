@@ -71,9 +71,9 @@ LOT-02 introduces the structural contract:
 ```python
 from pyschedulekit.domain.trigger import Trigger
 
+
 class Trigger(Protocol):
-    def next_after(self, reference: Instant) -> Instant | None:
-        ...
+    def next_after(self, reference: Instant) -> Instant | None: ...
 ```
 
 Every future built-in Trigger must preserve deterministic results and strict temporal progression. The reusable `TriggerContractSuite` makes those invariants executable.

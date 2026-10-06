@@ -487,9 +487,7 @@ class Execution:
                 "Attempt number does not match the active Execution Attempt."
             )
         if attempt.execution_id != self._id:
-            raise InvalidExecutionTransitionError(
-                "Attempt belongs to a different Execution."
-            )
+            raise InvalidExecutionTransitionError("Attempt belongs to a different Execution.")
         if not attempt.is_terminal or attempt.result is None:
             raise InvalidExecutionTransitionError(
                 "Attempt must be terminal before finishing it on Execution."

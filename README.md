@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-05 complete — next: LOT-06 Occurrence Planning**
+**LOT-06 complete — next: LOT-07 In-Memory Persistence**
 
 Completed:
 
@@ -15,6 +15,7 @@ Completed:
 - LOT-02 — Trigger Foundations
 - LOT-03 — DateTrigger & IntervalTrigger
 - LOT-05 — Schedule Aggregate
+- LOT-06 — Occurrence Planning
 
 The implementation follows a domain-first roadmap:
 
@@ -126,6 +127,22 @@ ACTIVE
 ```
 
 `ScheduleRevision` changes only when the functional definition changes; `PersistenceVersion` changes for durable operational mutations as well.
+
+## Occurrence planning
+
+LOT-06 introduces immutable logical occurrences:
+
+```text
+OccurrenceKey
+=
+ScheduleId
++
+ScheduleRevision
++
+ScheduledAt
+```
+
+`OccurrencePlanner` can project the current Schedule checkpoint or calculate a future occurrence without mutating the Schedule. This deterministic identity will later back durable uniqueness and distributed deduplication.
 
 ## Package shape
 

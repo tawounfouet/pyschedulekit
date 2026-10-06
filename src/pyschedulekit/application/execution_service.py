@@ -16,7 +16,7 @@ from pyschedulekit.domain.execution_request import (
     RequestId,
 )
 from pyschedulekit.domain.time import Instant
-from pyschedulekit.ports.persistence import UnitOfWorkFactory
+from pyschedulekit.ports.persistence import UnitOfWork, UnitOfWorkFactory
 
 
 class ExecutionRequestNotFoundError(LookupError):
@@ -201,7 +201,7 @@ class ExecutionService:
 
     @staticmethod
     def _load_attempt_and_execution(
-        uow,
+        uow: UnitOfWork,
         attempt_id: AttemptId,
     ) -> tuple[Attempt, Execution]:
         attempt = uow.attempts.get(attempt_id)

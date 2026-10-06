@@ -32,9 +32,7 @@ def test_t_time_002_naive_datetime_is_rejected() -> None:
 
 def test_t_time_003_same_instant_with_different_offsets_is_equal() -> None:
     utc = Instant(datetime(2026, 1, 1, 10, 0, tzinfo=UTC))
-    plus_one = Instant(
-        datetime(2026, 1, 1, 11, 0, tzinfo=timezone(timedelta(hours=1)))
-    )
+    plus_one = Instant(datetime(2026, 1, 1, 11, 0, tzinfo=timezone(timedelta(hours=1))))
 
     assert utc == plus_one
 
@@ -78,9 +76,7 @@ def test_t_time_007_mutable_clock_changes_only_when_explicitly_advanced() -> Non
 
 
 def test_t_time_008_instant_normalizes_input_to_utc() -> None:
-    instant = Instant(
-        datetime(2026, 1, 1, 11, 0, tzinfo=timezone(timedelta(hours=1)))
-    )
+    instant = Instant(datetime(2026, 1, 1, 11, 0, tzinfo=timezone(timedelta(hours=1))))
 
     assert instant.value.tzinfo is UTC
     assert instant.value == datetime(2026, 1, 1, 10, 0, tzinfo=UTC)
@@ -141,6 +137,4 @@ def test_grace_period_builds_deadline_from_scheduled_instant() -> None:
     scheduled_at = Instant(datetime(2026, 1, 1, 10, 0, tzinfo=UTC))
     grace = GracePeriod.seconds(30)
 
-    assert grace.deadline_for(scheduled_at) == Instant(
-        datetime(2026, 1, 1, 10, 0, 30, tzinfo=UTC)
-    )
+    assert grace.deadline_for(scheduled_at) == Instant(datetime(2026, 1, 1, 10, 0, 30, tzinfo=UTC))

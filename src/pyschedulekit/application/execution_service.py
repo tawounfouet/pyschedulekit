@@ -210,8 +210,6 @@ class ExecutionService:
 
         execution = uow.executions.get(attempt.execution_id)
         if execution is None:
-            raise ExecutionConsistencyError(
-                "Attempt references an Execution that does not exist."
-            )
+            raise ExecutionConsistencyError("Attempt references an Execution that does not exist.")
 
         return attempt, execution

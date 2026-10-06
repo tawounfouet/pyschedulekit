@@ -487,7 +487,9 @@ class InMemoryAttemptRepository:
         with self._store._lock:
             committed_ids = [
                 attempt_id
-                for (candidate_execution_id, _), attempt_id in self._store._attempt_by_number.items()
+                for (candidate_execution_id, _), attempt_id in (
+                    self._store._attempt_by_number.items()
+                )
                 if candidate_execution_id == execution_id
             ]
 

@@ -253,7 +253,7 @@ schedule.advance_next_run_after(
 not with:
 
 ```python
-reference=evaluation_now
+reference = evaluation_now
 ```
 
 This preserves the Trigger's logical sequence without silently skipping missed candidates.

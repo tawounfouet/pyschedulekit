@@ -162,9 +162,7 @@ class InMemoryScheduleRepository:
 
     def _after_commit(self) -> None:
         for schedule_id in self._new | self._dirty:
-            self._expected_versions[schedule_id] = self._tracked[
-                schedule_id
-            ].persistence_version
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].persistence_version
 
         self._new.clear()
         self._dirty.clear()

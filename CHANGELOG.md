@@ -8,6 +8,11 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- `ScheduleRepository`, `UnitOfWork`, and `UnitOfWorkFactory` persistence ports.
+- Transactional `InMemoryUnitOfWork` with explicit commit/rollback semantics.
+- In-memory identity map, write set, committed-state cloning, and optimistic concurrency validation.
+- Deterministic `list_due()` query for upcoming SchedulerEngine evaluation.
+- LOT-07 integration tests covering transaction visibility, rollback, atomic conflicts, due selection, and stale-writer rejection.
 - Immutable `Occurrence` and deterministic `OccurrenceKey` value objects.
 - Pure `OccurrencePlanner` for current-checkpoint and future occurrence projection.
 - LOT-06 qualification tests covering deterministic identity, revision lineage, immutability, and non-mutating planning.

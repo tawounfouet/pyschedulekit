@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Implementation — LOT-05: Schedule Aggregate**
+**LOT-05 complete — next: LOT-06 Occurrence Planning**
 
 Completed:
 
@@ -14,7 +14,7 @@ Completed:
 - LOT-01 — Time Model
 - LOT-02 — Trigger Foundations
 - LOT-03 — DateTrigger & IntervalTrigger
-- LOT-05 — Schedule Aggregate (branch qualification in progress)
+- LOT-05 — Schedule Aggregate
 
 The implementation follows a domain-first roadmap:
 

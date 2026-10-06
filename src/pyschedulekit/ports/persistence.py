@@ -40,6 +40,10 @@ class UntrackedEntityError(RuntimeError):
     """Raised when attempting to save an entity not tracked by this UnitOfWork."""
 
 
+class UntrackedScheduleError(UntrackedEntityError):
+    """Backward-compatible Schedule-specific untracked-entity error."""
+
+
 class ScheduleRepository(Protocol):
     """Transactional repository for Schedule aggregates."""
 

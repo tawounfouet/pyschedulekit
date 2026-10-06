@@ -8,6 +8,9 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Immutable `Occurrence` and deterministic `OccurrenceKey` value objects.
+- Pure `OccurrencePlanner` for current-checkpoint and future occurrence projection.
+- LOT-06 qualification tests covering deterministic identity, revision lineage, immutability, and non-mutating planning.
 - First `Schedule` Aggregate Root with explicit lifecycle and invariants.
 - `ScheduleId`, `ScheduleRevision`, `PersistenceVersion`, `ScheduleState`, `TargetRef`, and immutable `ScheduleDefinition`.
 - Pause/resume/cancel/reschedule/checkpoint semantics with explicit definition-versus-persistence versioning.

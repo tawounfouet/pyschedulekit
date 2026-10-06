@@ -147,9 +147,7 @@ class InMemoryScheduleRepository:
     def _validate_commit_locked(self) -> None:
         for schedule_id in self._new:
             if schedule_id in self._store._schedules:
-                raise DuplicateScheduleError(
-                    f"Schedule {schedule_id.value!r} already exists."
-                )
+                raise DuplicateScheduleError(f"Schedule {schedule_id.value!r} already exists.")
 
         for schedule_id in self._dirty:
             committed = self._store._schedules.get(schedule_id)

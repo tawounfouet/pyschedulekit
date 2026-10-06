@@ -6,12 +6,13 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-01 complete — next: LOT-02 Trigger Foundations**
+**Implementation — LOT-02: Trigger Foundations**
 
 Completed:
 
 - LOT-00 — Repository & Packaging Foundation
 - LOT-01 — Time Model
+- LOT-02 — Trigger Foundations (branch qualification in progress)
 
 The implementation follows a domain-first roadmap:
 
@@ -62,6 +63,20 @@ Key semantics:
 - ambiguous DST local times require an explicit `fold`.
 - `TimeWindow` uses `[start, end)` boundaries.
 - the scheduling domain never reads the host clock directly.
+
+## Current trigger foundation
+
+LOT-02 introduces the structural contract:
+
+```python
+from pyschedulekit.domain.trigger import Trigger
+
+class Trigger(Protocol):
+    def next_after(self, reference: Instant) -> Instant | None:
+        ...
+```
+
+Every future built-in Trigger must preserve deterministic results and strict temporal progression. The reusable `TriggerContractSuite` makes those invariants executable.
 
 ## Package shape
 

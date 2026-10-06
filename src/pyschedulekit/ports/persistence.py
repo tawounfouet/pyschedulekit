@@ -1,10 +1,12 @@
-"""Persistence ports for Schedule storage and transactional boundaries."""
+"""Persistence ports for scheduling state and transactional boundaries."""
 
 from __future__ import annotations
 
 from types import TracebackType
 from typing import Protocol
 
+from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
+from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.schedule import Schedule, ScheduleId
 from pyschedulekit.domain.time import Instant
 
@@ -19,6 +21,10 @@ class OptimisticConcurrencyError(PersistenceConflictError):
 
 class DuplicateScheduleError(PersistenceConflictError):
     """Raised when a new Schedule uses an already committed ScheduleId."""
+
+
+class DuplicateExecutionRequestError(PersistenceConflictError):
+    """Raised when a request duplicates an existing ID or OccurrenceKey."""
 
 
 class UntrackedScheduleError(RuntimeError):
@@ -45,10 +51,27 @@ class ScheduleRepository(Protocol):
         ...
 
 
+class ExecutionRequestRepository(Protocol):
+    """Transactional repository for immutable ExecutionRequest intents."""
+
+    def add(self, request: ExecutionRequest) -> None:
+        """Stage a new durable execution intent."""
+        ...
+
+    def get(self, request_id: RequestId) -> ExecutionRequest | None:
+        """Load a request by stable request identity."""
+        ...
+
+    def get_by_occurrence(self, key: OccurrenceKey) -> ExecutionRequest | None:
+        """Load the request associated with one logical Occurrence."""
+        ...
+
+
 class UnitOfWork(Protocol):
-    """Transactional boundary owning Schedule repository changes."""
+    """Transactional boundary owning all scheduling-state changes."""
 
     schedules: ScheduleRepository
+    requests: ExecutionRequestRepository
 
     def __enter__(self) -> UnitOfWork: ...
 
@@ -60,7 +83,7 @@ class UnitOfWork(Protocol):
     ) -> bool | None: ...
 
     def commit(self) -> None:
-        """Atomically publish staged changes."""
+        """Atomically publish every staged repository change."""
         ...
 
     def rollback(self) -> None:

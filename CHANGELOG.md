@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Executor port with explicit target preparation and normalized invocation outcomes.
+- Registry-only synchronous `LocalExecutor` for trusted zero-argument Python callables.
+- `PythonTargetRegistry` with duplicate, async, and required-argument validation.
+- `ExecutionRunner` that commits RUNNING state before invoking workload code outside transactions.
+- Safe normalization of target `Exception` values into UNKNOWN Failures without persisting raw exception messages.
+- LOT-10 tests for success, failure, resolution-before-Attempt, crash persistence, and no implicit retry.
 - Full `ExecutionRequest` lifecycle: PENDING, WAITING_ADMISSION, DISPATCHED, CANCELLED.
 - `Execution` aggregate with QUEUED, RUNNING, RETRY_WAIT and terminal states.
 - Numbered `Attempt` entities with immutable terminal `AttemptResult`.

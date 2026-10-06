@@ -94,10 +94,9 @@ def test_rollback_discards_staged_insert() -> None:
 def test_exception_causes_rollback_on_context_exit() -> None:
     factory = InMemoryUnitOfWorkFactory()
 
-    with pytest.raises(RuntimeError, match="boom"):
-        with factory() as uow:
-            uow.schedules.add(_schedule("schedule-1"))
-            raise RuntimeError("boom")
+    with pytest.raises(RuntimeError, match="boom"), factory() as uow:
+        uow.schedules.add(_schedule("schedule-1"))
+        raise RuntimeError("boom")
 
     with factory() as observer:
         assert observer.schedules.get(ScheduleId("schedule-1")) is None

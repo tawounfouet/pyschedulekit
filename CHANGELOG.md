@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Minimal immutable `ExecutionRequest` with deterministic scheduler-created `RequestId`.
+- `ExecutionRequestRepository` integrated into the shared UnitOfWork.
+- Atomic in-memory commits spanning Schedule checkpoint updates and ExecutionRequest creation.
+- `SchedulerEngine` with same-now evaluation, authoritative per-Schedule reload, and conflict isolation.
+- Recovery behavior for a durable request whose Schedule checkpoint still points at the same Occurrence.
+- LOT-08 integration tests covering atomicity, backlog progression, target snapshots, finite triggers, and conflicts.
 - `ScheduleRepository`, `UnitOfWork`, and `UnitOfWorkFactory` persistence ports.
 - Transactional `InMemoryUnitOfWork` with explicit commit/rollback semantics.
 - In-memory identity map, write set, committed-state cloning, and optimistic concurrency validation.

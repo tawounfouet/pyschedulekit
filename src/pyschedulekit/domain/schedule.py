@@ -145,9 +145,7 @@ class Schedule:
         """Create a Schedule and calculate its first future occurrence."""
 
         next_run_time = definition.trigger.next_after(reference)
-        state = (
-            ScheduleState.COMPLETED if next_run_time is None else ScheduleState.ACTIVE
-        )
+        state = ScheduleState.COMPLETED if next_run_time is None else ScheduleState.ACTIVE
 
         return cls(
             schedule_id=schedule_id,
@@ -208,9 +206,7 @@ class Schedule:
 
         next_run_time = self._definition.trigger.next_after(reference)
         self._next_run_time = next_run_time
-        self._state = (
-            ScheduleState.COMPLETED if next_run_time is None else ScheduleState.ACTIVE
-        )
+        self._state = ScheduleState.COMPLETED if next_run_time is None else ScheduleState.ACTIVE
         self._touch()
 
     def cancel(self) -> None:
@@ -295,9 +291,7 @@ class Schedule:
 
     def _assert_invariants(self) -> None:
         if self._state is ScheduleState.ACTIVE and self._next_run_time is None:
-            raise InvalidScheduleOperationError(
-                "An active Schedule must have a next_run_time."
-            )
+            raise InvalidScheduleOperationError("An active Schedule must have a next_run_time.")
 
         if self._state is not ScheduleState.ACTIVE and self._next_run_time is not None:
             raise InvalidScheduleOperationError(

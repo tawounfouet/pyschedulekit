@@ -191,11 +191,10 @@ class InMemoryUnitOfWork:
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
         traceback: TracebackType | None,
-    ) -> bool:
+    ) -> None:
         del exc_type, exc, traceback
         self.rollback()
         self._active = False
-        return False
 
     def commit(self) -> None:
         self._require_active()

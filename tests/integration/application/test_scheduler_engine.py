@@ -1,6 +1,5 @@
 """LOT-08 integration tests for SchedulerEngine evaluation semantics."""
 
-from dataclasses import FrozenInstanceError
 from datetime import UTC, datetime
 
 import pytest
@@ -84,7 +83,7 @@ def test_request_id_changes_when_occurrence_revision_changes() -> None:
     assert RequestId.for_occurrence(key_v1) != RequestId.for_occurrence(key_v2)
 
 
-def test_execution_request_is_immutable() -> None:
+def test_execution_request_identity_and_payload_are_read_only() -> None:
     occurrence = Occurrence(
         schedule_id=ScheduleId("schedule-1"),
         schedule_revision=ScheduleRevision(1),
@@ -96,7 +95,7 @@ def test_execution_request_is_immutable() -> None:
         created_at=_instant(),
     )
 
-    with pytest.raises(FrozenInstanceError):
+    with pytest.raises(AttributeError):
         request.target = TargetRef.python("other")  # type: ignore[misc]
 
 

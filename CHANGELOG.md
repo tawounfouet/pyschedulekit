@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Full `ExecutionRequest` lifecycle: PENDING, WAITING_ADMISSION, DISPATCHED, CANCELLED.
+- `Execution` aggregate with QUEUED, RUNNING, RETRY_WAIT and terminal states.
+- Numbered `Attempt` entities with immutable terminal `AttemptResult`.
+- `ExecutionResult`, normalized `Failure`, `FailureCategory`, `IdempotencyKey`, and minimal `ExecutionPolicySnapshot`.
+- `ExecutionService` for transactional dispatch, Attempt start/completion, retry-wait, timeout, and cancellation transitions.
+- In-memory Execution and Attempt repositories with optimistic lifecycle version checks and uniqueness constraints.
+- Qualification of deferred Schedule/Execution independence scenarios T-SCH-012/013/014.
 - Minimal immutable `ExecutionRequest` with deterministic scheduler-created `RequestId`.
 - `ExecutionRequestRepository` integrated into the shared UnitOfWork.
 - Atomic in-memory commits spanning Schedule checkpoint updates and ExecutionRequest creation.

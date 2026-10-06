@@ -1,10 +1,11 @@
-"""Persistence ports for scheduling state and transactional boundaries."""
+"""Persistence ports for scheduling and execution state."""
 
 from __future__ import annotations
 
 from types import TracebackType
 from typing import Protocol
 
+from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.schedule import Schedule, ScheduleId
@@ -16,7 +17,7 @@ class PersistenceConflictError(RuntimeError):
 
 
 class OptimisticConcurrencyError(PersistenceConflictError):
-    """Raised when committed state changed since a Schedule was loaded."""
+    """Raised when committed state changed since an entity was loaded."""
 
 
 class DuplicateScheduleError(PersistenceConflictError):
@@ -27,51 +28,79 @@ class DuplicateExecutionRequestError(PersistenceConflictError):
     """Raised when a request duplicates an existing ID or OccurrenceKey."""
 
 
-class UntrackedScheduleError(RuntimeError):
-    """Raised when attempting to save a Schedule not loaded by this UnitOfWork."""
+class DuplicateExecutionError(PersistenceConflictError):
+    """Raised when an Execution duplicates an existing ID or RequestId."""
+
+
+class DuplicateAttemptError(PersistenceConflictError):
+    """Raised when an Attempt duplicates an existing ID or attempt number."""
+
+
+class UntrackedEntityError(RuntimeError):
+    """Raised when attempting to save an entity not tracked by this UnitOfWork."""
+
+
+class UntrackedScheduleError(UntrackedEntityError):
+    """Backward-compatible Schedule-specific untracked-entity error."""
 
 
 class ScheduleRepository(Protocol):
     """Transactional repository for Schedule aggregates."""
 
-    def add(self, schedule: Schedule) -> None:
-        """Stage a new Schedule for insertion."""
-        ...
+    def add(self, schedule: Schedule) -> None: ...
 
-    def get(self, schedule_id: ScheduleId) -> Schedule | None:
-        """Load one Schedule into the current UnitOfWork identity map."""
-        ...
+    def get(self, schedule_id: ScheduleId) -> Schedule | None: ...
 
-    def save(self, schedule: Schedule) -> None:
-        """Stage an already-loaded Schedule for update."""
-        ...
+    def save(self, schedule: Schedule) -> None: ...
 
-    def list_due(self, *, now: Instant, limit: int) -> list[Schedule]:
-        """Load active Schedules due at or before now in deterministic order."""
-        ...
+    def list_due(self, *, now: Instant, limit: int) -> list[Schedule]: ...
 
 
 class ExecutionRequestRepository(Protocol):
-    """Transactional repository for immutable ExecutionRequest intents."""
+    """Transactional repository for ExecutionRequest entities."""
 
-    def add(self, request: ExecutionRequest) -> None:
-        """Stage a new durable execution intent."""
-        ...
+    def add(self, request: ExecutionRequest) -> None: ...
 
-    def get(self, request_id: RequestId) -> ExecutionRequest | None:
-        """Load a request by stable request identity."""
-        ...
+    def get(self, request_id: RequestId) -> ExecutionRequest | None: ...
 
-    def get_by_occurrence(self, key: OccurrenceKey) -> ExecutionRequest | None:
-        """Load the request associated with one logical Occurrence."""
-        ...
+    def get_by_occurrence(self, key: OccurrenceKey) -> ExecutionRequest | None: ...
+
+    def save(self, request: ExecutionRequest) -> None: ...
+
+    def list_pending(self, *, limit: int) -> list[ExecutionRequest]: ...
+
+
+class ExecutionRepository(Protocol):
+    """Transactional repository for Execution aggregates."""
+
+    def add(self, execution: Execution) -> None: ...
+
+    def get(self, execution_id: ExecutionId) -> Execution | None: ...
+
+    def get_by_request(self, request_id: RequestId) -> Execution | None: ...
+
+    def save(self, execution: Execution) -> None: ...
+
+
+class AttemptRepository(Protocol):
+    """Transactional repository for Attempt entities."""
+
+    def add(self, attempt: Attempt) -> None: ...
+
+    def get(self, attempt_id: AttemptId) -> Attempt | None: ...
+
+    def save(self, attempt: Attempt) -> None: ...
+
+    def list_for_execution(self, execution_id: ExecutionId) -> list[Attempt]: ...
 
 
 class UnitOfWork(Protocol):
-    """Transactional boundary owning all scheduling-state changes."""
+    """Transactional boundary owning scheduling and execution changes."""
 
     schedules: ScheduleRepository
     requests: ExecutionRequestRepository
+    executions: ExecutionRepository
+    attempts: AttemptRepository
 
     def __enter__(self) -> UnitOfWork: ...
 
@@ -82,13 +111,9 @@ class UnitOfWork(Protocol):
         traceback: TracebackType | None,
     ) -> bool | None: ...
 
-    def commit(self) -> None:
-        """Atomically publish every staged repository change."""
-        ...
+    def commit(self) -> None: ...
 
-    def rollback(self) -> None:
-        """Discard every staged change."""
-        ...
+    def rollback(self) -> None: ...
 
 
 class UnitOfWorkFactory(Protocol):

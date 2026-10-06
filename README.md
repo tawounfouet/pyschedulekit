@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-08 complete — next: LOT-09 Execution Lifecycle**
+**Implementation — LOT-09: Execution Lifecycle**
 
 Completed:
 
@@ -18,6 +18,7 @@ Completed:
 - LOT-06 — Occurrence Planning
 - LOT-07 — In-Memory Persistence
 - LOT-08 — SchedulerEngine
+- LOT-09 — Execution Lifecycle (branch qualification in progress)
 
 The implementation follows a domain-first roadmap:
 
@@ -185,6 +186,24 @@ atomic commit
 ```
 
 The engine never invokes workload code. It materializes one due occurrence per Schedule per cycle and persists the request together with checkpoint advancement.
+
+## Execution lifecycle
+
+LOT-09 separates durable intent from logical execution and concrete attempts:
+
+```text
+ExecutionRequest
+      ↓
+Execution
+      ↓
+Attempt #1
+      ↓
+AttemptResult
+      ↓
+ExecutionResult
+```
+
+A retry keeps the same `ExecutionId` and `IdempotencyKey` while creating a new numbered Attempt.
 
 ## Package shape
 

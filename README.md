@@ -6,13 +6,14 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-02 complete — next: LOT-03 DateTrigger & IntervalTrigger**
+**LOT-03 complete — next: LOT-05 Schedule Aggregate**
 
 Completed:
 
 - LOT-00 — Repository & Packaging Foundation
 - LOT-01 — Time Model
 - LOT-02 — Trigger Foundations
+- LOT-03 — DateTrigger & IntervalTrigger
 
 The implementation follows a domain-first roadmap:
 
@@ -77,6 +78,28 @@ class Trigger(Protocol):
 ```
 
 Every future built-in Trigger must preserve deterministic results and strict temporal progression. The reusable `TriggerContractSuite` makes those invariants executable.
+
+## First concrete triggers
+
+LOT-03 adds the first real temporal rules:
+
+```python
+from pyschedulekit.domain.time import Duration, Instant
+from pyschedulekit.domain.triggers import DateTrigger, IntervalTrigger
+```
+
+`DateTrigger` emits one finite absolute occurrence. `IntervalTrigger` is fixed-rate and remains anchored:
+
+```text
+anchor
+anchor + interval
+anchor + 2 × interval
+...
+```
+
+Late execution never shifts the recurrence, and far-future lookup uses direct arithmetic rather than replaying historical occurrences.
+
+Cron is deliberately deferred until after the first in-memory end-to-end scheduling slice.
 
 ## Package shape
 

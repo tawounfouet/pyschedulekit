@@ -8,6 +8,9 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Immutable `DateTrigger` with finite one-occurrence semantics.
+- Anchored fixed-rate `IntervalTrigger` with direct next-occurrence calculation.
+- LOT-03 Date/Interval Trigger qualification tests covering progression, drift, and far-future calculation.
 - Structural `Trigger` protocol with `next_after(reference) -> Instant | None` semantics.
 - Reusable `TriggerContractSuite` for determinism and strict-progression qualification.
 - LOT-02 Trigger contract tests.

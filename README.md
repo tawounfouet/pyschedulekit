@@ -6,13 +6,13 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Implementation — LOT-02: Trigger Foundations**
+**LOT-02 complete — next: LOT-03 DateTrigger & IntervalTrigger**
 
 Completed:
 
 - LOT-00 — Repository & Packaging Foundation
 - LOT-01 — Time Model
-- LOT-02 — Trigger Foundations (branch qualification in progress)
+- LOT-02 — Trigger Foundations
 
 The implementation follows a domain-first roadmap:
 

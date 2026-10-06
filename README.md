@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-07 complete — next: LOT-08 SchedulerEngine**
+**Implementation — LOT-08: SchedulerEngine**
 
 Completed:
 
@@ -17,6 +17,7 @@ Completed:
 - LOT-05 — Schedule Aggregate
 - LOT-06 — Occurrence Planning
 - LOT-07 — In-Memory Persistence
+- LOT-08 — SchedulerEngine (branch qualification in progress)
 
 The implementation follows a domain-first roadmap:
 
@@ -162,6 +163,28 @@ InMemoryScheduleStore
 Repositories never commit implicitly. Each UnitOfWork owns an identity map and write set, while commit validates the loaded `PersistenceVersion` against committed state before applying any write.
 
 The adapter also exposes deterministic due-Schedule selection ordered by `next_run_time` and `ScheduleId`.
+
+## SchedulerEngine
+
+LOT-08 introduces the first scheduling application service:
+
+```text
+evaluation_now
+   ↓
+list_due()
+   ↓
+reload Schedule
+   ↓
+Occurrence
+   ↓
+ExecutionRequest
+   +
+advance next_run_time
+   ↓
+atomic commit
+```
+
+The engine never invokes workload code. It materializes one due occurrence per Schedule per cycle and persists the request together with checkpoint advancement.
 
 ## Package shape
 

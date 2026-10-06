@@ -29,9 +29,9 @@ def _instant(hour: int = 10, minute: int = 0) -> Instant:
     return Instant(datetime(2026, 1, 1, hour, minute, tzinfo=UTC))
 
 
-def _request() -> ExecutionRequest:
+def _request(request_id: str = "request-1") -> ExecutionRequest:
     return ExecutionRequest(
-        id=RequestId("request-1"),
+        id=RequestId(request_id),
         occurrence_key=OccurrenceKey(
             schedule_id=ScheduleId("schedule-1"),
             schedule_revision=ScheduleRevision(1),
@@ -42,15 +42,15 @@ def _request() -> ExecutionRequest:
     )
 
 
-def _dispatched_request() -> ExecutionRequest:
-    request = _request()
+def _dispatched_request(request_id: str = "request-1") -> ExecutionRequest:
+    request = _request(request_id)
     request.mark_dispatched()
     return request
 
 
-def _execution() -> Execution:
+def _execution(request_id: str = "request-1") -> Execution:
     return Execution.from_request(
-        request=_dispatched_request(),
+        request=_dispatched_request(request_id),
         created_at=_instant(),
         policy_snapshot=ExecutionPolicySnapshot(timeout=Duration.minutes(5)),
     )
@@ -261,11 +261,11 @@ def test_attempt_from_other_execution_cannot_complete_execution() -> None:
     execution = _execution()
     active = execution.start_attempt(started_at=_instant(hour=10, minute=1))
 
-    other = _execution()
+    other = _execution("request-2")
     other_attempt = other.start_attempt(started_at=_instant(hour=10, minute=1))
     other_attempt.succeed(completed_at=_instant(hour=10, minute=2))
 
-    assert active.id == other_attempt.id
+    assert active.id != other_attempt.id
 
     with pytest.raises(InvalidExecutionTransitionError):
         execution.finish_attempt(attempt=other_attempt)

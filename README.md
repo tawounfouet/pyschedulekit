@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Implementation — LOT-08: SchedulerEngine**
+**LOT-08 complete — next: LOT-09 Execution Lifecycle**
 
 Completed:
 
@@ -17,7 +17,7 @@ Completed:
 - LOT-05 — Schedule Aggregate
 - LOT-06 — Occurrence Planning
 - LOT-07 — In-Memory Persistence
-- LOT-08 — SchedulerEngine (branch qualification in progress)
+- LOT-08 — SchedulerEngine
 
 The implementation follows a domain-first roadmap:
 

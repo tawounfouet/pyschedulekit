@@ -74,11 +74,12 @@ def test_domain_has_no_ambient_time_sleep_or_environment_access() -> None:
             if not isinstance(node, ast.Call):
                 continue
             qualified_name = _qualified_call_name(node)
-            if qualified_name in FORBIDDEN_AMBIENT_CALLS:
-                relative_path = path.relative_to(PROJECT_ROOT)
-                call_name = ".".join(qualified_name)
-                violations.append(
-                    f"{relative_path}:{node.lineno}: forbidden ambient call {call_name}()"
-                )
+            if qualified_name is None or qualified_name not in FORBIDDEN_AMBIENT_CALLS:
+                continue
+            relative_path = path.relative_to(PROJECT_ROOT)
+            call_name = ".".join(qualified_name)
+            violations.append(
+                f"{relative_path}:{node.lineno}: forbidden ambient call {call_name}()"
+            )
 
     assert violations == [], "\n".join(violations)

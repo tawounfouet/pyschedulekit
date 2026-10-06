@@ -61,9 +61,7 @@ class PythonTargetRegistry:
             )
         ]
         if required:
-            raise InvalidCallableTargetError(
-                "Local executor callables must not require arguments."
-            )
+            raise InvalidCallableTargetError("Local executor callables must not require arguments.")
 
         self._targets[reference] = target
 
@@ -71,9 +69,7 @@ class PythonTargetRegistry:
         try:
             return self._targets[reference]
         except KeyError as exc:
-            raise TargetResolutionError(
-                f"Python target {reference!r} is not registered."
-            ) from exc
+            raise TargetResolutionError(f"Python target {reference!r} is not registered.") from exc
 
 
 @dataclass(frozen=True, slots=True)

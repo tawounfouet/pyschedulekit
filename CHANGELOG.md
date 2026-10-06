@@ -8,6 +8,9 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Structural `Trigger` protocol with `next_after(reference) -> Instant | None` semantics.
+- Reusable `TriggerContractSuite` for determinism and strict-progression qualification.
+- LOT-02 Trigger contract tests.
 - Core temporal Value Objects: `Instant`, `Duration`, `Timezone`, `TimeWindow`, and `GracePeriod`.
 - Explicit `Clock` port with `SystemClock` production adapter.
 - Deterministic `FixedClock` and `MutableClock` testing adapters.

@@ -96,12 +96,10 @@ def test_t_trg_013_interval_has_no_cumulative_drift() -> None:
     trigger = IntervalTrigger(every=interval, anchor=anchor)
     exact_occurrence = anchor.add(Duration.seconds(7 * 10_000))
 
-    assert trigger.next_after(
-        exact_occurrence.add(Duration.seconds(-0))  # preserve exact Instant explicitly
-    ) == anchor.add(Duration.seconds(7 * 10_001))
+    assert trigger.next_after(exact_occurrence) == anchor.add(Duration.seconds(7 * 10_001))
 
 
-def test_t_trg_013_interval_far_sequence_remains_anchor_based() -> None:
+def test_interval_far_sequence_remains_anchor_based() -> None:
     anchor = _instant(hour=10)
     trigger = IntervalTrigger(
         every=Duration.minutes(10),

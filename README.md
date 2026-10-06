@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-09 complete — next: LOT-10 Local Executor**
+**LOT-10 complete — next: LOT-11 run_pending() End-to-End Slice**
 
 Completed:
 
@@ -19,6 +19,7 @@ Completed:
 - LOT-07 — In-Memory Persistence
 - LOT-08 — SchedulerEngine
 - LOT-09 — Execution Lifecycle
+- LOT-10 — Local Executor
 
 The implementation follows a domain-first roadmap:
 
@@ -204,6 +205,24 @@ ExecutionResult
 ```
 
 A retry keeps the same `ExecutionId` and `IdempotencyKey` while creating a new numbered Attempt.
+
+## Local executor
+
+LOT-10 executes the first real Python workload through an explicit registry:
+
+```text
+TargetRef.python("refresh")
+        ↓
+PythonTargetRegistry
+        ↓
+Attempt RUNNING committed
+        ↓
+callable invoked outside transaction
+        ↓
+SUCCESS or normalized Failure
+```
+
+Persisted target data never authorizes arbitrary Python imports.
 
 ## Package shape
 

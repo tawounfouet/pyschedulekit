@@ -43,7 +43,7 @@ def _clone_schedule(schedule: Schedule) -> Schedule:
 
 def _clone_request(request: ExecutionRequest) -> ExecutionRequest:
     return ExecutionRequest(
-        request_id=request.id,
+        id=request.id,
         occurrence_key=request.occurrence_key,
         target=request.target,
         created_at=request.created_at,

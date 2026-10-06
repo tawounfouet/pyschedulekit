@@ -8,8 +8,7 @@ Define the smallest common contract that every temporal trigger in PyScheduleKit
 
 ```python
 class Trigger(Protocol):
-    def next_after(self, reference: Instant) -> Instant | None:
-        ...
+    def next_after(self, reference: Instant) -> Instant | None: ...
 ```
 
 The contract answers one question only:

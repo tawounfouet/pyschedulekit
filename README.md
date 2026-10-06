@@ -6,7 +6,12 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Early implementation — LOT-00: Repository & Packaging Foundation**
+**Implementation — LOT-01: Time Model**
+
+Completed:
+
+- LOT-00 — Repository & Packaging Foundation
+- LOT-01 — Time Model (branch qualification in progress)
 
 The implementation follows a domain-first roadmap:
 
@@ -15,7 +20,7 @@ Time → Trigger → Schedule → Occurrence → SchedulerEngine
      → Execution → Runtime → Persistence → Recovery → Distribution
 ```
 
-The first executable milestone is intentionally small:
+The first executable milestone remains intentionally small:
 
 ```text
 MutableClock
@@ -40,7 +45,25 @@ exactly one successful local Execution
 - Configuration is declarative data, not executable code.
 - Every supported guarantee must map to an executable test.
 
-## Planned package shape
+## Current temporal foundation
+
+LOT-01 introduces:
+
+```python
+from pyschedulekit.domain.time import Duration, Instant, Timezone
+from pyschedulekit.testing import FixedClock, MutableClock
+```
+
+Key semantics:
+
+- `Instant` values are timezone-aware and normalized to UTC.
+- `Duration` represents elapsed time; one day is exactly 24 hours.
+- `Timezone` uses IANA timezone data and rejects unresolved DST gaps.
+- ambiguous DST local times require an explicit `fold`.
+- `TimeWindow` uses `[start, end)` boundaries.
+- the scheduling domain never reads the host clock directly.
+
+## Package shape
 
 ```text
 src/pyschedulekit/
@@ -51,13 +74,11 @@ src/pyschedulekit/
 └── testing/
 ```
 
-The directory structure will grow only when implementation needs it; the project avoids creating empty architectural ceremony before the first working vertical slice.
+The directory structure grows only when implementation needs it; the project avoids empty architectural ceremony before working vertical slices.
 
 ## Development
 
 Target baseline: **Python 3.11+**.
-
-Once the LOT-00 tooling is merged:
 
 ```bash
 python -m venv .venv

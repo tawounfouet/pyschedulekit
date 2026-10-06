@@ -5,7 +5,12 @@ from __future__ import annotations
 from threading import RLock
 from types import TracebackType
 
-from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
+from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
+from pyschedulekit.domain.execution_request import (
+    ExecutionRequest,
+    ExecutionRequestState,
+    RequestId,
+)
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.schedule import (
     PersistenceVersion,
@@ -15,16 +20,17 @@ from pyschedulekit.domain.schedule import (
 )
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import (
+    DuplicateAttemptError,
+    DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateScheduleError,
     OptimisticConcurrencyError,
+    UntrackedEntityError,
     UntrackedScheduleError,
 )
 
 
 def _clone_schedule(schedule: Schedule) -> Schedule:
-    """Rehydrate an independent aggregate instance from committed state."""
-
     return Schedule(
         schedule_id=schedule.id,
         definition=schedule.definition,
@@ -35,6 +41,46 @@ def _clone_schedule(schedule: Schedule) -> Schedule:
     )
 
 
+def _clone_request(request: ExecutionRequest) -> ExecutionRequest:
+    return ExecutionRequest(
+        request_id=request.id,
+        occurrence_key=request.occurrence_key,
+        target=request.target,
+        created_at=request.created_at,
+        state=request.state,
+        version=request.version,
+    )
+
+
+def _clone_execution(execution: Execution) -> Execution:
+    return Execution(
+        execution_id=execution.id,
+        request_id=execution.request_id,
+        target=execution.target,
+        created_at=execution.created_at,
+        policy_snapshot=execution.policy_snapshot,
+        idempotency_key=execution.idempotency_key,
+        state=execution.state,
+        version=execution.version,
+        attempt_count=execution.attempt_count,
+        active_attempt_number=execution.active_attempt_number,
+        next_attempt_at=execution.next_attempt_at,
+        result=execution.result,
+    )
+
+
+def _clone_attempt(attempt: Attempt) -> Attempt:
+    return Attempt(
+        attempt_id=attempt.id,
+        execution_id=attempt.execution_id,
+        number=attempt.number,
+        started_at=attempt.started_at,
+        state=attempt.state,
+        result=attempt.result,
+        version=attempt.version,
+    )
+
+
 class InMemoryStore:
     """Shared committed state backing independent in-memory UnitOfWork instances."""
 
@@ -42,6 +88,10 @@ class InMemoryStore:
         self._schedules: dict[ScheduleId, Schedule] = {}
         self._execution_requests: dict[RequestId, ExecutionRequest] = {}
         self._request_by_occurrence: dict[OccurrenceKey, RequestId] = {}
+        self._executions: dict[ExecutionId, Execution] = {}
+        self._execution_by_request: dict[RequestId, ExecutionId] = {}
+        self._attempts: dict[AttemptId, Attempt] = {}
+        self._attempt_by_number: dict[tuple[ExecutionId, int], AttemptId] = {}
         self._lock = RLock()
 
 
@@ -64,7 +114,6 @@ class InMemoryScheduleRepository:
             raise DuplicateScheduleError(
                 f"Schedule {schedule_id.value!r} is already tracked by this UnitOfWork."
             )
-
         self._tracked[schedule_id] = schedule
         self._new.add(schedule_id)
 
@@ -77,7 +126,6 @@ class InMemoryScheduleRepository:
             committed = self._store._schedules.get(schedule_id)
             if committed is None:
                 return None
-
             loaded = _clone_schedule(committed)
             self._tracked[schedule_id] = loaded
             self._expected_versions[schedule_id] = committed.persistence_version
@@ -86,20 +134,16 @@ class InMemoryScheduleRepository:
     def save(self, schedule: Schedule) -> None:
         schedule_id = schedule.id
         tracked = self._tracked.get(schedule_id)
-
         if tracked is not schedule:
             raise UntrackedScheduleError(
                 f"Schedule {schedule_id.value!r} must be loaded by this UnitOfWork before save()."
             )
-
         if schedule_id in self._new:
             return
-
         if schedule_id not in self._expected_versions:
             raise UntrackedScheduleError(
                 f"Schedule {schedule_id.value!r} has no tracked committed version."
             )
-
         self._dirty.add(schedule_id)
 
     def list_due(self, *, now: Instant, limit: int) -> list[Schedule]:
@@ -108,7 +152,6 @@ class InMemoryScheduleRepository:
 
         with self._store._lock:
             candidate_ids = set(self._store._schedules)
-
         candidate_ids.update(self._tracked)
 
         due: list[Schedule] = []
@@ -140,12 +183,10 @@ class InMemoryScheduleRepository:
         for schedule_id in self._dirty:
             committed = self._store._schedules.get(schedule_id)
             expected = self._expected_versions[schedule_id]
-
             if committed is None:
                 raise OptimisticConcurrencyError(
                     f"Schedule {schedule_id.value!r} was deleted after it was loaded."
                 )
-
             if committed.persistence_version != expected:
                 raise OptimisticConcurrencyError(
                     f"Schedule {schedule_id.value!r} changed concurrently: "
@@ -154,16 +195,12 @@ class InMemoryScheduleRepository:
                 )
 
     def _apply_commit_locked(self) -> None:
-        for schedule_id in self._new:
-            self._store._schedules[schedule_id] = _clone_schedule(self._tracked[schedule_id])
-
-        for schedule_id in self._dirty:
+        for schedule_id in self._new | self._dirty:
             self._store._schedules[schedule_id] = _clone_schedule(self._tracked[schedule_id])
 
     def _after_commit(self) -> None:
         for schedule_id in self._new | self._dirty:
             self._expected_versions[schedule_id] = self._tracked[schedule_id].persistence_version
-
         self._new.clear()
         self._dirty.clear()
 
@@ -175,79 +212,350 @@ class InMemoryScheduleRepository:
 
 
 class InMemoryExecutionRequestRepository:
-    """Immutable ExecutionRequest repository with occurrence uniqueness."""
+    """ExecutionRequest repository with optimistic state updates."""
 
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
-        self._new: dict[RequestId, ExecutionRequest] = {}
+        self._tracked: dict[RequestId, ExecutionRequest] = {}
+        self._expected_versions: dict[RequestId, int] = {}
+        self._new: set[RequestId] = set()
+        self._dirty: set[RequestId] = set()
         self._new_by_occurrence: dict[OccurrenceKey, RequestId] = {}
 
     def add(self, request: ExecutionRequest) -> None:
-        if request.id in self._new:
+        if request.id in self._tracked:
             raise DuplicateExecutionRequestError(
-                f"ExecutionRequest {request.id.value!r} is already staged."
+                f"ExecutionRequest {request.id.value!r} is already tracked."
             )
         if request.occurrence_key in self._new_by_occurrence:
             raise DuplicateExecutionRequestError(
                 "An ExecutionRequest for this OccurrenceKey is already staged."
             )
-
-        self._new[request.id] = request
+        self._tracked[request.id] = request
+        self._new.add(request.id)
         self._new_by_occurrence[request.occurrence_key] = request.id
 
     def get(self, request_id: RequestId) -> ExecutionRequest | None:
-        staged = self._new.get(request_id)
-        if staged is not None:
-            return staged
+        tracked = self._tracked.get(request_id)
+        if tracked is not None:
+            return tracked
 
         with self._store._lock:
-            return self._store._execution_requests.get(request_id)
+            committed = self._store._execution_requests.get(request_id)
+            if committed is None:
+                return None
+            loaded = _clone_request(committed)
+            self._tracked[request_id] = loaded
+            self._expected_versions[request_id] = committed.version
+            return loaded
 
     def get_by_occurrence(self, key: OccurrenceKey) -> ExecutionRequest | None:
         staged_id = self._new_by_occurrence.get(key)
         if staged_id is not None:
-            return self._new[staged_id]
+            return self._tracked[staged_id]
 
         with self._store._lock:
             committed_id = self._store._request_by_occurrence.get(key)
-            if committed_id is None:
-                return None
-            return self._store._execution_requests[committed_id]
+        if committed_id is None:
+            return None
+        return self.get(committed_id)
+
+    def save(self, request: ExecutionRequest) -> None:
+        tracked = self._tracked.get(request.id)
+        if tracked is not request:
+            raise UntrackedEntityError(
+                f"ExecutionRequest {request.id.value!r} must be loaded before save()."
+            )
+        if request.id in self._new:
+            return
+        if request.id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ExecutionRequest {request.id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(request.id)
+
+    def list_pending(self, *, limit: int) -> list[ExecutionRequest]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            candidate_ids = set(self._store._execution_requests)
+        candidate_ids.update(self._tracked)
+
+        pending: list[ExecutionRequest] = []
+        for request_id in candidate_ids:
+            request = self._tracked.get(request_id)
+            if request is None:
+                request = self.get(request_id)
+            if request is None or request.state is not ExecutionRequestState.PENDING:
+                continue
+            pending.append(request)
+
+        pending.sort(key=lambda request: (request.created_at.value, request.id.value))
+        return pending[:limit]
 
     def _validate_commit_locked(self) -> None:
-        for request in self._new.values():
-            if request.id in self._store._execution_requests:
+        for request_id in self._new:
+            request = self._tracked[request_id]
+            if request_id in self._store._execution_requests:
                 raise DuplicateExecutionRequestError(
-                    f"ExecutionRequest {request.id.value!r} already exists."
+                    f"ExecutionRequest {request_id.value!r} already exists."
                 )
-
             if request.occurrence_key in self._store._request_by_occurrence:
                 raise DuplicateExecutionRequestError(
                     "An ExecutionRequest for this OccurrenceKey already exists."
                 )
 
+        for request_id in self._dirty:
+            committed = self._store._execution_requests.get(request_id)
+            expected = self._expected_versions[request_id]
+            if committed is None:
+                raise OptimisticConcurrencyError(
+                    f"ExecutionRequest {request_id.value!r} disappeared after load."
+                )
+            if committed.version != expected:
+                raise OptimisticConcurrencyError(
+                    f"ExecutionRequest {request_id.value!r} changed concurrently."
+                )
+
     def _apply_commit_locked(self) -> None:
-        for request in self._new.values():
-            self._store._execution_requests[request.id] = request
-            self._store._request_by_occurrence[request.occurrence_key] = request.id
+        for request_id in self._new | self._dirty:
+            request = self._tracked[request_id]
+            self._store._execution_requests[request_id] = _clone_request(request)
+            self._store._request_by_occurrence[request.occurrence_key] = request_id
 
     def _after_commit(self) -> None:
+        for request_id in self._new | self._dirty:
+            self._expected_versions[request_id] = self._tracked[request_id].version
         self._new.clear()
+        self._dirty.clear()
         self._new_by_occurrence.clear()
 
     def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
         self._new.clear()
+        self._dirty.clear()
         self._new_by_occurrence.clear()
 
 
+class InMemoryExecutionRepository:
+    """Execution repository enforcing one Execution per RequestId."""
+
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+        self._tracked: dict[ExecutionId, Execution] = {}
+        self._expected_versions: dict[ExecutionId, int] = {}
+        self._new: set[ExecutionId] = set()
+        self._dirty: set[ExecutionId] = set()
+        self._new_by_request: dict[RequestId, ExecutionId] = {}
+
+    def add(self, execution: Execution) -> None:
+        if execution.id in self._tracked:
+            raise DuplicateExecutionError(f"Execution {execution.id.value!r} is already tracked.")
+        if execution.request_id in self._new_by_request:
+            raise DuplicateExecutionError("An Execution for this RequestId is already staged.")
+        self._tracked[execution.id] = execution
+        self._new.add(execution.id)
+        self._new_by_request[execution.request_id] = execution.id
+
+    def get(self, execution_id: ExecutionId) -> Execution | None:
+        tracked = self._tracked.get(execution_id)
+        if tracked is not None:
+            return tracked
+
+        with self._store._lock:
+            committed = self._store._executions.get(execution_id)
+            if committed is None:
+                return None
+            loaded = _clone_execution(committed)
+            self._tracked[execution_id] = loaded
+            self._expected_versions[execution_id] = committed.version
+            return loaded
+
+    def get_by_request(self, request_id: RequestId) -> Execution | None:
+        staged_id = self._new_by_request.get(request_id)
+        if staged_id is not None:
+            return self._tracked[staged_id]
+
+        with self._store._lock:
+            committed_id = self._store._execution_by_request.get(request_id)
+        if committed_id is None:
+            return None
+        return self.get(committed_id)
+
+    def save(self, execution: Execution) -> None:
+        tracked = self._tracked.get(execution.id)
+        if tracked is not execution:
+            raise UntrackedEntityError(
+                f"Execution {execution.id.value!r} must be loaded before save()."
+            )
+        if execution.id in self._new:
+            return
+        if execution.id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"Execution {execution.id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(execution.id)
+
+    def _validate_commit_locked(self) -> None:
+        for execution_id in self._new:
+            execution = self._tracked[execution_id]
+            if execution_id in self._store._executions:
+                raise DuplicateExecutionError(f"Execution {execution_id.value!r} already exists.")
+            if execution.request_id in self._store._execution_by_request:
+                raise DuplicateExecutionError("An Execution for this RequestId already exists.")
+
+        for execution_id in self._dirty:
+            committed = self._store._executions.get(execution_id)
+            expected = self._expected_versions[execution_id]
+            if committed is None:
+                raise OptimisticConcurrencyError(
+                    f"Execution {execution_id.value!r} disappeared after load."
+                )
+            if committed.version != expected:
+                raise OptimisticConcurrencyError(
+                    f"Execution {execution_id.value!r} changed concurrently."
+                )
+
+    def _apply_commit_locked(self) -> None:
+        for execution_id in self._new | self._dirty:
+            execution = self._tracked[execution_id]
+            self._store._executions[execution_id] = _clone_execution(execution)
+            self._store._execution_by_request[execution.request_id] = execution_id
+
+    def _after_commit(self) -> None:
+        for execution_id in self._new | self._dirty:
+            self._expected_versions[execution_id] = self._tracked[execution_id].version
+        self._new.clear()
+        self._dirty.clear()
+        self._new_by_request.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+        self._new_by_request.clear()
+
+
+class InMemoryAttemptRepository:
+    """Attempt repository enforcing unique number within one Execution."""
+
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+        self._tracked: dict[AttemptId, Attempt] = {}
+        self._expected_versions: dict[AttemptId, int] = {}
+        self._new: set[AttemptId] = set()
+        self._dirty: set[AttemptId] = set()
+
+    def add(self, attempt: Attempt) -> None:
+        if attempt.id in self._tracked:
+            raise DuplicateAttemptError(f"Attempt {attempt.id.value!r} is already tracked.")
+        self._tracked[attempt.id] = attempt
+        self._new.add(attempt.id)
+
+    def get(self, attempt_id: AttemptId) -> Attempt | None:
+        tracked = self._tracked.get(attempt_id)
+        if tracked is not None:
+            return tracked
+
+        with self._store._lock:
+            committed = self._store._attempts.get(attempt_id)
+            if committed is None:
+                return None
+            loaded = _clone_attempt(committed)
+            self._tracked[attempt_id] = loaded
+            self._expected_versions[attempt_id] = committed.version
+            return loaded
+
+    def save(self, attempt: Attempt) -> None:
+        tracked = self._tracked.get(attempt.id)
+        if tracked is not attempt:
+            raise UntrackedEntityError(
+                f"Attempt {attempt.id.value!r} must be loaded before save()."
+            )
+        if attempt.id in self._new:
+            return
+        if attempt.id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"Attempt {attempt.id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(attempt.id)
+
+    def list_for_execution(self, execution_id: ExecutionId) -> list[Attempt]:
+        with self._store._lock:
+            committed_ids = [
+                attempt_id
+                for (candidate_execution_id, _), attempt_id in self._store._attempt_by_number.items()
+                if candidate_execution_id == execution_id
+            ]
+
+        result: dict[AttemptId, Attempt] = {}
+        for attempt_id in committed_ids:
+            attempt = self.get(attempt_id)
+            if attempt is not None:
+                result[attempt_id] = attempt
+
+        for attempt_id in self._new:
+            attempt = self._tracked[attempt_id]
+            if attempt.execution_id == execution_id:
+                result[attempt_id] = attempt
+
+        return sorted(result.values(), key=lambda attempt: attempt.number)
+
+    def _validate_commit_locked(self) -> None:
+        for attempt_id in self._new:
+            attempt = self._tracked[attempt_id]
+            key = (attempt.execution_id, attempt.number)
+            if attempt_id in self._store._attempts:
+                raise DuplicateAttemptError(f"Attempt {attempt_id.value!r} already exists.")
+            if key in self._store._attempt_by_number:
+                raise DuplicateAttemptError(
+                    "An Attempt with this execution_id and number already exists."
+                )
+
+        for attempt_id in self._dirty:
+            committed = self._store._attempts.get(attempt_id)
+            expected = self._expected_versions[attempt_id]
+            if committed is None:
+                raise OptimisticConcurrencyError(
+                    f"Attempt {attempt_id.value!r} disappeared after load."
+                )
+            if committed.version != expected:
+                raise OptimisticConcurrencyError(
+                    f"Attempt {attempt_id.value!r} changed concurrently."
+                )
+
+    def _apply_commit_locked(self) -> None:
+        for attempt_id in self._new | self._dirty:
+            attempt = self._tracked[attempt_id]
+            self._store._attempts[attempt_id] = _clone_attempt(attempt)
+            self._store._attempt_by_number[(attempt.execution_id, attempt.number)] = attempt_id
+
+    def _after_commit(self) -> None:
+        for attempt_id in self._new | self._dirty:
+            self._expected_versions[attempt_id] = self._tracked[attempt_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class InMemoryUnitOfWork:
-    """Explicit transaction across Schedule and ExecutionRequest repositories."""
+    """Explicit transaction across scheduling and execution repositories."""
 
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
         self._active = False
         self.schedules = InMemoryScheduleRepository(store)
         self.requests = InMemoryExecutionRequestRepository(store)
+        self.executions = InMemoryExecutionRepository(store)
+        self.attempts = InMemoryAttemptRepository(store)
 
     def __enter__(self) -> InMemoryUnitOfWork:
         if self._active:
@@ -267,20 +575,26 @@ class InMemoryUnitOfWork:
 
     def commit(self) -> None:
         self._require_active()
+        repositories = (
+            self.schedules,
+            self.requests,
+            self.executions,
+            self.attempts,
+        )
 
         with self._store._lock:
-            self.schedules._validate_commit_locked()
-            self.requests._validate_commit_locked()
-
-            self.schedules._apply_commit_locked()
-            self.requests._apply_commit_locked()
-
-            self.schedules._after_commit()
-            self.requests._after_commit()
+            for repository in repositories:
+                repository._validate_commit_locked()
+            for repository in repositories:
+                repository._apply_commit_locked()
+            for repository in repositories:
+                repository._after_commit()
 
     def rollback(self) -> None:
         self.schedules._rollback()
         self.requests._rollback()
+        self.executions._rollback()
+        self.attempts._rollback()
 
     def _require_active(self) -> None:
         if not self._active:

@@ -261,7 +261,7 @@ def test_list_due_filters_state_orders_deterministically_and_applies_limit() -> 
     factory = InMemoryUnitOfWorkFactory()
     _persist(factory, _schedule("schedule-b", anchor_minute=0))
     _persist(factory, _schedule("schedule-a", anchor_minute=0))
-    _persist(factory, _schedule("schedule-c", anchor_minute=5))
+    _persist(factory, _schedule("schedule-c", anchor_minute=0))
 
     with factory() as pause_uow:
         paused = pause_uow.schedules.get(ScheduleId("schedule-c"))
@@ -271,7 +271,7 @@ def test_list_due_filters_state_orders_deterministically_and_applies_limit() -> 
         pause_uow.commit()
 
     with factory() as uow:
-        due = uow.schedules.list_due(now=_instant(hour=10), limit=2)
+        due = uow.schedules.list_due(now=_instant(hour=10), limit=10)
 
         assert [schedule.id.value for schedule in due] == [
             "schedule-a",

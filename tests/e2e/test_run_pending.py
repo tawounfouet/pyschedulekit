@@ -375,25 +375,80 @@ def test_t_e2e_014_explicit_run_now_executes_true_misfire() -> None:
     assert result.succeeded == 1
 
 
-@pytest.mark.parametrize(
-    "policy",
-    [
-        MisfirePolicy.catch_up(),
-        MisfirePolicy.coalesce(),
-    ],
-)
-def test_t_e2e_015_public_scheduler_rejects_recovery_modes_not_implemented_yet(
-    policy: MisfirePolicy,
-) -> None:
-    scheduler = Scheduler(clock=MutableClock(_instant()))
+def test_t_e2e_015_catch_up_drains_bounded_backlog_across_cycles() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[int] = []
 
-    with pytest.raises(ValueError, match="not yet supported"):
-        scheduler.add_schedule(
-            id="future-recovery",
-            target=lambda: None,
-            trigger=IntervalTrigger(
-                every=Duration.minutes(10),
-                anchor=_instant(hour=10, minute=10),
-            ),
-            misfire=policy,
-        )
+    scheduler.add_schedule(
+        id="catch-up",
+        target=lambda: calls.append(len(calls) + 1),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.catch_up(max_occurrences=2),
+    )
+
+    clock.advance(Duration.minutes(45))
+
+    first = scheduler.run_pending()
+    second = scheduler.run_pending()
+    third = scheduler.run_pending()
+
+    assert len(first.materialized_request_ids) == 2
+    assert len(second.materialized_request_ids) == 2
+    assert third.materialized_request_ids == ()
+    assert calls == [1, 2, 3, 4]
+    assert first.succeeded == 2
+    assert second.succeeded == 2
+    assert first.recovery_limit_schedules == ()
+    assert second.recovery_limit_schedules == ()
+
+
+def test_t_e2e_016_coalesce_executes_only_latest_due_occurrence() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[str] = []
+
+    scheduler.add_schedule(
+        id="coalesce",
+        target=lambda: calls.append("executed"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.coalesce(max_occurrences=10),
+    )
+
+    clock.advance(Duration.minutes(45))
+    result = scheduler.run_pending()
+
+    assert calls == ["executed"]
+    assert len(result.materialized_request_ids) == 1
+    assert result.succeeded == 1
+    assert result.recovery_limit_schedules == ()
+
+
+def test_t_e2e_017_coalesce_fails_closed_when_backlog_exceeds_bound() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[str] = []
+
+    scheduler.add_schedule(
+        id="bounded-coalesce",
+        target=lambda: calls.append("unexpected"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.coalesce(max_occurrences=2),
+    )
+
+    clock.advance(Duration.minutes(45))
+    result = scheduler.run_pending()
+
+    assert calls == []
+    assert result.materialized_request_ids == ()
+    assert result.executions == ()
+    assert result.recovery_limit_schedules == (ScheduleId("bounded-coalesce"),)

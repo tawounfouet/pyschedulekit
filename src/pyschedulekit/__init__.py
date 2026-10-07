@@ -3,6 +3,7 @@
 from pyschedulekit._version import __version__
 from pyschedulekit.api import Scheduler
 from pyschedulekit.application.recovery import (
+    CrashRecoveryActiveRuntimeError,
     CrashRecoveryError,
     CrashRecoveryIncompleteError,
     CrashRecoveryResult,
@@ -51,6 +52,7 @@ from pyschedulekit.ports.cancellation import (
 
 __all__ = [
     "CancellationToken",
+    "CrashRecoveryActiveRuntimeError",
     "CrashRecoveryError",
     "CrashRecoveryIncompleteError",
     "CrashRecoveryResult",

@@ -12,6 +12,7 @@ from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
+from pyschedulekit.application.materialization import ScheduleMaterializationCoordinator
 from pyschedulekit.application.outbox import OutboxDispatcher, OutboxDispatchResult
 from pyschedulekit.application.reconciliation import (
     ReconciliationActiveRuntimeError,
@@ -74,6 +75,7 @@ class Scheduler:
         claim_ttl: Duration | None = None,
         lease_heartbeat_interval: Duration | None = None,
         admission_lock_ttl: Duration | None = None,
+        materialization_lease_ttl: Duration | None = None,
     ) -> None:
         self._clock: Clock = clock if clock is not None else SystemClock()
         self._uow_factory: UnitOfWorkFactory = (
@@ -96,6 +98,11 @@ class Scheduler:
         self._admission_lock_ttl = (
             admission_lock_ttl if admission_lock_ttl is not None else Duration.seconds(5)
         )
+        self._materialization_lease_ttl = (
+            materialization_lease_ttl
+            if materialization_lease_ttl is not None
+            else Duration.seconds(5)
+        )
         self._claim_coordinator = ExecutionClaimCoordinator(
             uow_factory=self._uow_factory,
             worker_id=self._worker_id,
@@ -106,6 +113,11 @@ class Scheduler:
             uow_factory=self._uow_factory,
             worker_id=self._worker_id,
             ttl=self._admission_lock_ttl,
+        )
+        self._materialization_coordinator = ScheduleMaterializationCoordinator(
+            uow_factory=self._uow_factory,
+            worker_id=self._worker_id,
+            ttl=self._materialization_lease_ttl,
         )
 
         self._execution_service = ExecutionService(uow_factory=self._uow_factory)
@@ -142,7 +154,10 @@ class Scheduler:
         self._run_pending_service = RunPendingService(
             clock=self._clock,
             uow_factory=self._uow_factory,
-            scheduler_engine=SchedulerEngine(uow_factory=self._uow_factory),
+            scheduler_engine=SchedulerEngine(
+                uow_factory=self._uow_factory,
+                materialization_coordinator=self._materialization_coordinator,
+            ),
             concurrency_coordinator=ConcurrencyCoordinator(
                 uow_factory=self._uow_factory,
                 admission_lock_coordinator=self._admission_lock_coordinator,
@@ -150,6 +165,7 @@ class Scheduler:
             ),
             execution_runner=execution_runner,
             claim_coordinator=self._claim_coordinator,
+            distributed_recovery_service=self._recovery_service,
             shutdown_coordinator=self._shutdown_coordinator,
         )
         self._runtime = ContinuousSchedulerLoop(

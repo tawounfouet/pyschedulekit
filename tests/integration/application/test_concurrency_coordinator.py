@@ -210,22 +210,26 @@ def test_t_con_025_allow_policy_does_not_limit_non_terminal_executions() -> None
     assert two.action is ConcurrencyDecisionAction.ADMIT
 
 
-def test_t_con_026_same_coordinator_serializes_competing_admissions() -> None:
+def test_t_con_026_process_lock_serializes_distinct_coordinators() -> None:
     factory = InMemoryUnitOfWorkFactory()
     policy = ConcurrencyPolicy.limit(max_instances=1)
     first = _request(request_id="request-1", policy=policy)
     second = _request(request_id="request-2", minute=1, policy=policy)
     _persist(factory, first, second)
-    coordinator = ConcurrencyCoordinator(uow_factory=factory)
+    coordinators = (
+        ConcurrencyCoordinator(uow_factory=factory),
+        ConcurrencyCoordinator(uow_factory=factory),
+    )
 
-    def admit(request: ExecutionRequest) -> ConcurrencyDecisionAction:
+    def admit(pair: tuple[ConcurrencyCoordinator, ExecutionRequest]) -> ConcurrencyDecisionAction:
+        coordinator, request = pair
         return coordinator.admit(
             request_id=request.id,
             created_at=_instant(minute=2),
         ).action
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        actions = list(pool.map(admit, (first, second)))
+        actions = list(pool.map(admit, zip(coordinators, (first, second), strict=True)))
 
     assert sorted(action.value for action in actions) == ["admit", "queue"]
 

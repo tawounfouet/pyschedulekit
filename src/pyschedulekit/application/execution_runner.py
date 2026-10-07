@@ -132,9 +132,7 @@ class ExecutionRunner:
                 timeout=execution_snapshot.policy_snapshot.timeout,
                 cancellation_token=cancellation_token,
                 fencing_token=(
-                    active_claim_handle.generation
-                    if active_claim_handle is not None
-                    else None
+                    active_claim_handle.generation if active_claim_handle is not None else None
                 ),
             )
             completed_at = self._clock.now()

@@ -10,6 +10,7 @@ from uuid import uuid4
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
+from pyschedulekit.application.outbox import OutboxDispatchResult, OutboxDispatcher
 from pyschedulekit.application.reconciliation import (
     ReconciliationActiveRuntimeError,
     ReconciliationIncompleteError,
@@ -52,6 +53,7 @@ from pyschedulekit.infrastructure.local_executor import (
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.runtime import EventLoopWaiter
 from pyschedulekit.infrastructure.time import SystemClock
+from pyschedulekit.ports.outbox import OutboxPublisher
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
 
@@ -246,6 +248,21 @@ class Scheduler:
             if not result.complete:
                 raise ReconciliationIncompleteError(result)
             return result
+
+    def dispatch_outbox(
+        self,
+        publisher: OutboxPublisher,
+        *,
+        limit: int = 100,
+    ) -> OutboxDispatchResult:
+        """Publish committed outbox messages with at-least-once semantics."""
+
+        dispatcher = OutboxDispatcher(
+            clock=self._clock,
+            uow_factory=self._uow_factory,
+            publisher=publisher,
+        )
+        return dispatcher.dispatch_pending(limit=limit)
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking end-to-end scheduling cycle."""

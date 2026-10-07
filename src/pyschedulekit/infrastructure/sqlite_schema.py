@@ -655,9 +655,7 @@ def _verify_v7_schema(connection: sqlite3.Connection) -> None:
 
 def _verify_v8_schema(connection: sqlite3.Connection) -> None:
     _verify_v7_schema(connection)
-    execution_columns = {
-        str(row[1]) for row in connection.execute("PRAGMA table_info(executions)")
-    }
+    execution_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(executions)")}
     if "completed_at" not in execution_columns:
         raise RuntimeError("PyScheduleKit executions completed_at column is missing in v8.")
 

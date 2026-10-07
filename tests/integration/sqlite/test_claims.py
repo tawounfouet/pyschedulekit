@@ -196,7 +196,7 @@ def test_t_claim_sql_004_v3_database_migrates_through_current_schema(tmp_path) -
         ).fetchone()
 
         assert version is not None
-        assert int(version[0]) == 7
+        assert int(version[0]) == 8
         assert table is not None
     finally:
         connection.close()

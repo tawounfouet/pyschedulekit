@@ -181,7 +181,6 @@ CREATE TABLE execution_claims (
         CHECK(length(trim(token)) > 0),
     claimed_at TEXT NOT NULL,
     expires_at TEXT NOT NULL,
-    generation INTEGER NOT NULL CHECK(generation >= 1),
     state TEXT NOT NULL
         CHECK(state IN ('active', 'released')),
     released_at TEXT,
@@ -209,7 +208,6 @@ CREATE TABLE schedule_admission_locks (
     token TEXT NOT NULL UNIQUE CHECK(length(trim(token)) > 0),
     acquired_at TEXT NOT NULL,
     expires_at TEXT NOT NULL,
-    generation INTEGER NOT NULL CHECK(generation >= 1),
     state TEXT NOT NULL CHECK(state IN ('active', 'released')),
     released_at TEXT,
     version INTEGER NOT NULL CHECK(version >= 0),
@@ -292,6 +290,7 @@ def _create_v6_schema(connection: sqlite3.Connection) -> None:
         _execute_sql_batch(connection, _INDEXES_V4_SQL)
         _execute_sql_batch(connection, _ADMISSION_LOCKS_V5_SQL)
         _execute_sql_batch(connection, _INDEXES_V5_SQL)
+        _add_fencing_generation_columns(connection)
         connection.execute(
             "INSERT INTO pyschedulekit_schema(version) VALUES (?)",
             (SCHEMA_VERSION,),
@@ -443,20 +442,7 @@ def _migrate_v4_to_v5(connection: sqlite3.Connection) -> None:
 def _migrate_v5_to_v6(connection: sqlite3.Connection) -> None:
     connection.execute("BEGIN IMMEDIATE")
     try:
-        connection.execute(
-            """
-            ALTER TABLE execution_claims
-            ADD COLUMN generation INTEGER NOT NULL DEFAULT 1
-            CHECK(generation >= 1)
-            """
-        )
-        connection.execute(
-            """
-            ALTER TABLE schedule_admission_locks
-            ADD COLUMN generation INTEGER NOT NULL DEFAULT 1
-            CHECK(generation >= 1)
-            """
-        )
+        _add_fencing_generation_columns(connection)
         connection.execute(
             "UPDATE pyschedulekit_schema SET version = ?",
             (SCHEMA_VERSION,),
@@ -467,6 +453,23 @@ def _migrate_v5_to_v6(connection: sqlite3.Connection) -> None:
         raise
 
     _verify_v6_schema(connection)
+
+
+def _add_fencing_generation_columns(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        ALTER TABLE execution_claims
+        ADD COLUMN generation INTEGER NOT NULL DEFAULT 1
+        CHECK(generation >= 1)
+        """
+    )
+    connection.execute(
+        """
+        ALTER TABLE schedule_admission_locks
+        ADD COLUMN generation INTEGER NOT NULL DEFAULT 1
+        CHECK(generation >= 1)
+        """
+    )
 
 
 def _verify_v2_schema(connection: sqlite3.Connection) -> None:

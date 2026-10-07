@@ -65,7 +65,7 @@ This preserves periodic reconciliation while avoiding unnecessary short polling.
 The LOT-18 argument:
 
 ```python
-poll_interval=...
+poll_interval = ...
 ```
 
 remains accepted as an alias for `max_sleep`.

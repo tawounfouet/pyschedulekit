@@ -531,7 +531,7 @@ same UnitOfWork / same SQL transaction
 external publication later
 ```
 
-Publication is explicitly at-least-once. `OutboxMessage.id` is the consumer idempotency key.
+Publication is explicitly at-least-once. `OutboxMessage.id` is the consumer idempotency key, and consumers are expected to deduplicate replays with it.
 
 ```python
 result = scheduler.dispatch_outbox(publisher)

@@ -8,6 +8,15 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Durable graph reconciliation across ExecutionRequest, Execution, and Attempt state.
+- Deterministic repair for DISPATCHED requests missing Executions.
+- Deterministic request-state repair when a durable Execution already exists.
+- Explicit reconciliation issues for unsafe terminal, target, policy, and Attempt-history drift.
+- Bounded reconciliation scans with truncation-aware fail-closed semantics.
+- Automatic startup ordering: Crash Recovery → Reconciliation → Scheduling.
+- Public `Scheduler.reconcile()` and `last_reconciliation_result`.
+- LOT-24 SQLite integration and reconstruction-to-SUCCESS end-to-end qualification.
+
 - Persisted crash recovery for orphaned RUNNING Executions and Attempts.
 - Automatic recovery barrier before the first Scheduler cycle.
 - Explicit CrashRecoveryResult, CrashRecoveryError, and CrashRecoveryIncompleteError APIs.

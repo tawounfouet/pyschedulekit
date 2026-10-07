@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-26 complete — next: LOT-27 Multi-worker Admission**
+**LOT-27 complete — next: LOT-28 Lease / Fencing Refinements**
 
 Completed:
 
@@ -37,6 +37,7 @@ Completed:
 - LOT-24 — Reconciliation
 - LOT-25 — Transactional Outbox
 - LOT-26 — Distributed Claims
+- LOT-27 — Multi-worker Admission
 
 The implementation follows a domain-first roadmap:
 
@@ -567,6 +568,24 @@ scheduler = Scheduler(
 ```
 
 Claims are one-shot admission tokens, not yet renewable execution leases. Expired claims can be taken over, and stale claim handles are rejected at Attempt start.
+
+## Multi-worker admission
+
+LOT-27 makes `ConcurrencyPolicy.limit(max_instances=N)` global across cooperating workers sharing the same durable store.
+
+```text
+ScheduleAdmissionLock
+        ↓
+count non-terminal Executions
+        ↓
+ADMIT / QUEUE / DROP
+        ↓
+commit
+        ↓
+release
+```
+
+Admission-lock contention is reported separately from a real policy QUEUE. SQLite schema v5 persists the short-lived Schedule-scoped locks.
 
 ## Package shape
 

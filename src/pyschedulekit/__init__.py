@@ -24,6 +24,13 @@ from pyschedulekit.application.run_pending import (
 )
 from pyschedulekit.application.runtime import RuntimeAlreadyRunningError
 from pyschedulekit.application.shutdown import ShutdownMode, ShutdownResult
+from pyschedulekit.domain.admission_lock import (
+    AdmissionLockOwnershipError,
+    AdmissionToken,
+    ScheduleAdmissionLock,
+    ScheduleAdmissionLockHandle,
+    ScheduleAdmissionLockState,
+)
 from pyschedulekit.domain.claim import (
     ClaimOwnershipError,
     ClaimToken,
@@ -75,6 +82,8 @@ from pyschedulekit.ports.cancellation import (
 from pyschedulekit.ports.outbox import OutboxPublisher
 
 __all__ = [
+    "AdmissionLockOwnershipError",
+    "AdmissionToken",
     "CancellationToken",
     "ClaimOwnershipError",
     "ClaimToken",
@@ -122,6 +131,9 @@ __all__ = [
     "RunPendingError",
     "RunPendingResult",
     "RuntimeAlreadyRunningError",
+    "ScheduleAdmissionLock",
+    "ScheduleAdmissionLockHandle",
+    "ScheduleAdmissionLockState",
     "ScheduleId",
     "Scheduler",
     "ShutdownMode",

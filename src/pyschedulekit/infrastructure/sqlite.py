@@ -9,6 +9,11 @@ from types import TracebackType
 from typing import NoReturn, cast
 from uuid import uuid4
 
+from pyschedulekit.domain.admission_lock import (
+    AdmissionToken,
+    ScheduleAdmissionLock,
+    ScheduleAdmissionLockState,
+)
 from pyschedulekit.domain.claim import (
     ClaimToken,
     ExecutionClaim,
@@ -58,6 +63,7 @@ from pyschedulekit.infrastructure.sqlite_schema import initialize_sqlite_schema
 from pyschedulekit.ports.persistence import (
     AttemptRepository,
     DatabaseInvariantError,
+    DuplicateAdmissionLockError,
     DuplicateAttemptError,
     DuplicateExecutionClaimError,
     DuplicateExecutionError,
@@ -71,6 +77,7 @@ from pyschedulekit.ports.persistence import (
     OutboxRepository,
     PersistenceConflictError,
     ReferentialIntegrityError,
+    ScheduleAdmissionLockRepository,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
@@ -92,6 +99,12 @@ def _optional_duration(value: object) -> Duration | None:
 
 def _raise_integrity_error(exc: sqlite3.IntegrityError) -> NoReturn:
     message = str(exc)
+
+    if "UNIQUE constraint failed: schedule_admission_locks.schedule_id" in message:
+        raise DuplicateAdmissionLockError("Schedule admission lock already exists.") from exc
+
+    if "UNIQUE constraint failed: schedule_admission_locks.token" in message:
+        raise DuplicateAdmissionLockError("Schedule admission lock token already exists.") from exc
 
     if "UNIQUE constraint failed: execution_claims.execution_id" in message:
         raise DuplicateExecutionClaimError("Execution claim already exists.") from exc
@@ -142,6 +155,19 @@ def _require_cas_update(
         raise OptimisticConcurrencyError(
             f"{entity} changed concurrently before the compare-and-swap update."
         )
+
+
+def _admission_lock_from_row(row: sqlite3.Row) -> ScheduleAdmissionLock:
+    return ScheduleAdmissionLock(
+        schedule_id=ScheduleId(str(row["schedule_id"])),
+        worker_id=WorkerId(str(row["worker_id"])),
+        token=AdmissionToken(str(row["token"])),
+        acquired_at=Instant.parse(str(row["acquired_at"])),
+        expires_at=Instant.parse(str(row["expires_at"])),
+        state=ScheduleAdmissionLockState(str(row["state"])),
+        released_at=_optional_instant(row["released_at"]),
+        version=int(row["version"]),
+    )
 
 
 def _claim_from_row(row: sqlite3.Row) -> ExecutionClaim:
@@ -1117,6 +1143,129 @@ class SqliteAttemptRepository:
         self._dirty.clear()
 
 
+class SqliteScheduleAdmissionLockRepository:
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+        self._tracked: dict[ScheduleId, ScheduleAdmissionLock] = {}
+        self._expected_versions: dict[ScheduleId, int] = {}
+        self._new: set[ScheduleId] = set()
+        self._dirty: set[ScheduleId] = set()
+
+    def add(self, lock: ScheduleAdmissionLock) -> None:
+        if lock.schedule_id in self._tracked:
+            raise DuplicateAdmissionLockError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} is already tracked."
+            )
+        self._tracked[lock.schedule_id] = lock
+        self._new.add(lock.schedule_id)
+
+    def get(self, schedule_id: ScheduleId) -> ScheduleAdmissionLock | None:
+        tracked = self._tracked.get(schedule_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM schedule_admission_locks WHERE schedule_id = ?",
+            (schedule_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _admission_lock_from_row(row)
+        self._tracked[schedule_id] = loaded
+        self._expected_versions[schedule_id] = loaded.version
+        return loaded
+
+    def save(self, lock: ScheduleAdmissionLock) -> None:
+        if self._tracked.get(lock.schedule_id) is not lock:
+            raise UntrackedEntityError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} must be loaded before save()."
+            )
+        if lock.schedule_id in self._new:
+            return
+        if lock.schedule_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} has no tracked version."
+            )
+        self._dirty.add(lock.schedule_id)
+
+    def _validate(self) -> None:
+        for schedule_id in self._new:
+            row = self._connection.execute(
+                "SELECT 1 FROM schedule_admission_locks WHERE schedule_id = ?",
+                (schedule_id.value,),
+            ).fetchone()
+            if row is not None:
+                raise DuplicateAdmissionLockError(
+                    f"ScheduleAdmissionLock {schedule_id.value!r} already exists."
+                )
+        for schedule_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM schedule_admission_locks WHERE schedule_id = ?",
+                (schedule_id.value,),
+            ).fetchone()
+            if row is None or int(row[0]) != self._expected_versions[schedule_id]:
+                raise OptimisticConcurrencyError(
+                    f"ScheduleAdmissionLock {schedule_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for schedule_id in self._new:
+            lock = self._tracked[schedule_id]
+            self._connection.execute(
+                """
+                INSERT INTO schedule_admission_locks(
+                    schedule_id, worker_id, token, acquired_at, expires_at,
+                    state, released_at, version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    lock.schedule_id.value,
+                    lock.worker_id.value,
+                    lock.token.value,
+                    lock.acquired_at.value.isoformat(),
+                    lock.expires_at.value.isoformat(),
+                    lock.state.value,
+                    _instant_text(lock.released_at),
+                    lock.version,
+                ),
+            )
+
+        for schedule_id in self._dirty:
+            lock = self._tracked[schedule_id]
+            expected = self._expected_versions[schedule_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE schedule_admission_locks
+                SET worker_id = ?, token = ?, acquired_at = ?, expires_at = ?,
+                    state = ?, released_at = ?, version = ?
+                WHERE schedule_id = ? AND version = ?
+                """,
+                (
+                    lock.worker_id.value,
+                    lock.token.value,
+                    lock.acquired_at.value.isoformat(),
+                    lock.expires_at.value.isoformat(),
+                    lock.state.value,
+                    _instant_text(lock.released_at),
+                    lock.version,
+                    lock.schedule_id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(cursor, entity=f"ScheduleAdmissionLock {lock.schedule_id.value!r}")
+
+    def _after_commit(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class SqliteExecutionClaimRepository:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
@@ -1409,6 +1558,7 @@ class SqliteUnitOfWork:
         self._requests = SqliteExecutionRequestRepository(connection)
         self._executions = SqliteExecutionRepository(connection)
         self._attempts = SqliteAttemptRepository(connection)
+        self._admission_locks = SqliteScheduleAdmissionLockRepository(connection)
         self._claims = SqliteExecutionClaimRepository(connection)
         self._outbox = SqliteOutboxRepository(connection)
 
@@ -1416,6 +1566,7 @@ class SqliteUnitOfWork:
         self.requests: ExecutionRequestRepository = self._requests
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
+        self.admission_locks: ScheduleAdmissionLockRepository = self._admission_locks
         self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
 
@@ -1443,6 +1594,7 @@ class SqliteUnitOfWork:
             self._requests,
             self._executions,
             self._attempts,
+            self._admission_locks,
             self._claims,
             self._outbox,
         )
@@ -1470,6 +1622,7 @@ class SqliteUnitOfWork:
         self._requests._rollback()
         self._executions._rollback()
         self._attempts._rollback()
+        self._admission_locks._rollback()
         self._claims._rollback()
         self._outbox._rollback()
 

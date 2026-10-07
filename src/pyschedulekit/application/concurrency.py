@@ -10,6 +10,10 @@ from pyschedulekit.application.execution_service import (
     ExecutionConsistencyError,
     ExecutionRequestNotFoundError,
 )
+from pyschedulekit.domain.admission_lock import (
+    AdmissionLockOwnershipError,
+    ScheduleAdmissionLockHandle,
+)
 from pyschedulekit.domain.concurrency import (
     ConcurrencyDecision,
     ConcurrencyDecisionAction,
@@ -23,7 +27,12 @@ from pyschedulekit.domain.execution_request import (
 )
 from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.domain.time import Instant
-from pyschedulekit.ports.persistence import UnitOfWorkFactory
+from pyschedulekit.ports.persistence import (
+    PersistenceConflictError,
+    UnitOfWork,
+    UnitOfWorkFactory,
+)
+from pyschedulekit.ports.time import Clock
 
 _PROCESS_ADMISSION_LOCK = RLock()
 
@@ -49,10 +58,12 @@ class ConcurrencyCoordinator:
         uow_factory: UnitOfWorkFactory,
         evaluator: ConcurrencyEvaluator | None = None,
         admission_lock_coordinator: ScheduleAdmissionLockCoordinator | None = None,
+        clock: Clock | None = None,
     ) -> None:
         self._uow_factory = uow_factory
         self._evaluator = evaluator or ConcurrencyEvaluator()
         self._admission_lock_coordinator = admission_lock_coordinator
+        self._clock = clock
         self._lock = _PROCESS_ADMISSION_LOCK
 
     def admit(
@@ -68,33 +79,31 @@ class ConcurrencyCoordinator:
                 return self._admit_locked(
                     request_id=request_id,
                     created_at=created_at,
+                    lock_handle=None,
                 )
 
         schedule_id = self._schedule_id_for_request(request_id)
         acquisition = self._admission_lock_coordinator.acquire(
             schedule_id=schedule_id,
-            now=created_at,
+            now=self._now(created_at),
         )
         if not acquisition.acquired or acquisition.handle is None:
-            return AdmissionResult(
-                request_id=request_id,
-                action=ConcurrencyDecisionAction.QUEUE,
-                decision=None,
-                execution=None,
-                reused=False,
-                lock_denied=True,
-            )
+            return self._lock_denied_result(request_id)
 
         try:
             return self._admit_locked(
                 request_id=request_id,
                 created_at=created_at,
+                lock_handle=acquisition.handle,
             )
-        finally:
+        except (AdmissionLockOwnershipError, PersistenceConflictError):
+            return self._lock_denied_result(request_id)
+        except Exception:
             self._admission_lock_coordinator.release(
                 handle=acquisition.handle,
-                released_at=created_at,
+                released_at=self._now(created_at),
             )
+            raise
 
     def _schedule_id_for_request(self, request_id: RequestId) -> ScheduleId:
         with self._uow_factory() as uow:
@@ -108,11 +117,20 @@ class ConcurrencyCoordinator:
         *,
         request_id: RequestId,
         created_at: Instant,
+        lock_handle: ScheduleAdmissionLockHandle | None,
     ) -> AdmissionResult:
         with self._uow_factory() as uow:
             request = uow.requests.get(request_id)
             if request is None:
                 raise ExecutionRequestNotFoundError(request_id.value)
+
+            if (
+                lock_handle is not None
+                and lock_handle.schedule_id != request.occurrence_key.schedule_id
+            ):
+                raise AdmissionLockOwnershipError(
+                    "Admission lock belongs to a different Schedule."
+                )
 
             existing = uow.executions.get_by_request(request.id)
 
@@ -121,6 +139,11 @@ class ConcurrencyCoordinator:
                     raise ExecutionConsistencyError(
                         "Dispatched ExecutionRequest has no persisted Execution."
                     )
+                self._commit_with_lock(
+                    uow=uow,
+                    lock_handle=lock_handle,
+                    released_at=self._now(created_at),
+                )
                 return AdmissionResult(
                     request_id=request.id,
                     action=ConcurrencyDecisionAction.ADMIT,
@@ -130,6 +153,11 @@ class ConcurrencyCoordinator:
                 )
 
             if request.state is ExecutionRequestState.DROPPED:
+                self._commit_with_lock(
+                    uow=uow,
+                    lock_handle=lock_handle,
+                    released_at=self._now(created_at),
+                )
                 return AdmissionResult(
                     request_id=request.id,
                     action=ConcurrencyDecisionAction.DROP,
@@ -146,7 +174,11 @@ class ConcurrencyCoordinator:
             if existing is not None:
                 request.mark_dispatched()
                 uow.requests.save(request)
-                uow.commit()
+                self._commit_with_lock(
+                    uow=uow,
+                    lock_handle=lock_handle,
+                    released_at=self._now(created_at),
+                )
                 return AdmissionResult(
                     request_id=request.id,
                     action=ConcurrencyDecisionAction.ADMIT,
@@ -166,7 +198,11 @@ class ConcurrencyCoordinator:
             if decision.action is ConcurrencyDecisionAction.QUEUE:
                 request.wait_for_admission()
                 uow.requests.save(request)
-                uow.commit()
+                self._commit_with_lock(
+                    uow=uow,
+                    lock_handle=lock_handle,
+                    released_at=self._now(created_at),
+                )
                 return AdmissionResult(
                     request_id=request.id,
                     action=decision.action,
@@ -177,7 +213,11 @@ class ConcurrencyCoordinator:
             if decision.action is ConcurrencyDecisionAction.DROP:
                 request.drop()
                 uow.requests.save(request)
-                uow.commit()
+                self._commit_with_lock(
+                    uow=uow,
+                    lock_handle=lock_handle,
+                    released_at=self._now(created_at),
+                )
                 return AdmissionResult(
                     request_id=request.id,
                     action=decision.action,
@@ -192,7 +232,11 @@ class ConcurrencyCoordinator:
             )
             uow.requests.save(request)
             uow.executions.add(execution)
-            uow.commit()
+            self._commit_with_lock(
+                uow=uow,
+                lock_handle=lock_handle,
+                released_at=self._now(created_at),
+            )
 
             return AdmissionResult(
                 request_id=request.id,
@@ -200,3 +244,39 @@ class ConcurrencyCoordinator:
                 decision=decision,
                 execution=execution,
             )
+
+    @staticmethod
+    def _commit_with_lock(
+        *,
+        uow: UnitOfWork,
+        lock_handle: ScheduleAdmissionLockHandle | None,
+        released_at: Instant,
+    ) -> None:
+        if lock_handle is not None:
+            lock = uow.admission_locks.get(lock_handle.schedule_id)
+            if lock is None:
+                raise AdmissionLockOwnershipError(
+                    "Persisted admission lock disappeared before commit."
+                )
+            lock.release(
+                worker_id=lock_handle.worker_id,
+                token=lock_handle.token,
+                generation=lock_handle.generation,
+                released_at=released_at,
+            )
+            uow.admission_locks.save(lock)
+        uow.commit()
+
+    @staticmethod
+    def _lock_denied_result(request_id: RequestId) -> AdmissionResult:
+        return AdmissionResult(
+            request_id=request_id,
+            action=ConcurrencyDecisionAction.QUEUE,
+            decision=None,
+            execution=None,
+            reused=False,
+            lock_denied=True,
+        )
+
+    def _now(self, fallback: Instant) -> Instant:
+        return self._clock.now() if self._clock is not None else fallback

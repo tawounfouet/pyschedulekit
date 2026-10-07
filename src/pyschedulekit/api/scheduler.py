@@ -74,7 +74,7 @@ class Scheduler:
     def register_target(
         self,
         reference: str,
-        target: Callable[[], object],
+        target: Callable[..., object],
     ) -> TargetRef:
         """Register trusted local Python code and return its declarative TargetRef."""
 
@@ -84,7 +84,7 @@ class Scheduler:
     def add_schedule(
         self,
         *,
-        target: TargetRef | Callable[[], object],
+        target: TargetRef | Callable[..., object],
         trigger: Trigger,
         id: str | None = None,
         timezone: Timezone | None = None,
@@ -170,7 +170,7 @@ class Scheduler:
     def _normalize_target(
         self,
         *,
-        target: TargetRef | Callable[[], object],
+        target: TargetRef | Callable[..., object],
         schedule_id: ScheduleId,
     ) -> TargetRef:
         if isinstance(target, TargetRef):

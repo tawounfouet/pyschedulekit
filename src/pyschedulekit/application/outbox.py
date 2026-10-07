@@ -88,9 +88,7 @@ class OutboxDispatcher:
                         error=error_message,
                     )
                 except PersistenceConflictError:
-                    error_message = (
-                        f"{error_message}; persistence conflict while recording failure"
-                    )
+                    error_message = f"{error_message}; persistence conflict while recording failure"
                 failed.append(snapshot.id)
                 errors.append(
                     OutboxPublishError(

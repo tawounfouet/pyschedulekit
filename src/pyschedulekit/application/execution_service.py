@@ -318,6 +318,7 @@ class ExecutionService:
                     "execution_id": execution.id.value,
                     "execution_state": execution.state.value,
                 },
+                sequence=1,
             )
         )
 

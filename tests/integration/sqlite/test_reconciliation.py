@@ -83,10 +83,7 @@ def test_t_reconciliation_001_dispatched_request_without_execution_is_reconstruc
         uow.requests.save(loaded)
         uow.commit()
 
-    result = ReconciliationService(
-        clock=MutableClock(_instant(minute=1)),
-        uow_factory=factory,
-    ).reconcile()
+    result = ReconciliationService(uow_factory=factory).reconcile()
 
     assert result.complete is True
     assert len(result.reconstructed_execution_ids) == 1
@@ -126,10 +123,7 @@ def test_t_reconciliation_002_existing_execution_repairs_request_to_dispatched(
     finally:
         connection.close()
 
-    result = ReconciliationService(
-        clock=MutableClock(_instant(minute=1)),
-        uow_factory=factory,
-    ).reconcile()
+    result = ReconciliationService(uow_factory=factory).reconcile()
 
     assert result.complete is True
     assert result.repaired_request_ids == (request.id,)
@@ -167,10 +161,7 @@ def test_t_reconciliation_003_terminal_request_with_execution_is_not_guessed(
     finally:
         connection.close()
 
-    result = ReconciliationService(
-        clock=MutableClock(_instant(minute=1)),
-        uow_factory=factory,
-    ).reconcile()
+    result = ReconciliationService(uow_factory=factory).reconcile()
 
     assert result.complete is False
     assert result.repaired == 0
@@ -209,10 +200,7 @@ def test_t_reconciliation_004_missing_attempt_history_is_reported(tmp_path) -> N
     finally:
         connection.close()
 
-    result = ReconciliationService(
-        clock=MutableClock(_instant(minute=2)),
-        uow_factory=factory,
-    ).reconcile()
+    result = ReconciliationService(uow_factory=factory).reconcile()
 
     assert result.complete is False
     assert any(
@@ -232,10 +220,7 @@ def test_t_reconciliation_005_bounded_scan_fails_closed_when_truncated(tmp_path)
     _seed_request(factory, schedule_id="schedule-a")
     _seed_request(factory, schedule_id="schedule-b")
 
-    result = ReconciliationService(
-        clock=MutableClock(_instant()),
-        uow_factory=factory,
-    ).reconcile(limit=1)
+    result = ReconciliationService(uow_factory=factory).reconcile(limit=1)
 
     assert result.scan_truncated is True
     assert result.complete is False

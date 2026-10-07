@@ -71,11 +71,7 @@ class RunPendingResult:
 
     @property
     def admission_lock_denied_request_ids(self) -> tuple[RequestId, ...]:
-        return tuple(
-            admission.request_id
-            for admission in self.admissions
-            if admission.lock_denied
-        )
+        return tuple(admission.request_id for admission in self.admissions if admission.lock_denied)
 
     @property
     def dropped_request_ids(self) -> tuple[RequestId, ...]:

@@ -128,9 +128,7 @@ class ConcurrencyCoordinator:
                 lock_handle is not None
                 and lock_handle.schedule_id != request.occurrence_key.schedule_id
             ):
-                raise AdmissionLockOwnershipError(
-                    "Admission lock belongs to a different Schedule."
-                )
+                raise AdmissionLockOwnershipError("Admission lock belongs to a different Schedule.")
 
             existing = uow.executions.get_by_request(request.id)
 

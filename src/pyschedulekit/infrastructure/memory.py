@@ -5,6 +5,7 @@ from __future__ import annotations
 from threading import RLock
 from types import TracebackType
 
+from pyschedulekit.domain.admission_lock import ScheduleAdmissionLock
 from pyschedulekit.domain.claim import ExecutionClaim
 from pyschedulekit.domain.execution import (
     Attempt,
@@ -29,6 +30,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import (
     AttemptRepository,
+    DuplicateAdmissionLockError,
     DuplicateAttemptError,
     DuplicateExecutionClaimError,
     DuplicateExecutionError,
@@ -41,6 +43,7 @@ from pyschedulekit.ports.persistence import (
     OptimisticConcurrencyError,
     OutboxRepository,
     ReferentialIntegrityError,
+    ScheduleAdmissionLockRepository,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
@@ -70,6 +73,19 @@ def _clone_request(request: ExecutionRequest) -> ExecutionRequest:
         timeout=request.timeout,
         state=request.state,
         version=request.version,
+    )
+
+
+def _clone_admission_lock(lock: ScheduleAdmissionLock) -> ScheduleAdmissionLock:
+    return ScheduleAdmissionLock(
+        schedule_id=lock.schedule_id,
+        worker_id=lock.worker_id,
+        token=lock.token,
+        acquired_at=lock.acquired_at,
+        expires_at=lock.expires_at,
+        state=lock.state,
+        released_at=lock.released_at,
+        version=lock.version,
     )
 
 
@@ -144,6 +160,7 @@ class InMemoryStore:
         self._execution_by_request: dict[RequestId, ExecutionId] = {}
         self._attempts: dict[AttemptId, Attempt] = {}
         self._attempt_by_number: dict[tuple[ExecutionId, int], AttemptId] = {}
+        self._admission_locks: dict[ScheduleId, ScheduleAdmissionLock] = {}
         self._claims: dict[ExecutionId, ExecutionClaim] = {}
         self._outbox_messages: dict[OutboxMessageId, OutboxMessage] = {}
         self._lock = RLock()
@@ -823,6 +840,85 @@ class InMemoryAttemptRepository:
         self._dirty.clear()
 
 
+class InMemoryScheduleAdmissionLockRepository:
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+        self._tracked: dict[ScheduleId, ScheduleAdmissionLock] = {}
+        self._expected_versions: dict[ScheduleId, int] = {}
+        self._new: set[ScheduleId] = set()
+        self._dirty: set[ScheduleId] = set()
+
+    def add(self, lock: ScheduleAdmissionLock) -> None:
+        if lock.schedule_id in self._tracked:
+            raise DuplicateAdmissionLockError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} is already tracked."
+            )
+        self._tracked[lock.schedule_id] = lock
+        self._new.add(lock.schedule_id)
+
+    def get(self, schedule_id: ScheduleId) -> ScheduleAdmissionLock | None:
+        tracked = self._tracked.get(schedule_id)
+        if tracked is not None:
+            return tracked
+        with self._store._lock:
+            committed = self._store._admission_locks.get(schedule_id)
+            if committed is None:
+                return None
+            loaded = _clone_admission_lock(committed)
+            self._tracked[schedule_id] = loaded
+            self._expected_versions[schedule_id] = committed.version
+            return loaded
+
+    def save(self, lock: ScheduleAdmissionLock) -> None:
+        if self._tracked.get(lock.schedule_id) is not lock:
+            raise UntrackedEntityError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} must be loaded before save()."
+            )
+        if lock.schedule_id in self._new:
+            return
+        if lock.schedule_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} has no tracked version."
+            )
+        self._dirty.add(lock.schedule_id)
+
+    def _validate_commit_locked(self) -> None:
+        for schedule_id in self._new:
+            if schedule_id in self._store._admission_locks:
+                raise DuplicateAdmissionLockError(
+                    f"ScheduleAdmissionLock {schedule_id.value!r} already exists."
+                )
+            if schedule_id not in self._store._schedules:
+                raise ReferentialIntegrityError(
+                    "ScheduleAdmissionLock references a Schedule that does not exist."
+                )
+        for schedule_id in self._dirty:
+            committed = self._store._admission_locks.get(schedule_id)
+            expected = self._expected_versions[schedule_id]
+            if committed is None or committed.version != expected:
+                raise OptimisticConcurrencyError(
+                    f"ScheduleAdmissionLock {schedule_id.value!r} changed concurrently."
+                )
+
+    def _apply_commit_locked(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._store._admission_locks[schedule_id] = _clone_admission_lock(
+                self._tracked[schedule_id]
+            )
+
+    def _after_commit(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class InMemoryExecutionClaimRepository:
     """Execution claim repository with optimistic version checks."""
 
@@ -1022,6 +1118,7 @@ class InMemoryUnitOfWork:
         self._requests = InMemoryExecutionRequestRepository(store)
         self._executions = InMemoryExecutionRepository(store)
         self._attempts = InMemoryAttemptRepository(store)
+        self._admission_locks = InMemoryScheduleAdmissionLockRepository(store)
         self._claims = InMemoryExecutionClaimRepository(store)
         self._outbox = InMemoryOutboxRepository(store)
 
@@ -1029,6 +1126,7 @@ class InMemoryUnitOfWork:
         self.requests: ExecutionRequestRepository = self._requests
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
+        self.admission_locks: ScheduleAdmissionLockRepository = self._admission_locks
         self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
 
@@ -1055,6 +1153,7 @@ class InMemoryUnitOfWork:
             self._requests,
             self._executions,
             self._attempts,
+            self._admission_locks,
             self._claims,
             self._outbox,
         )
@@ -1072,6 +1171,7 @@ class InMemoryUnitOfWork:
         self._requests._rollback()
         self._executions._rollback()
         self._attempts._rollback()
+        self._admission_locks._rollback()
         self._claims._rollback()
         self._outbox._rollback()
 

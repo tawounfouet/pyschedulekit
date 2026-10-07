@@ -194,6 +194,8 @@ def test_t_lease_sql_004_v5_database_migrates_to_v6(tmp_path) -> None:
 
     connection = sqlite3.connect(database)
     try:
+        connection.execute("DROP INDEX ix_schedule_materialization_leases_active")
+        connection.execute("DROP TABLE schedule_materialization_leases")
         connection.execute("ALTER TABLE execution_claims DROP COLUMN generation")
         connection.execute("ALTER TABLE schedule_admission_locks DROP COLUMN generation")
         connection.execute("UPDATE pyschedulekit_schema SET version = 5")
@@ -215,7 +217,7 @@ def test_t_lease_sql_004_v5_database_migrates_to_v6(tmp_path) -> None:
             for row in connection.execute("PRAGMA table_info(schedule_admission_locks)").fetchall()
         }
         assert version is not None
-        assert int(version[0]) == 6
+        assert int(version[0]) == 7
         assert "generation" in claim_columns
         assert "generation" in admission_columns
     finally:

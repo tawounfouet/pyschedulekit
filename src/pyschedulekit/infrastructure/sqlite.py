@@ -34,6 +34,11 @@ from pyschedulekit.domain.execution_request import (
     ExecutionRequestState,
     RequestId,
 )
+from pyschedulekit.domain.materialization_lease import (
+    MaterializationToken,
+    ScheduleMaterializationLease,
+    ScheduleMaterializationLeaseState,
+)
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.outbox import OutboxMessage, OutboxMessageId, OutboxState
 from pyschedulekit.domain.schedule import (
@@ -68,6 +73,7 @@ from pyschedulekit.ports.persistence import (
     DuplicateExecutionClaimError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
+    DuplicateMaterializationLeaseError,
     DuplicateOutboxMessageError,
     DuplicateScheduleError,
     ExecutionClaimRepository,
@@ -78,6 +84,7 @@ from pyschedulekit.ports.persistence import (
     PersistenceConflictError,
     ReferentialIntegrityError,
     ScheduleAdmissionLockRepository,
+    ScheduleMaterializationLeaseRepository,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
@@ -105,6 +112,16 @@ def _raise_integrity_error(exc: sqlite3.IntegrityError) -> NoReturn:
 
     if "UNIQUE constraint failed: schedule_admission_locks.token" in message:
         raise DuplicateAdmissionLockError("Schedule admission lock token already exists.") from exc
+
+    if "UNIQUE constraint failed: schedule_materialization_leases.schedule_id" in message:
+        raise DuplicateMaterializationLeaseError(
+            "Schedule materialization lease already exists."
+        ) from exc
+
+    if "UNIQUE constraint failed: schedule_materialization_leases.token" in message:
+        raise DuplicateMaterializationLeaseError(
+            "Schedule materialization lease token already exists."
+        ) from exc
 
     if "UNIQUE constraint failed: execution_claims.execution_id" in message:
         raise DuplicateExecutionClaimError("Execution claim already exists.") from exc
@@ -166,6 +183,20 @@ def _admission_lock_from_row(row: sqlite3.Row) -> ScheduleAdmissionLock:
         expires_at=Instant.parse(str(row["expires_at"])),
         generation=int(row["generation"]),
         state=ScheduleAdmissionLockState(str(row["state"])),
+        released_at=_optional_instant(row["released_at"]),
+        version=int(row["version"]),
+    )
+
+
+def _materialization_lease_from_row(row: sqlite3.Row) -> ScheduleMaterializationLease:
+    return ScheduleMaterializationLease(
+        schedule_id=ScheduleId(str(row["schedule_id"])),
+        worker_id=WorkerId(str(row["worker_id"])),
+        token=MaterializationToken(str(row["token"])),
+        acquired_at=Instant.parse(str(row["acquired_at"])),
+        expires_at=Instant.parse(str(row["expires_at"])),
+        generation=int(row["generation"]),
+        state=ScheduleMaterializationLeaseState(str(row["state"])),
         released_at=_optional_instant(row["released_at"]),
         version=int(row["version"]),
     )
@@ -1270,6 +1301,135 @@ class SqliteScheduleAdmissionLockRepository:
         self._dirty.clear()
 
 
+class SqliteScheduleMaterializationLeaseRepository:
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+        self._tracked: dict[ScheduleId, ScheduleMaterializationLease] = {}
+        self._expected_versions: dict[ScheduleId, int] = {}
+        self._new: set[ScheduleId] = set()
+        self._dirty: set[ScheduleId] = set()
+
+    def add(self, lease: ScheduleMaterializationLease) -> None:
+        if lease.schedule_id in self._tracked:
+            raise DuplicateMaterializationLeaseError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} is already tracked."
+            )
+        self._tracked[lease.schedule_id] = lease
+        self._new.add(lease.schedule_id)
+
+    def get(self, schedule_id: ScheduleId) -> ScheduleMaterializationLease | None:
+        tracked = self._tracked.get(schedule_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM schedule_materialization_leases WHERE schedule_id = ?",
+            (schedule_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _materialization_lease_from_row(row)
+        self._tracked[schedule_id] = loaded
+        self._expected_versions[schedule_id] = loaded.version
+        return loaded
+
+    def save(self, lease: ScheduleMaterializationLease) -> None:
+        if self._tracked.get(lease.schedule_id) is not lease:
+            raise UntrackedEntityError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} "
+                "must be loaded before save()."
+            )
+        if lease.schedule_id in self._new:
+            return
+        if lease.schedule_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} has no tracked version."
+            )
+        self._dirty.add(lease.schedule_id)
+
+    def _validate(self) -> None:
+        for schedule_id in self._new:
+            row = self._connection.execute(
+                "SELECT 1 FROM schedule_materialization_leases WHERE schedule_id = ?",
+                (schedule_id.value,),
+            ).fetchone()
+            if row is not None:
+                raise DuplicateMaterializationLeaseError(
+                    f"ScheduleMaterializationLease {schedule_id.value!r} already exists."
+                )
+        for schedule_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM schedule_materialization_leases WHERE schedule_id = ?",
+                (schedule_id.value,),
+            ).fetchone()
+            if row is None or int(row[0]) != self._expected_versions[schedule_id]:
+                raise OptimisticConcurrencyError(
+                    f"ScheduleMaterializationLease {schedule_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for schedule_id in self._new:
+            lease = self._tracked[schedule_id]
+            self._connection.execute(
+                """
+                INSERT INTO schedule_materialization_leases(
+                    schedule_id, worker_id, token, acquired_at, expires_at,
+                    generation, state, released_at, version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    lease.schedule_id.value,
+                    lease.worker_id.value,
+                    lease.token.value,
+                    lease.acquired_at.value.isoformat(),
+                    lease.expires_at.value.isoformat(),
+                    lease.generation,
+                    lease.state.value,
+                    _instant_text(lease.released_at),
+                    lease.version,
+                ),
+            )
+
+        for schedule_id in self._dirty:
+            lease = self._tracked[schedule_id]
+            expected = self._expected_versions[schedule_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE schedule_materialization_leases
+                SET worker_id = ?, token = ?, acquired_at = ?, expires_at = ?,
+                    generation = ?, state = ?, released_at = ?, version = ?
+                WHERE schedule_id = ? AND version = ?
+                """,
+                (
+                    lease.worker_id.value,
+                    lease.token.value,
+                    lease.acquired_at.value.isoformat(),
+                    lease.expires_at.value.isoformat(),
+                    lease.generation,
+                    lease.state.value,
+                    _instant_text(lease.released_at),
+                    lease.version,
+                    lease.schedule_id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(
+                cursor,
+                entity=f"ScheduleMaterializationLease {lease.schedule_id.value!r}",
+            )
+
+    def _after_commit(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class SqliteExecutionClaimRepository:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
@@ -1565,6 +1725,7 @@ class SqliteUnitOfWork:
         self._executions = SqliteExecutionRepository(connection)
         self._attempts = SqliteAttemptRepository(connection)
         self._admission_locks = SqliteScheduleAdmissionLockRepository(connection)
+        self._materialization_leases = SqliteScheduleMaterializationLeaseRepository(connection)
         self._claims = SqliteExecutionClaimRepository(connection)
         self._outbox = SqliteOutboxRepository(connection)
 
@@ -1573,6 +1734,9 @@ class SqliteUnitOfWork:
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
         self.admission_locks: ScheduleAdmissionLockRepository = self._admission_locks
+        self.materialization_leases: ScheduleMaterializationLeaseRepository = (
+            self._materialization_leases
+        )
         self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
 
@@ -1601,6 +1765,7 @@ class SqliteUnitOfWork:
             self._executions,
             self._attempts,
             self._admission_locks,
+            self._materialization_leases,
             self._claims,
             self._outbox,
         )
@@ -1629,6 +1794,7 @@ class SqliteUnitOfWork:
         self._executions._rollback()
         self._attempts._rollback()
         self._admission_locks._rollback()
+        self._materialization_leases._rollback()
         self._claims._rollback()
         self._outbox._rollback()
 

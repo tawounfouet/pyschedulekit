@@ -19,6 +19,7 @@ from pyschedulekit.domain.execution_request import (
     ExecutionRequestState,
     RequestId,
 )
+from pyschedulekit.domain.materialization_lease import ScheduleMaterializationLease
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.outbox import OutboxMessage, OutboxMessageId, OutboxState
 from pyschedulekit.domain.schedule import (
@@ -35,6 +36,7 @@ from pyschedulekit.ports.persistence import (
     DuplicateExecutionClaimError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
+    DuplicateMaterializationLeaseError,
     DuplicateOutboxMessageError,
     DuplicateScheduleError,
     ExecutionClaimRepository,
@@ -44,6 +46,7 @@ from pyschedulekit.ports.persistence import (
     OutboxRepository,
     ReferentialIntegrityError,
     ScheduleAdmissionLockRepository,
+    ScheduleMaterializationLeaseRepository,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
@@ -87,6 +90,22 @@ def _clone_admission_lock(lock: ScheduleAdmissionLock) -> ScheduleAdmissionLock:
         state=lock.state,
         released_at=lock.released_at,
         version=lock.version,
+    )
+
+
+def _clone_materialization_lease(
+    lease: ScheduleMaterializationLease,
+) -> ScheduleMaterializationLease:
+    return ScheduleMaterializationLease(
+        schedule_id=lease.schedule_id,
+        worker_id=lease.worker_id,
+        token=lease.token,
+        acquired_at=lease.acquired_at,
+        expires_at=lease.expires_at,
+        generation=lease.generation,
+        state=lease.state,
+        released_at=lease.released_at,
+        version=lease.version,
     )
 
 
@@ -163,6 +182,7 @@ class InMemoryStore:
         self._attempts: dict[AttemptId, Attempt] = {}
         self._attempt_by_number: dict[tuple[ExecutionId, int], AttemptId] = {}
         self._admission_locks: dict[ScheduleId, ScheduleAdmissionLock] = {}
+        self._materialization_leases: dict[ScheduleId, ScheduleMaterializationLease] = {}
         self._claims: dict[ExecutionId, ExecutionClaim] = {}
         self._outbox_messages: dict[OutboxMessageId, OutboxMessage] = {}
         self._lock = RLock()
@@ -921,6 +941,89 @@ class InMemoryScheduleAdmissionLockRepository:
         self._dirty.clear()
 
 
+class InMemoryScheduleMaterializationLeaseRepository:
+    """Schedule materialization lease repository with optimistic version checks."""
+
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+        self._tracked: dict[ScheduleId, ScheduleMaterializationLease] = {}
+        self._expected_versions: dict[ScheduleId, int] = {}
+        self._new: set[ScheduleId] = set()
+        self._dirty: set[ScheduleId] = set()
+
+    def add(self, lease: ScheduleMaterializationLease) -> None:
+        if lease.schedule_id in self._tracked:
+            raise DuplicateMaterializationLeaseError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} is already tracked."
+            )
+        self._tracked[lease.schedule_id] = lease
+        self._new.add(lease.schedule_id)
+
+    def get(self, schedule_id: ScheduleId) -> ScheduleMaterializationLease | None:
+        tracked = self._tracked.get(schedule_id)
+        if tracked is not None:
+            return tracked
+        with self._store._lock:
+            committed = self._store._materialization_leases.get(schedule_id)
+            if committed is None:
+                return None
+            loaded = _clone_materialization_lease(committed)
+            self._tracked[schedule_id] = loaded
+            self._expected_versions[schedule_id] = committed.version
+            return loaded
+
+    def save(self, lease: ScheduleMaterializationLease) -> None:
+        if self._tracked.get(lease.schedule_id) is not lease:
+            raise UntrackedEntityError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} "
+                "must be loaded before save()."
+            )
+        if lease.schedule_id in self._new:
+            return
+        if lease.schedule_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} has no tracked version."
+            )
+        self._dirty.add(lease.schedule_id)
+
+    def _validate_commit_locked(self) -> None:
+        for schedule_id in self._new:
+            if schedule_id in self._store._materialization_leases:
+                raise DuplicateMaterializationLeaseError(
+                    f"ScheduleMaterializationLease {schedule_id.value!r} already exists."
+                )
+            if schedule_id not in self._store._schedules:
+                raise ReferentialIntegrityError(
+                    "ScheduleMaterializationLease references a Schedule that does not exist."
+                )
+
+        for schedule_id in self._dirty:
+            committed = self._store._materialization_leases.get(schedule_id)
+            expected = self._expected_versions[schedule_id]
+            if committed is None or committed.version != expected:
+                raise OptimisticConcurrencyError(
+                    f"ScheduleMaterializationLease {schedule_id.value!r} changed concurrently."
+                )
+
+    def _apply_commit_locked(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._store._materialization_leases[schedule_id] = _clone_materialization_lease(
+                self._tracked[schedule_id]
+            )
+
+    def _after_commit(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class InMemoryExecutionClaimRepository:
     """Execution claim repository with optimistic version checks."""
 
@@ -1121,6 +1224,7 @@ class InMemoryUnitOfWork:
         self._executions = InMemoryExecutionRepository(store)
         self._attempts = InMemoryAttemptRepository(store)
         self._admission_locks = InMemoryScheduleAdmissionLockRepository(store)
+        self._materialization_leases = InMemoryScheduleMaterializationLeaseRepository(store)
         self._claims = InMemoryExecutionClaimRepository(store)
         self._outbox = InMemoryOutboxRepository(store)
 
@@ -1129,6 +1233,9 @@ class InMemoryUnitOfWork:
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
         self.admission_locks: ScheduleAdmissionLockRepository = self._admission_locks
+        self.materialization_leases: ScheduleMaterializationLeaseRepository = (
+            self._materialization_leases
+        )
         self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
 
@@ -1156,6 +1263,7 @@ class InMemoryUnitOfWork:
             self._executions,
             self._attempts,
             self._admission_locks,
+            self._materialization_leases,
             self._claims,
             self._outbox,
         )
@@ -1174,6 +1282,7 @@ class InMemoryUnitOfWork:
         self._executions._rollback()
         self._attempts._rollback()
         self._admission_locks._rollback()
+        self._materialization_leases._rollback()
         self._claims._rollback()
         self._outbox._rollback()
 

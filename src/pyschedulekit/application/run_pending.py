@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import AdmissionResult, ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
+from pyschedulekit.application.recovery import (
+    CrashRecoveryIncompleteError,
+    CrashRecoveryService,
+)
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.application.shutdown import (
     ShutdownCoordinator,
@@ -45,6 +49,7 @@ class RunPendingResult:
     admissions: tuple[AdmissionResult, ...]
     errors: tuple[RunPendingError, ...]
     claim_denied_execution_ids: tuple[ExecutionId, ...] = ()
+    materialization_denied_schedule_ids: tuple[ScheduleId, ...] = ()
 
     @property
     def succeeded(self) -> int:
@@ -94,6 +99,7 @@ class RunPendingService:
         concurrency_coordinator: ConcurrencyCoordinator,
         execution_runner: ExecutionRunner,
         claim_coordinator: ExecutionClaimCoordinator | None = None,
+        distributed_recovery_service: CrashRecoveryService | None = None,
         shutdown_coordinator: ShutdownCoordinator | None = None,
     ) -> None:
         self._clock = clock
@@ -102,6 +108,7 @@ class RunPendingService:
         self._concurrency_coordinator = concurrency_coordinator
         self._execution_runner = execution_runner
         self._claim_coordinator = claim_coordinator
+        self._distributed_recovery_service = distributed_recovery_service
         self._shutdown_coordinator = shutdown_coordinator
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
@@ -110,8 +117,8 @@ class RunPendingService:
         if limit < 1:
             raise ValueError("limit must be greater than or equal to 1.")
 
-        evaluation_now = self._clock.now()
         if self._shutdown_requested():
+            evaluation_now = self._clock.now()
             return RunPendingResult(
                 evaluation_now=evaluation_now,
                 materialized_request_ids=(),
@@ -123,6 +130,12 @@ class RunPendingService:
                 errors=(),
             )
 
+        if self._distributed_recovery_service is not None:
+            recovery = self._distributed_recovery_service.recover(limit=limit)
+            if not recovery.complete:
+                raise CrashRecoveryIncompleteError(recovery)
+
+        evaluation_now = self._clock.now()
         evaluation = self._scheduler_engine.evaluate(
             evaluation_now=evaluation_now,
             limit=limit,
@@ -214,6 +227,7 @@ class RunPendingService:
             admissions=tuple(admissions),
             errors=tuple(errors),
             claim_denied_execution_ids=tuple(claim_denied),
+            materialization_denied_schedule_ids=evaluation.coordination_denied_schedules,
         )
 
     def _release_unstarted_claim(

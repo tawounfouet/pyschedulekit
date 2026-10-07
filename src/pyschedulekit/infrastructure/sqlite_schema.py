@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 
-SCHEMA_VERSION = 6
+SCHEMA_VERSION = 7
 
 _TABLES_V2_SQL = """
 CREATE TABLE schedules (
@@ -226,6 +226,32 @@ CREATE INDEX ix_schedule_admission_locks_active
     ON schedule_admission_locks(state, expires_at, schedule_id);
 """
 
+_MATERIALIZATION_LEASES_V7_SQL = """
+CREATE TABLE schedule_materialization_leases (
+    schedule_id TEXT PRIMARY KEY,
+    worker_id TEXT NOT NULL CHECK(length(trim(worker_id)) > 0),
+    token TEXT NOT NULL UNIQUE CHECK(length(trim(token)) > 0),
+    acquired_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    generation INTEGER NOT NULL CHECK(generation >= 1),
+    state TEXT NOT NULL CHECK(state IN ('active', 'released')),
+    released_at TEXT,
+    version INTEGER NOT NULL CHECK(version >= 0),
+    FOREIGN KEY(schedule_id) REFERENCES schedules(id) ON DELETE CASCADE,
+    CHECK(expires_at > acquired_at),
+    CHECK(
+        (state = 'active' AND released_at IS NULL)
+        OR
+        (state = 'released' AND released_at IS NOT NULL)
+    )
+);
+"""
+
+_INDEXES_V7_SQL = """
+CREATE INDEX ix_schedule_materialization_leases_active
+    ON schedule_materialization_leases(state, expires_at, schedule_id);
+"""
+
 
 def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
     """Create or migrate the durable SQLite schema to the current version."""
@@ -233,7 +259,7 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
     connection.execute("PRAGMA foreign_keys = ON")
 
     if not _schema_metadata_exists(connection):
-        _create_v6_schema(connection)
+        _create_v7_schema(connection)
         return
 
     row = connection.execute("SELECT version FROM pyschedulekit_schema LIMIT 1").fetchone()
@@ -242,7 +268,7 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
 
     version = int(row[0])
     if version == SCHEMA_VERSION:
-        _verify_v6_schema(connection)
+        _verify_v7_schema(connection)
         return
     if version == 1:
         _migrate_v1_to_v2(connection)
@@ -258,6 +284,9 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
         version = 5
     if version == 5:
         _migrate_v5_to_v6(connection)
+        version = 6
+    if version == 6:
+        _migrate_v6_to_v7(connection)
         return
 
     raise RuntimeError(f"Unsupported PyScheduleKit SQLite schema version: {version!r}.")
@@ -276,7 +305,7 @@ def _schema_metadata_exists(connection: sqlite3.Connection) -> bool:
     )
 
 
-def _create_v6_schema(connection: sqlite3.Connection) -> None:
+def _create_v7_schema(connection: sqlite3.Connection) -> None:
     connection.execute("BEGIN IMMEDIATE")
     try:
         connection.execute(
@@ -291,6 +320,8 @@ def _create_v6_schema(connection: sqlite3.Connection) -> None:
         _execute_sql_batch(connection, _ADMISSION_LOCKS_V5_SQL)
         _execute_sql_batch(connection, _INDEXES_V5_SQL)
         _add_fencing_generation_columns(connection)
+        _execute_sql_batch(connection, _MATERIALIZATION_LEASES_V7_SQL)
+        _execute_sql_batch(connection, _INDEXES_V7_SQL)
         connection.execute(
             "INSERT INTO pyschedulekit_schema(version) VALUES (?)",
             (SCHEMA_VERSION,),
@@ -299,7 +330,7 @@ def _create_v6_schema(connection: sqlite3.Connection) -> None:
     except Exception:
         connection.rollback()
         raise
-    _verify_v6_schema(connection)
+    _verify_v7_schema(connection)
 
 
 def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
@@ -445,7 +476,7 @@ def _migrate_v5_to_v6(connection: sqlite3.Connection) -> None:
         _add_fencing_generation_columns(connection)
         connection.execute(
             "UPDATE pyschedulekit_schema SET version = ?",
-            (SCHEMA_VERSION,),
+            (6,),
         )
         connection.commit()
     except Exception:
@@ -453,6 +484,23 @@ def _migrate_v5_to_v6(connection: sqlite3.Connection) -> None:
         raise
 
     _verify_v6_schema(connection)
+
+
+def _migrate_v6_to_v7(connection: sqlite3.Connection) -> None:
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        _execute_sql_batch(connection, _MATERIALIZATION_LEASES_V7_SQL)
+        _execute_sql_batch(connection, _INDEXES_V7_SQL)
+        connection.execute(
+            "UPDATE pyschedulekit_schema SET version = ?",
+            (SCHEMA_VERSION,),
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+
+    _verify_v7_schema(connection)
 
 
 def _add_fencing_generation_columns(connection: sqlite3.Connection) -> None:
@@ -533,6 +581,21 @@ def _verify_v6_schema(connection: sqlite3.Connection) -> None:
     if "generation" not in admission_columns:
         raise RuntimeError(
             "PyScheduleKit schedule_admission_locks generation column is missing in v6."
+        )
+
+
+def _verify_v7_schema(connection: sqlite3.Connection) -> None:
+    _verify_v6_schema(connection)
+    row = connection.execute(
+        """
+        SELECT 1
+        FROM sqlite_master
+        WHERE type = 'table' AND name = 'schedule_materialization_leases'
+        """
+    ).fetchone()
+    if row is None:
+        raise RuntimeError(
+            "PyScheduleKit schedule_materialization_leases table is missing from schema v7."
         )
 
 

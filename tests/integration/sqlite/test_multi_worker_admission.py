@@ -184,6 +184,8 @@ def test_t_admission_sql_004_v4_database_migrates_through_current_schema(tmp_pat
 
     connection = sqlite3.connect(database)
     try:
+        connection.execute("DROP INDEX ix_schedule_materialization_leases_active")
+        connection.execute("DROP TABLE schedule_materialization_leases")
         connection.execute("DROP INDEX ix_schedule_admission_locks_active")
         connection.execute("DROP TABLE schedule_admission_locks")
         connection.execute("ALTER TABLE execution_claims DROP COLUMN generation")
@@ -204,7 +206,7 @@ def test_t_admission_sql_004_v4_database_migrates_through_current_schema(tmp_pat
             """
         ).fetchone()
         assert version is not None
-        assert int(version[0]) == 6
+        assert int(version[0]) == 7
         assert table is not None
     finally:
         connection.close()

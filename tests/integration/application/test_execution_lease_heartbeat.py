@@ -1,6 +1,5 @@
 """LOT-28 integration test for the execution lease heartbeat."""
 
-from datetime import UTC, datetime
 from time import monotonic, sleep
 
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
@@ -11,7 +10,7 @@ from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRef
-from pyschedulekit.domain.time import Duration, Instant
+from pyschedulekit.domain.time import Duration
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.time import SystemClock

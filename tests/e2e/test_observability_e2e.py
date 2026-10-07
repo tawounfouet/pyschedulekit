@@ -44,7 +44,7 @@ def test_t_observability_e2e_001_successful_cycle_emits_structured_observations(
     cycles = sink.by_name("scheduler.cycle.completed")
 
     assert len(attempts) == 1
-    assert attempts[0].attribute("state") == "SUCCESS"
+    assert attempts[0].attribute("state") == "success"
     assert attempts[0].attribute("succeeded") is True
     assert attempts[0].attribute("retry_scheduled") is False
 

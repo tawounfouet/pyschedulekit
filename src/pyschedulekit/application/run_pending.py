@@ -45,7 +45,11 @@ class RunPendingResult:
 
     @property
     def failed(self) -> int:
-        return len(self.executions) - self.succeeded
+        return sum(result.execution.is_terminal and not result.outcome.succeeded for result in self.executions)
+
+    @property
+    def retry_scheduled(self) -> int:
+        return sum(not result.execution.is_terminal for result in self.executions)
 
     @property
     def queued_request_ids(self) -> tuple[RequestId, ...]:
@@ -114,7 +118,7 @@ class RunPendingService:
                 )
 
         executions: list[ExecutionRunResult] = []
-        for execution in self._list_queued_executions(limit=limit):
+        for execution in self._list_runnable_executions(now=evaluation_now, limit=limit):
             try:
                 executions.append(self._execution_runner.run(execution_id=execution.id))
             except TargetResolutionError:
@@ -157,6 +161,11 @@ class RunPendingService:
         with self._uow_factory() as uow:
             return uow.requests.list_admission_candidates(limit=limit)
 
-    def _list_queued_executions(self, *, limit: int) -> list[Execution]:
+    def _list_runnable_executions(
+        self,
+        *,
+        now: Instant,
+        limit: int,
+    ) -> list[Execution]:
         with self._uow_factory() as uow:
-            return uow.executions.list_queued(limit=limit)
+            return uow.executions.list_runnable(now=now, limit=limit)

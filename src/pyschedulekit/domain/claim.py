@@ -43,6 +43,7 @@ class ExecutionClaim:
         "_claimed_at",
         "_execution_id",
         "_expires_at",
+        "_generation",
         "_released_at",
         "_state",
         "_token",
@@ -58,12 +59,15 @@ class ExecutionClaim:
         token: ClaimToken,
         claimed_at: Instant,
         expires_at: Instant,
+        generation: int = 1,
         state: ExecutionClaimState = ExecutionClaimState.ACTIVE,
         released_at: Instant | None = None,
         version: int = 0,
     ) -> None:
         if expires_at <= claimed_at:
             raise ValueError("Claim expires_at must be after claimed_at.")
+        if generation < 1:
+            raise ValueError("Claim generation must be greater than or equal to 1.")
         if version < 0:
             raise ValueError("Claim version must be non-negative.")
         if state is ExecutionClaimState.ACTIVE and released_at is not None:
@@ -76,6 +80,7 @@ class ExecutionClaim:
         self._token = token
         self._claimed_at = claimed_at
         self._expires_at = expires_at
+        self._generation = generation
         self._state = state
         self._released_at = released_at
         self._version = version
@@ -99,6 +104,10 @@ class ExecutionClaim:
     @property
     def expires_at(self) -> Instant:
         return self._expires_at
+
+    @property
+    def generation(self) -> int:
+        return self._generation
 
     @property
     def state(self) -> ExecutionClaimState:
@@ -132,8 +141,31 @@ class ExecutionClaim:
         self._token = token
         self._claimed_at = claimed_at
         self._expires_at = expires_at
+        self._generation += 1
         self._state = ExecutionClaimState.ACTIVE
         self._released_at = None
+        self._version += 1
+
+    def renew(
+        self,
+        *,
+        worker_id: WorkerId,
+        token: ClaimToken,
+        generation: int,
+        renewed_at: Instant,
+        expires_at: Instant,
+    ) -> None:
+        self._assert_owner(
+            worker_id=worker_id,
+            token=token,
+            generation=generation,
+        )
+        if not self.is_active(now=renewed_at):
+            raise ClaimOwnershipError("Execution lease is expired or inactive.")
+        if expires_at <= renewed_at:
+            raise ValueError("Renewed lease expiry must be after renewed_at.")
+
+        self._expires_at = expires_at
         self._version += 1
 
     def release(
@@ -141,10 +173,14 @@ class ExecutionClaim:
         *,
         worker_id: WorkerId,
         token: ClaimToken,
+        generation: int,
         released_at: Instant,
     ) -> bool:
-        if self._worker_id != worker_id or self._token != token:
-            raise ClaimOwnershipError("Execution claim ownership token does not match.")
+        self._assert_owner(
+            worker_id=worker_id,
+            token=token,
+            generation=generation,
+        )
         if self._state is ExecutionClaimState.RELEASED:
             return False
         if released_at < self._claimed_at:
@@ -155,10 +191,41 @@ class ExecutionClaim:
         self._version += 1
         return True
 
+    def assert_owner(
+        self,
+        *,
+        worker_id: WorkerId,
+        token: ClaimToken,
+        generation: int,
+        now: Instant,
+    ) -> None:
+        self._assert_owner(
+            worker_id=worker_id,
+            token=token,
+            generation=generation,
+        )
+        if not self.is_active(now=now):
+            raise ClaimOwnershipError("Execution lease is expired or inactive.")
+
+    def _assert_owner(
+        self,
+        *,
+        worker_id: WorkerId,
+        token: ClaimToken,
+        generation: int,
+    ) -> None:
+        if (
+            self._worker_id != worker_id
+            or self._token != token
+            or self._generation != generation
+        ):
+            raise ClaimOwnershipError("Execution lease fencing identity does not match.")
+
 
 @dataclass(frozen=True, slots=True)
 class ExecutionClaimHandle:
     execution_id: ExecutionId
     worker_id: WorkerId
     token: ClaimToken
+    generation: int
     expires_at: Instant

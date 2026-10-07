@@ -95,6 +95,7 @@ def _clone_outbox_message(message: OutboxMessage) -> OutboxMessage:
         aggregate_id=message.aggregate_id,
         payload=message.payload,
         created_at=message.created_at,
+        sequence=message.sequence,
         state=message.state,
         published_at=message.published_at,
         publish_attempts=message.publish_attempts,
@@ -866,7 +867,15 @@ class InMemoryOutboxRepository:
             if message is not None:
                 result.append(message)
 
-        result.sort(key=lambda item: (item.created_at.value, item.id.value))
+        result.sort(
+            key=lambda item: (
+                item.created_at.value,
+                item.aggregate_type,
+                item.aggregate_id,
+                item.sequence,
+                item.id.value,
+            )
+        )
         return result[:limit]
 
     def _validate_commit_locked(self) -> None:

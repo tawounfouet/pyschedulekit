@@ -183,6 +183,8 @@ class ExecutionClaim:
         )
         if self._state is ExecutionClaimState.RELEASED:
             return False
+        if not self.is_active(now=released_at):
+            raise ClaimOwnershipError("Execution lease is expired or inactive.")
         if released_at < self._claimed_at:
             raise ValueError("Claim release cannot precede acquisition.")
 

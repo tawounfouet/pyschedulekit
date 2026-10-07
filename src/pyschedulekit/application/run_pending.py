@@ -45,7 +45,10 @@ class RunPendingResult:
 
     @property
     def failed(self) -> int:
-        return sum(result.execution.is_terminal and not result.outcome.succeeded for result in self.executions)
+        return sum(
+            result.execution.is_terminal and not result.outcome.succeeded
+            for result in self.executions
+        )
 
     @property
     def retry_scheduled(self) -> int:

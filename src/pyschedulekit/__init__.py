@@ -6,6 +6,7 @@ from pyschedulekit.application.run_pending import (
     RunPendingError,
     RunPendingResult,
 )
+from pyschedulekit.application.runtime import RuntimeAlreadyRunningError
 from pyschedulekit.domain.concurrency import (
     ConcurrencyDecisionAction,
     ConcurrencyMode,
@@ -69,6 +70,7 @@ __all__ = [
     "RetryPolicy",
     "RunPendingError",
     "RunPendingResult",
+    "RuntimeAlreadyRunningError",
     "ScheduleId",
     "Scheduler",
     "TargetRef",

@@ -32,9 +32,7 @@ def test_t_wakeup_001_no_known_event_uses_max_sleep() -> None:
     clock = MutableClock(_instant())
     factory = InMemoryUnitOfWorkFactory()
 
-    delay = _planner(clock=clock, factory=factory).next_delay(
-        max_sleep=Duration.seconds(30)
-    )
+    delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.seconds(30))
 
     assert delay == Duration.seconds(30)
 
@@ -52,9 +50,7 @@ def test_t_wakeup_002_next_schedule_shortens_sleep() -> None:
         ),
     )
 
-    delay = _planner(clock=clock, factory=factory).next_delay(
-        max_sleep=Duration.hours(1)
-    )
+    delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.hours(1))
 
     assert delay == Duration.minutes(10)
 
@@ -173,8 +169,6 @@ def test_t_wakeup_007_max_sleep_caps_far_future_event() -> None:
         ),
     )
 
-    delay = _planner(clock=clock, factory=factory).next_delay(
-        max_sleep=Duration.seconds(20)
-    )
+    delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.seconds(20))
 
     assert delay == Duration.seconds(20)

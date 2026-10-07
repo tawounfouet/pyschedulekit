@@ -17,6 +17,14 @@ from pyschedulekit.domain.misfire import (
     MisfirePolicy,
     MisfirePolicyAction,
 )
+from pyschedulekit.domain.retry import (
+    ExponentialBackoff,
+    FixedBackoff,
+    NoBackoff,
+    RetryDecision,
+    RetryDecisionReason,
+    RetryPolicy,
+)
 from pyschedulekit.domain.schedule import ScheduleId, TargetRef
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
 from pyschedulekit.domain.triggers import (
@@ -42,9 +50,15 @@ __all__ = [
     "GracePeriod",
     "Instant",
     "IntervalTrigger",
+    "ExponentialBackoff",
+    "FixedBackoff",
+    "NoBackoff",
     "LatenessStatus",
     "MisfirePolicy",
     "MisfirePolicyAction",
+    "RetryDecision",
+    "RetryDecisionReason",
+    "RetryPolicy",
     "RunPendingError",
     "RunPendingResult",
     "ScheduleId",

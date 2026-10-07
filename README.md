@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Implementation — LOT-04: CronTrigger**
+**LOT-04 complete — next: LOT-12 Misfire Policy Foundations**
 
 Completed:
 
@@ -14,7 +14,7 @@ Completed:
 - LOT-01 — Time Model
 - LOT-02 — Trigger Foundations
 - LOT-03 — DateTrigger & IntervalTrigger
-- LOT-04 — CronTrigger (branch qualification in progress)
+- LOT-04 — CronTrigger
 - LOT-05 — Schedule Aggregate
 - LOT-06 — Occurrence Planning
 - LOT-07 — In-Memory Persistence

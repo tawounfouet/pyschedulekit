@@ -8,6 +8,7 @@ from pyschedulekit.domain.execution import (
     Execution,
     ExecutionId,
     ExecutionPolicySnapshot,
+    ExecutionState,
     Failure,
 )
 from pyschedulekit.domain.execution_request import (
@@ -181,13 +182,38 @@ class ExecutionService:
             uow.commit()
             return execution
 
+    def request_cancellation(
+        self,
+        *,
+        execution_id: ExecutionId,
+        requested_at: Instant,
+    ) -> Execution:
+        """Cancel idle work immediately or mark a running Execution for cancellation."""
+
+        with self._uow_factory() as uow:
+            execution = uow.executions.get(execution_id)
+            if execution is None:
+                raise ExecutionNotFoundError(execution_id.value)
+
+            if execution.is_terminal:
+                return execution
+
+            if execution.state in (ExecutionState.QUEUED, ExecutionState.RETRY_WAIT):
+                execution.cancel(completed_at=requested_at)
+            else:
+                execution.request_cancellation(requested_at=requested_at)
+
+            uow.executions.save(execution)
+            uow.commit()
+            return execution
+
     def cancel_execution(
         self,
         *,
         execution_id: ExecutionId,
         completed_at: Instant,
     ) -> Execution:
-        """Cancel a queued or retry-waiting Execution."""
+        """Backward-compatible immediate cancellation for idle Executions."""
 
         with self._uow_factory() as uow:
             execution = uow.executions.get(execution_id)

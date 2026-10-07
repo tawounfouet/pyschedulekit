@@ -12,6 +12,7 @@ from pyschedulekit.domain.concurrency import (
     ConcurrencyOverflowPolicy,
     ConcurrencyPolicy,
 )
+from pyschedulekit.domain.execution import ExecutionId
 from pyschedulekit.domain.misfire import (
     LatenessStatus,
     MisfirePolicy,
@@ -35,8 +36,13 @@ from pyschedulekit.domain.triggers import (
     DateTrigger,
     IntervalTrigger,
 )
+from pyschedulekit.ports.cancellation import (
+    CancellationToken,
+    ExecutionCancelledError,
+)
 
 __all__ = [
+    "CancellationToken",
     "ConcurrencyDecisionAction",
     "ConcurrencyMode",
     "ConcurrencyOverflowPolicy",
@@ -47,6 +53,8 @@ __all__ = [
     "CronTrigger",
     "DateTrigger",
     "Duration",
+    "ExecutionCancelledError",
+    "ExecutionId",
     "ExponentialBackoff",
     "FixedBackoff",
     "GracePeriod",

@@ -79,6 +79,7 @@ def _clone_execution(execution: Execution) -> Execution:
         attempt_count=execution.attempt_count,
         active_attempt_number=execution.active_attempt_number,
         next_attempt_at=execution.next_attempt_at,
+        cancellation_requested_at=execution.cancellation_requested_at,
         result=execution.result,
     )
 

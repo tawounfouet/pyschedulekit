@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-16 complete — next: LOT-17 Cancellation Refinements**
+**LOT-17 complete — next: LOT-18 Continuous Scheduler Loop**
 
 Completed:
 
@@ -27,6 +27,7 @@ Completed:
 - LOT-14 — Concurrency Policy Foundations
 - LOT-15 — Retry Policy Foundations
 - LOT-16 — Execution Timeout
+- LOT-17 — Cancellation Refinements
 
 The implementation follows a domain-first roadmap:
 
@@ -359,6 +360,25 @@ scheduler.add_schedule(
 ```
 
 The local runtime regains control when the deadline expires. Because Python cannot safely kill an arbitrary thread, an expired callable may still finish in its daemon worker; LOT-17 will refine cancellation/cooperative termination semantics.
+
+## Cancellation refinements
+
+LOT-17 adds explicit execution cancellation:
+
+```python
+scheduler.cancel_execution(execution_id)
+```
+
+Token-aware local workloads can cooperate:
+
+```python
+def job(cancellation_token: CancellationToken) -> None:
+    while work_remains():
+        cancellation_token.raise_if_cancelled()
+        do_one_unit()
+```
+
+QUEUED and RETRY_WAIT work cancels immediately. RUNNING work records durable cancellation intent and receives a process-local signal. CANCELLED is terminal and never retried.
 
 ## Package shape
 

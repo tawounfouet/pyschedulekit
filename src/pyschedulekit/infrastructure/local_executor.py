@@ -10,6 +10,7 @@ from threading import Event, Thread
 from pyschedulekit.domain.execution import Failure, FailureCategory
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Duration
+from pyschedulekit.ports.cancellation import CancellationToken, ExecutionCancelledError
 from pyschedulekit.ports.executor import (
     ExecutorOutcome,
     PreparedTarget,
@@ -28,12 +29,13 @@ class InvalidCallableTargetError(TargetResolutionError):
 
 
 class PythonTargetRegistry:
-    """Explicit registry of trusted zero-argument Python callables."""
+    """Explicit registry of trusted Python callables."""
 
     def __init__(self) -> None:
-        self._targets: dict[str, Callable[[], object]] = {}
+        self._targets: dict[str, Callable[..., object]] = {}
+        self._cancellable_targets: set[str] = set()
 
-    def register(self, reference: str, target: Callable[[], object]) -> None:
+    def register(self, reference: str, target: Callable[..., object]) -> None:
         if not reference.strip():
             raise InvalidCallableTargetError("Target reference must not be empty.")
         if reference in self._targets:
@@ -62,16 +64,28 @@ class PythonTargetRegistry:
                 inspect.Parameter.VAR_KEYWORD,
             )
         ]
-        if required:
-            raise InvalidCallableTargetError("Local executor callables must not require arguments.")
+
+        accepts_cancellation_token = False
+        if len(required) == 1 and required[0].name == "cancellation_token":
+            accepts_cancellation_token = True
+        elif required:
+            raise InvalidCallableTargetError(
+                "Local executor callables must not require arguments, except for "
+                "one explicit 'cancellation_token' argument."
+            )
 
         self._targets[reference] = target
+        if accepts_cancellation_token:
+            self._cancellable_targets.add(reference)
 
-    def resolve(self, reference: str) -> Callable[[], object]:
+    def resolve(self, reference: str) -> Callable[..., object]:
         try:
             return self._targets[reference]
         except KeyError as exc:
             raise TargetResolutionError(f"Python target {reference!r} is not registered.") from exc
+
+    def accepts_cancellation_token(self, reference: str) -> bool:
+        return reference in self._cancellable_targets
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,7 +93,8 @@ class PreparedPythonTarget:
     """Resolved local Python callable ready for invocation."""
 
     target: TargetRef
-    callable: Callable[[], object]
+    callable: Callable[..., object]
+    accepts_cancellation_token: bool
 
 
 class LocalExecutor:
@@ -99,6 +114,7 @@ class LocalExecutor:
         return PreparedPythonTarget(
             target=target,
             callable=callable_target,
+            accepts_cancellation_token=self._registry.accepts_cancellation_token(target.reference),
         )
 
     def execute(
@@ -106,14 +122,24 @@ class LocalExecutor:
         prepared: PreparedTarget,
         *,
         timeout: Duration | None = None,
+        cancellation_token: CancellationToken | None = None,
     ) -> ExecutorOutcome:
         if not isinstance(prepared, PreparedPythonTarget):
             raise TargetResolutionError(
                 "LocalExecutor can only execute PreparedPythonTarget values."
             )
 
+        if cancellation_token is not None and cancellation_token.is_cancelled:
+            return self._cancelled_outcome()
+
         if timeout is None:
-            return self._invoke(prepared)
+            outcome = self._invoke(
+                prepared,
+                cancellation_token=cancellation_token,
+            )
+            if cancellation_token is not None and cancellation_token.is_cancelled:
+                return self._cancelled_outcome()
+            return outcome
 
         if timeout.total_seconds <= 0:
             raise ValueError("Executor timeout must be greater than zero.")
@@ -125,7 +151,12 @@ class LocalExecutor:
 
         def invoke() -> None:
             try:
-                outcomes.append(self._invoke(prepared))
+                outcomes.append(
+                    self._invoke(
+                        prepared,
+                        cancellation_token=cancellation_token,
+                    )
+                )
             except BaseException as exc:
                 crashes.append(exc)
             finally:
@@ -145,14 +176,30 @@ class LocalExecutor:
             raise crashes[0]
 
         outcome = outcomes[0]
+        if cancellation_token is not None and cancellation_token.is_cancelled:
+            return self._cancelled_outcome()
         elapsed = self._clock.now().elapsed_since(started_at)
         if elapsed >= timeout:
             return self._timeout_outcome()
         return outcome
 
-    def _invoke(self, prepared: PreparedPythonTarget) -> ExecutorOutcome:
+    def _invoke(
+        self,
+        prepared: PreparedPythonTarget,
+        *,
+        cancellation_token: CancellationToken | None,
+    ) -> ExecutorOutcome:
         try:
-            value = prepared.callable()
+            if prepared.accepts_cancellation_token:
+                if cancellation_token is None:
+                    raise RuntimeError("Cancellable target requires a cancellation token.")
+                value = prepared.callable(
+                    cancellation_token=cancellation_token,
+                )
+            else:
+                value = prepared.callable()
+        except ExecutionCancelledError:
+            return self._cancelled_outcome()
         except Exception as exc:
             return ExecutorOutcome(
                 failure=Failure(
@@ -179,6 +226,18 @@ class LocalExecutor:
             )
 
         return ExecutorOutcome()
+
+    def _cancelled_outcome(self) -> ExecutorOutcome:
+        occurred_at = self._clock.now()
+        return ExecutorOutcome(
+            failure=Failure(
+                category=FailureCategory.CANCELLED,
+                code="execution.cancelled",
+                message="Execution attempt was cancelled.",
+                occurred_at=occurred_at,
+                retryable_hint=False,
+            )
+        )
 
     def _timeout_outcome(self) -> ExecutorOutcome:
         occurred_at = self._clock.now()

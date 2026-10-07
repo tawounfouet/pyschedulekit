@@ -8,7 +8,7 @@ from pyschedulekit import (
     RetryPolicy,
     Scheduler,
 )
-from pyschedulekit.domain.execution import AttemptState, ExecutionState
+from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.testing import MutableClock
 
 

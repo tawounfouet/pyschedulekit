@@ -9,6 +9,7 @@ from pyschedulekit.domain.admission_lock import ScheduleAdmissionLock
 from pyschedulekit.domain.claim import ExecutionClaim
 from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
+from pyschedulekit.domain.materialization_lease import ScheduleMaterializationLease
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.outbox import OutboxMessage, OutboxMessageId
 from pyschedulekit.domain.schedule import Schedule, ScheduleId
@@ -143,6 +144,16 @@ class ScheduleAdmissionLockRepository(Protocol):
     def save(self, lock: ScheduleAdmissionLock) -> None: ...
 
 
+class ScheduleMaterializationLeaseRepository(Protocol):
+    """Transactional repository for Schedule materialization ownership."""
+
+    def add(self, lease: ScheduleMaterializationLease) -> None: ...
+
+    def get(self, schedule_id: ScheduleId) -> ScheduleMaterializationLease | None: ...
+
+    def save(self, lease: ScheduleMaterializationLease) -> None: ...
+
+
 class ExecutionClaimRepository(Protocol):
     """Transactional repository for durable Execution ownership claims."""
 
@@ -173,6 +184,7 @@ class UnitOfWork(Protocol):
     executions: ExecutionRepository
     attempts: AttemptRepository
     admission_locks: ScheduleAdmissionLockRepository
+    materialization_leases: ScheduleMaterializationLeaseRepository
     claims: ExecutionClaimRepository
     outbox: OutboxRepository
 

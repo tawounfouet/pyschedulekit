@@ -400,4 +400,4 @@ LOT-24 does not implement:
 
 ## Next
 
-`LOT-25 — Outbox`
+`LOT-25 — Transactional Outbox` (implemented: atomic integration intent, at-least-once dispatcher, and schema v3)

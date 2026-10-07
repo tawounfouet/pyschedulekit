@@ -8,6 +8,16 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Declarative `RetryPolicy` with total-attempt semantics and neutral max_attempts=1 default.
+- Built-in `NoBackoff`, `FixedBackoff`, and capped `ExponentialBackoff` strategies.
+- Pure `RetryEvaluator` and explicit retry decision reasons.
+- Durable retry policy snapshots across ScheduleDefinition, ExecutionRequest, and Execution.
+- Deadline-based `RETRY_WAIT` resumption without blocking sleep.
+- Runnable execution queries covering queued work and due retries.
+- `RunPendingResult.retry_scheduled` with terminal-only failed counting.
+- Public `Scheduler.add_schedule(retry=...)` support.
+- LOT-15 unit, integration, and end-to-end retry qualification.
+
 - Immutable `ConcurrencyPolicy` with ALLOW/LIMIT modes and QUEUE/DROP overflow behavior.
 - Pure `ConcurrencyEvaluator` producing ADMIT, QUEUE, or DROP decisions.
 - Durable concurrency policy snapshots on `ExecutionRequest`.

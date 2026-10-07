@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from hashlib import sha256
 
@@ -11,6 +11,7 @@ from pyschedulekit.domain.execution_request import (
     ExecutionRequestState,
     RequestId,
 )
+from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Duration, Instant
 
@@ -74,6 +75,7 @@ class ExecutionPolicySnapshot:
     """Execution policy values frozen when an Execution is created."""
 
     timeout: Duration | None = None
+    retry: RetryPolicy = field(default_factory=RetryPolicy.none)
 
 
 class FailureCategory(StrEnum):
@@ -387,7 +389,9 @@ class Execution:
             request_id=request.id,
             target=request.target,
             created_at=created_at,
-            policy_snapshot=policy_snapshot or ExecutionPolicySnapshot(),
+            policy_snapshot=policy_snapshot or ExecutionPolicySnapshot(
+                retry=request.retry_policy,
+            ),
             idempotency_key=IdempotencyKey.for_request(request.id),
         )
 

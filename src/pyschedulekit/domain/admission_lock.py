@@ -156,6 +156,10 @@ class ScheduleAdmissionLock:
             )
         if self._state is ScheduleAdmissionLockState.RELEASED:
             return False
+        if not self.is_active(now=released_at):
+            raise AdmissionLockOwnershipError(
+                "Admission lock is expired or inactive."
+            )
         if released_at < self._acquired_at:
             raise ValueError("Admission lock release cannot precede acquisition.")
 

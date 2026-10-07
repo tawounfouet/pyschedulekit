@@ -244,7 +244,9 @@ LOT-27 qualifies:
 - exact-expiry takeover;
 - SQLite repository persistence;
 - two concurrent workers against max_instances=1;
-- exactly one ADMIT plus one QUEUE;
+- exactly one admitted Execution during the race;
+- lock contention leaves the losing request unmutated;
+- a later retry evaluates the policy and enters WAITING_ADMISSION;
 - exactly one non-terminal Execution;
 - active lock denial without request mutation;
 - expired lock recovery;

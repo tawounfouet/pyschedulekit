@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Persisted crash recovery for orphaned RUNNING Executions and Attempts.
+- Automatic recovery barrier before the first Scheduler cycle.
+- Explicit CrashRecoveryResult, CrashRecoveryError, and CrashRecoveryIncompleteError APIs.
+- RetryPolicy-driven post-crash RETRY_WAIT scheduling with preserved backoff.
+- Cancellation-precedence recovery for previously requested cancellations.
+- Fail-closed scheduling when persisted RUNNING state cannot be reconciled.
+- LOT-23 SQLite restart and successful second-Attempt end-to-end qualification.
+
 - SQLite schema v2 with foreign keys, natural unique constraints, and lifecycle CHECK constraints.
 - Automatic transactional migration from LOT-21 schema v1 to schema v2.
 - SQL compare-and-swap updates for Schedule, ExecutionRequest, Execution, and Attempt versions.

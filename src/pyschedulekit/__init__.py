@@ -2,6 +2,12 @@
 
 from pyschedulekit._version import __version__
 from pyschedulekit.api import Scheduler
+from pyschedulekit.application.recovery import (
+    CrashRecoveryActiveRuntimeError,
+    CrashRecoveryError,
+    CrashRecoveryIncompleteError,
+    CrashRecoveryResult,
+)
 from pyschedulekit.application.run_pending import (
     RunPendingError,
     RunPendingResult,
@@ -50,6 +56,10 @@ __all__ = [
     "ConcurrencyMode",
     "ConcurrencyOverflowPolicy",
     "ConcurrencyPolicy",
+    "CrashRecoveryActiveRuntimeError",
+    "CrashRecoveryError",
+    "CrashRecoveryIncompleteError",
+    "CrashRecoveryResult",
     "CronAmbiguousTimePolicy",
     "CronDialect",
     "CronNonexistentTimePolicy",

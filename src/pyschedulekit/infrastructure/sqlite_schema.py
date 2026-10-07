@@ -179,8 +179,8 @@ def _create_v2_schema(connection: sqlite3.Connection) -> None:
         connection.execute(
             "CREATE TABLE pyschedulekit_schema (version INTEGER NOT NULL CHECK(version >= 1))"
         )
-        connection.executescript(_TABLES_V2_SQL)
-        connection.executescript(_INDEXES_V2_SQL)
+        _execute_sql_batch(connection, _TABLES_V2_SQL)
+        _execute_sql_batch(connection, _INDEXES_V2_SQL)
         connection.execute(
             "INSERT INTO pyschedulekit_schema(version) VALUES (?)",
             (SCHEMA_VERSION,),
@@ -212,7 +212,7 @@ def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
         connection.execute("ALTER TABLE execution_requests RENAME TO execution_requests_v1")
         connection.execute("ALTER TABLE schedules RENAME TO schedules_v1")
 
-        connection.executescript(_TABLES_V2_SQL)
+        _execute_sql_batch(connection, _TABLES_V2_SQL)
 
         connection.execute(
             """
@@ -256,7 +256,14 @@ def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
         connection.execute("DROP TABLE execution_requests_v1")
         connection.execute("DROP TABLE schedules_v1")
 
-        connection.executescript(_INDEXES_V2_SQL)
+        _execute_sql_batch(connection, _INDEXES_V2_SQL)
+
+        violations = connection.execute("PRAGMA foreign_key_check").fetchall()
+        if violations:
+            raise RuntimeError(
+                f"PyScheduleKit SQLite migration produced foreign-key violations: {violations!r}."
+            )
+
         connection.execute(
             "UPDATE pyschedulekit_schema SET version = ?",
             (SCHEMA_VERSION,),
@@ -278,3 +285,12 @@ def _verify_v2_schema(connection: sqlite3.Connection) -> None:
         raise RuntimeError(
             f"PyScheduleKit SQLite foreign-key validation failed: {violations!r}."
         )
+
+
+def _execute_sql_batch(connection: sqlite3.Connection, sql: str) -> None:
+    """Execute a static semicolon-delimited SQL batch without implicit commits."""
+
+    for statement in sql.split(";"):
+        normalized = statement.strip()
+        if normalized:
+            connection.execute(normalized)

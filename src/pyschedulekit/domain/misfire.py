@@ -12,6 +12,10 @@ class OccurrenceNotDueError(ValueError):
     """Raised when lateness is evaluated before an occurrence is due."""
 
 
+class InvalidRecoveryLimitError(ValueError):
+    """Raised when bounded recovery configuration is invalid."""
+
+
 class LatenessStatus(StrEnum):
     """Temporal classification of one due occurrence."""
 
@@ -44,33 +48,64 @@ class MisfirePolicy:
 
     action: MisfirePolicyAction = MisfirePolicyAction.RUN_NOW
     grace: GracePeriod = field(default_factory=GracePeriod.zero)
+    max_occurrences: int = 100
+
+    def __post_init__(self) -> None:
+        if self.max_occurrences < 1:
+            raise InvalidRecoveryLimitError(
+                "MisfirePolicy.max_occurrences must be greater than or equal to 1."
+            )
 
     @classmethod
-    def skip(cls, *, grace: GracePeriod | None = None) -> MisfirePolicy:
+    def skip(
+        cls,
+        *,
+        grace: GracePeriod | None = None,
+        max_occurrences: int = 100,
+    ) -> MisfirePolicy:
         return cls(
             action=MisfirePolicyAction.SKIP,
             grace=grace or GracePeriod.zero(),
+            max_occurrences=max_occurrences,
         )
 
     @classmethod
-    def run_now(cls, *, grace: GracePeriod | None = None) -> MisfirePolicy:
+    def run_now(
+        cls,
+        *,
+        grace: GracePeriod | None = None,
+        max_occurrences: int = 100,
+    ) -> MisfirePolicy:
         return cls(
             action=MisfirePolicyAction.RUN_NOW,
             grace=grace or GracePeriod.zero(),
+            max_occurrences=max_occurrences,
         )
 
     @classmethod
-    def catch_up(cls, *, grace: GracePeriod | None = None) -> MisfirePolicy:
+    def catch_up(
+        cls,
+        *,
+        grace: GracePeriod | None = None,
+        max_occurrences: int = 100,
+    ) -> MisfirePolicy:
         return cls(
             action=MisfirePolicyAction.CATCH_UP,
             grace=grace or GracePeriod.zero(),
+            max_occurrences=max_occurrences,
         )
 
     @classmethod
-    def coalesce(cls, *, grace: GracePeriod | None = None) -> MisfirePolicy:
+    def coalesce(
+        cls,
+        *,
+        grace: GracePeriod | None = None,
+        max_occurrences: int = 100,
+    ) -> MisfirePolicy:
         return cls(
             action=MisfirePolicyAction.COALESCE,
             grace=grace or GracePeriod.zero(),
+            max_occurrences=max_occurrences,
         )
 
 

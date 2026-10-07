@@ -982,8 +982,7 @@ class InMemoryScheduleMaterializationLeaseRepository:
             return
         if lease.schedule_id not in self._expected_versions:
             raise UntrackedEntityError(
-                f"ScheduleMaterializationLease {lease.schedule_id.value!r} "
-                "has no tracked version."
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} has no tracked version."
             )
         self._dirty.add(lease.schedule_id)
 

@@ -610,7 +610,10 @@ class Execution:
         if self._state is not ExecutionState.RUNNING and self._active_attempt_number is not None:
             raise ValueError("Only RUNNING Execution may have an active Attempt number.")
 
-        if self._cancellation_requested_at is not None and self._created_at > self._cancellation_requested_at:
+        if (
+            self._cancellation_requested_at is not None
+            and self._created_at > self._cancellation_requested_at
+        ):
             raise ValueError("Cancellation request cannot precede Execution creation.")
 
         if self._state is ExecutionState.RETRY_WAIT and self._next_attempt_at is None:

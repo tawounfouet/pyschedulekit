@@ -16,7 +16,7 @@ ADMIT / QUEUE / DROP
 
 but serialized count-and-admit only with a process-local `RLock`.
 
-LOT-27 makes that decision globally serialized per Schedule.
+LOT-27 makes that decision globally serialized per Schedule. LOT-28 further fences the decision by committing lock release and ADMIT/QUEUE/DROP atomically under a monotonic generation.
 
 ## Race closed
 

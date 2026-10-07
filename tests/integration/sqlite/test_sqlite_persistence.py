@@ -144,6 +144,7 @@ def test_t_sql_006_execution_graph_round_trip(tmp_path) -> None:
     )
 
     with factory() as uow:
+        uow.schedules.add(schedule)
         uow.requests.add(request)
         uow.commit()
 

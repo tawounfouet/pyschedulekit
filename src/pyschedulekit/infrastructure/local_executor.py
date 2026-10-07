@@ -84,6 +84,9 @@ class PythonTargetRegistry:
         except KeyError as exc:
             raise TargetResolutionError(f"Python target {reference!r} is not registered.") from exc
 
+    def accepts_cancellation_token(self, reference: str) -> bool:
+        return reference in self._cancellable_targets
+
 
 @dataclass(frozen=True, slots=True)
 class PreparedPythonTarget:
@@ -111,8 +114,8 @@ class LocalExecutor:
         return PreparedPythonTarget(
             target=target,
             callable=callable_target,
-            accepts_cancellation_token=(
-                target.reference in self._registry._cancellable_targets
+            accepts_cancellation_token=self._registry.accepts_cancellation_token(
+                target.reference
             ),
         )
 

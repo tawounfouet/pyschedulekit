@@ -28,17 +28,12 @@ class InvalidCallableTargetError(TargetResolutionError):
     """Raised when a callable does not satisfy the local executor contract."""
 
 
-@dataclass(frozen=True, slots=True)
-class RegisteredPythonTarget:
-    callable: Callable[..., object]
-    accepts_cancellation_token: bool
-
-
 class PythonTargetRegistry:
     """Explicit registry of trusted Python callables."""
 
     def __init__(self) -> None:
-        self._targets: dict[str, RegisteredPythonTarget] = {}
+        self._targets: dict[str, Callable[..., object]] = {}
+        self._cancellable_targets: set[str] = set()
 
     def register(self, reference: str, target: Callable[..., object]) -> None:
         if not reference.strip():
@@ -75,16 +70,15 @@ class PythonTargetRegistry:
             accepts_cancellation_token = True
         elif required:
             raise InvalidCallableTargetError(
-                "Local executor callables must require no arguments or one "
-                "'cancellation_token' argument."
+                "Local executor callables must not require arguments, except for "
+                "one explicit 'cancellation_token' argument."
             )
 
-        self._targets[reference] = RegisteredPythonTarget(
-            callable=target,
-            accepts_cancellation_token=accepts_cancellation_token,
-        )
+        self._targets[reference] = target
+        if accepts_cancellation_token:
+            self._cancellable_targets.add(reference)
 
-    def resolve(self, reference: str) -> RegisteredPythonTarget:
+    def resolve(self, reference: str) -> Callable[..., object]:
         try:
             return self._targets[reference]
         except KeyError as exc:
@@ -113,11 +107,13 @@ class LocalExecutor:
                 f"LocalExecutor does not support target kind {target.kind!r}."
             )
 
-        registered = self._registry.resolve(target.reference)
+        callable_target = self._registry.resolve(target.reference)
         return PreparedPythonTarget(
             target=target,
-            callable=registered.callable,
-            accepts_cancellation_token=registered.accepts_cancellation_token,
+            callable=callable_target,
+            accepts_cancellation_token=(
+                target.reference in self._registry._cancellable_targets
+            ),
         )
 
     def execute(

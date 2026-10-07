@@ -229,9 +229,7 @@ def test_t_outbox_sql_006_v2_database_migrates_to_v3(tmp_path) -> None:
 
     connection = sqlite3.connect(database)
     try:
-        version = connection.execute(
-            "SELECT version FROM pyschedulekit_schema"
-        ).fetchone()
+        version = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
         table = connection.execute(
             """
             SELECT 1 FROM sqlite_master

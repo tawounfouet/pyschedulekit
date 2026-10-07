@@ -2,6 +2,8 @@
 
 from datetime import UTC, datetime
 
+import pytest
+
 from pyschedulekit import CronTrigger, Duration, IntervalTrigger, Scheduler, TargetRef, Timezone
 from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.testing import MutableClock
@@ -283,8 +285,6 @@ def test_t_e2e_010_cron_trigger_runs_through_public_scheduler() -> None:
 
 def test_t_e2e_011_scheduler_rejects_conflicting_cron_timezone_metadata() -> None:
     scheduler = Scheduler(clock=MutableClock(_instant()))
-
-    import pytest
 
     with pytest.raises(ValueError, match="must match CronTrigger timezone"):
         scheduler.add_schedule(

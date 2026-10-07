@@ -164,6 +164,7 @@ def _admission_lock_from_row(row: sqlite3.Row) -> ScheduleAdmissionLock:
         token=AdmissionToken(str(row["token"])),
         acquired_at=Instant.parse(str(row["acquired_at"])),
         expires_at=Instant.parse(str(row["expires_at"])),
+        generation=int(row["generation"]),
         state=ScheduleAdmissionLockState(str(row["state"])),
         released_at=_optional_instant(row["released_at"]),
         version=int(row["version"]),
@@ -177,6 +178,7 @@ def _claim_from_row(row: sqlite3.Row) -> ExecutionClaim:
         token=ClaimToken(str(row["token"])),
         claimed_at=Instant.parse(str(row["claimed_at"])),
         expires_at=Instant.parse(str(row["expires_at"])),
+        generation=int(row["generation"]),
         state=ExecutionClaimState(str(row["state"])),
         released_at=_optional_instant(row["released_at"]),
         version=int(row["version"]),
@@ -1214,8 +1216,8 @@ class SqliteScheduleAdmissionLockRepository:
                 """
                 INSERT INTO schedule_admission_locks(
                     schedule_id, worker_id, token, acquired_at, expires_at,
-                    state, released_at, version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    generation, state, released_at, version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     lock.schedule_id.value,
@@ -1223,6 +1225,7 @@ class SqliteScheduleAdmissionLockRepository:
                     lock.token.value,
                     lock.acquired_at.value.isoformat(),
                     lock.expires_at.value.isoformat(),
+                    lock.generation,
                     lock.state.value,
                     _instant_text(lock.released_at),
                     lock.version,
@@ -1236,7 +1239,7 @@ class SqliteScheduleAdmissionLockRepository:
                 """
                 UPDATE schedule_admission_locks
                 SET worker_id = ?, token = ?, acquired_at = ?, expires_at = ?,
-                    state = ?, released_at = ?, version = ?
+                    generation = ?, state = ?, released_at = ?, version = ?
                 WHERE schedule_id = ? AND version = ?
                 """,
                 (
@@ -1244,6 +1247,7 @@ class SqliteScheduleAdmissionLockRepository:
                     lock.token.value,
                     lock.acquired_at.value.isoformat(),
                     lock.expires_at.value.isoformat(),
+                    lock.generation,
                     lock.state.value,
                     _instant_text(lock.released_at),
                     lock.version,
@@ -1338,8 +1342,8 @@ class SqliteExecutionClaimRepository:
                 """
                 INSERT INTO execution_claims(
                     execution_id, worker_id, token, claimed_at, expires_at,
-                    state, released_at, version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    generation, state, released_at, version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     claim.execution_id.value,
@@ -1347,6 +1351,7 @@ class SqliteExecutionClaimRepository:
                     claim.token.value,
                     claim.claimed_at.value.isoformat(),
                     claim.expires_at.value.isoformat(),
+                    claim.generation,
                     claim.state.value,
                     _instant_text(claim.released_at),
                     claim.version,
@@ -1360,7 +1365,7 @@ class SqliteExecutionClaimRepository:
                 """
                 UPDATE execution_claims
                 SET worker_id = ?, token = ?, claimed_at = ?, expires_at = ?,
-                    state = ?, released_at = ?, version = ?
+                    generation = ?, state = ?, released_at = ?, version = ?
                 WHERE execution_id = ? AND version = ?
                 """,
                 (
@@ -1368,6 +1373,7 @@ class SqliteExecutionClaimRepository:
                     claim.token.value,
                     claim.claimed_at.value.isoformat(),
                     claim.expires_at.value.isoformat(),
+                    claim.generation,
                     claim.state.value,
                     _instant_text(claim.released_at),
                     claim.version,

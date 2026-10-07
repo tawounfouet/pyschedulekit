@@ -2,12 +2,16 @@
 
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+
+import pytest
 from datetime import UTC, datetime
 
 from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
+from pyschedulekit.domain.admission_lock import ScheduleAdmissionLockState
 from pyschedulekit.domain.claim import WorkerId
 from pyschedulekit.domain.concurrency import ConcurrencyDecisionAction, ConcurrencyPolicy
+from pyschedulekit.domain.execution import Execution
 from pyschedulekit.domain.execution_request import ExecutionRequest, ExecutionRequestState
 from pyschedulekit.domain.occurrence import Occurrence
 from pyschedulekit.domain.schedule import (
@@ -20,6 +24,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
+from pyschedulekit.ports.persistence import OptimisticConcurrencyError
 
 
 def _instant(minute: int = 0) -> Instant:
@@ -203,3 +208,71 @@ def test_t_admission_sql_004_v4_database_migrates_through_current_schema(tmp_pat
         assert table is not None
     finally:
         connection.close()
+
+
+
+def test_t_admission_sql_005_stale_generation_rolls_back_admission_write(tmp_path) -> None:
+    database = tmp_path / "scheduler.db"
+    factory = SqliteUnitOfWorkFactory(database)
+    first, _ = _seed(factory)
+    owner = ScheduleAdmissionLockCoordinator(
+        uow_factory=factory,
+        worker_id=WorkerId("worker-a"),
+        ttl=Duration.seconds(5),
+    )
+    acquired = owner.acquire(
+        schedule_id=ScheduleId("shared"),
+        now=_instant(),
+    )
+    assert acquired.handle is not None
+
+    stale_factory = SqliteUnitOfWorkFactory(database)
+    stale_uow = stale_factory()
+    with stale_uow:
+        request = stale_uow.requests.get(first.id)
+        lock = stale_uow.admission_locks.get(ScheduleId("shared"))
+        assert request is not None
+        assert lock is not None
+
+        request.mark_dispatched()
+        stale_uow.requests.save(request)
+        stale_uow.executions.add(
+            Execution.from_request(
+                request=request,
+                created_at=_instant(1),
+            )
+        )
+
+        contender = ScheduleAdmissionLockCoordinator(
+            uow_factory=SqliteUnitOfWorkFactory(database),
+            worker_id=WorkerId("worker-b"),
+            ttl=Duration.seconds(5),
+        )
+        takeover = contender.acquire(
+            schedule_id=ScheduleId("shared"),
+            now=Instant(datetime(2026, 1, 1, 10, 0, 5, tzinfo=UTC)),
+        )
+        assert takeover.handle is not None
+        assert takeover.handle.generation == acquired.handle.generation + 1
+
+        lock.release(
+            worker_id=acquired.handle.worker_id,
+            token=acquired.handle.token,
+            generation=acquired.handle.generation,
+            released_at=_instant(1),
+        )
+        stale_uow.admission_locks.save(lock)
+
+        with pytest.raises(OptimisticConcurrencyError):
+            stale_uow.commit()
+
+    with factory() as uow:
+        request = uow.requests.get(first.id)
+        current_lock = uow.admission_locks.get(ScheduleId("shared"))
+        assert request is not None
+        assert current_lock is not None
+        assert request.state is ExecutionRequestState.PENDING
+        assert uow.executions.get_by_request(first.id) is None
+        assert current_lock.state is ScheduleAdmissionLockState.ACTIVE
+        assert current_lock.worker_id == WorkerId("worker-b")
+        assert current_lock.generation == acquired.handle.generation + 1

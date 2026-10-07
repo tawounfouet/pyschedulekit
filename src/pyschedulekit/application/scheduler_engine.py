@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.application.materialization import ScheduleMaterializationCoordinator
 from pyschedulekit.domain.execution_request import ExecutionRequest
+from pyschedulekit.domain.materialization_lease import (
+    MaterializationLeaseOwnershipError,
+    ScheduleMaterializationLeaseHandle,
+)
 from pyschedulekit.domain.misfire import (
     MisfireDecision,
     MisfireDecisionAction,
@@ -47,6 +52,7 @@ class SchedulerEvaluationResult:
     unsupported_policy_schedules: tuple[ScheduleId, ...] = ()
     recovery_records: tuple[RecoveryEvaluationRecord, ...] = ()
     recovery_limit_schedules: tuple[ScheduleId, ...] = ()
+    coordination_denied_schedules: tuple[ScheduleId, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,10 +72,12 @@ class SchedulerEngine:
         uow_factory: UnitOfWorkFactory,
         occurrence_planner: OccurrencePlanner | None = None,
         misfire_evaluator: MisfireEvaluator | None = None,
+        materialization_coordinator: ScheduleMaterializationCoordinator | None = None,
     ) -> None:
         self._uow_factory = uow_factory
         self._occurrence_planner = occurrence_planner or OccurrencePlanner()
         self._misfire_evaluator = misfire_evaluator or MisfireEvaluator()
+        self._materialization_coordinator = materialization_coordinator
 
     def evaluate(
         self,
@@ -89,19 +97,37 @@ class SchedulerEngine:
 
         requests: list[ExecutionRequest] = []
         conflicts: list[ScheduleId] = []
+        coordination_denied: list[ScheduleId] = []
         decisions: list[MisfireEvaluationRecord] = []
         recovery_records: list[RecoveryEvaluationRecord] = []
         recovery_limit_schedules: list[ScheduleId] = []
 
         for schedule_id in schedule_ids:
+            handle: ScheduleMaterializationLeaseHandle | None = None
+            if self._materialization_coordinator is not None:
+                acquisition = self._materialization_coordinator.acquire(
+                    schedule_id=schedule_id,
+                    now=evaluation_now,
+                )
+                if not acquisition.acquired or acquisition.handle is None:
+                    coordination_denied.append(schedule_id)
+                    continue
+                handle = acquisition.handle
+
             try:
                 evaluation = self._evaluate_schedule(
                     schedule_id=schedule_id,
                     evaluation_now=evaluation_now,
+                    materialization_handle=handle,
                 )
-            except PersistenceConflictError:
+            except (PersistenceConflictError, MaterializationLeaseOwnershipError):
                 conflicts.append(schedule_id)
                 continue
+            finally:
+                self._release_materialization_best_effort(
+                    handle=handle,
+                    released_at=evaluation_now,
+                )
 
             requests.extend(evaluation.requests)
             if evaluation.misfire_record is not None:
@@ -119,6 +145,7 @@ class SchedulerEngine:
             unsupported_policy_schedules=(),
             recovery_records=tuple(recovery_records),
             recovery_limit_schedules=tuple(recovery_limit_schedules),
+            coordination_denied_schedules=tuple(coordination_denied),
         )
 
     def _discover_due_schedule_ids(
@@ -136,18 +163,34 @@ class SchedulerEngine:
         *,
         schedule_id: ScheduleId,
         evaluation_now: Instant,
+        materialization_handle: ScheduleMaterializationLeaseHandle | None,
     ) -> _ScheduleEvaluation:
         with self._uow_factory() as uow:
             schedule = uow.schedules.get(schedule_id)
             if schedule is None or schedule.state is not ScheduleState.ACTIVE:
+                self._commit_with_materialization_lease(
+                    uow=uow,
+                    handle=materialization_handle,
+                    released_at=evaluation_now,
+                )
                 return _ScheduleEvaluation()
 
             checkpoint = schedule.next_run_time
             if checkpoint is None or checkpoint > evaluation_now:
+                self._commit_with_materialization_lease(
+                    uow=uow,
+                    handle=materialization_handle,
+                    released_at=evaluation_now,
+                )
                 return _ScheduleEvaluation()
 
             occurrence = self._occurrence_planner.current(schedule)
             if occurrence is None:
+                self._commit_with_materialization_lease(
+                    uow=uow,
+                    handle=materialization_handle,
+                    released_at=evaluation_now,
+                )
                 return _ScheduleEvaluation()
 
             configured_action = schedule.definition.misfire.action
@@ -159,7 +202,11 @@ class SchedulerEngine:
                 if existing is not None:
                     self._advance_schedule(schedule, occurrences=(occurrence,))
                     uow.schedules.save(schedule)
-                    uow.commit()
+                    self._commit_with_materialization_lease(
+                        uow=uow,
+                        handle=materialization_handle,
+                        released_at=evaluation_now,
+                    )
                     return _ScheduleEvaluation(requests=(existing,))
 
             decision = self._misfire_evaluator.evaluate(
@@ -178,6 +225,7 @@ class SchedulerEngine:
                     schedule=schedule,
                     evaluation_now=evaluation_now,
                     misfire_record=record,
+                    materialization_handle=materialization_handle,
                 )
 
             if decision.action is MisfireDecisionAction.COALESCE:
@@ -186,12 +234,17 @@ class SchedulerEngine:
                     schedule=schedule,
                     evaluation_now=evaluation_now,
                     misfire_record=record,
+                    materialization_handle=materialization_handle,
                 )
 
             if decision.action is MisfireDecisionAction.SKIP:
                 self._advance_schedule(schedule, occurrences=(occurrence,))
                 uow.schedules.save(schedule)
-                uow.commit()
+                self._commit_with_materialization_lease(
+                    uow=uow,
+                    handle=materialization_handle,
+                    released_at=evaluation_now,
+                )
                 return _ScheduleEvaluation(misfire_record=record)
 
             request = self._materialize_or_reuse(
@@ -202,7 +255,11 @@ class SchedulerEngine:
             )
             self._advance_schedule(schedule, occurrences=(occurrence,))
             uow.schedules.save(schedule)
-            uow.commit()
+            self._commit_with_materialization_lease(
+                uow=uow,
+                handle=materialization_handle,
+                released_at=evaluation_now,
+            )
 
             return _ScheduleEvaluation(
                 requests=(request,),
@@ -216,6 +273,7 @@ class SchedulerEngine:
         schedule: Schedule,
         evaluation_now: Instant,
         misfire_record: MisfireEvaluationRecord,
+        materialization_handle: ScheduleMaterializationLeaseHandle | None,
     ) -> _ScheduleEvaluation:
         backlog = self._occurrence_planner.due_backlog(
             schedule,
@@ -235,7 +293,11 @@ class SchedulerEngine:
 
         self._advance_schedule(schedule, occurrences=backlog.occurrences)
         uow.schedules.save(schedule)
-        uow.commit()
+        self._commit_with_materialization_lease(
+            uow=uow,
+            handle=materialization_handle,
+            released_at=evaluation_now,
+        )
 
         recovery_record = RecoveryEvaluationRecord(
             schedule_id=schedule.id,
@@ -257,6 +319,7 @@ class SchedulerEngine:
         schedule: Schedule,
         evaluation_now: Instant,
         misfire_record: MisfireEvaluationRecord,
+        materialization_handle: ScheduleMaterializationLeaseHandle | None,
     ) -> _ScheduleEvaluation:
         backlog = self._occurrence_planner.due_backlog(
             schedule,
@@ -273,6 +336,11 @@ class SchedulerEngine:
         )
 
         if backlog.has_more:
+            self._commit_with_materialization_lease(
+                uow=uow,
+                handle=materialization_handle,
+                released_at=evaluation_now,
+            )
             return _ScheduleEvaluation(
                 misfire_record=misfire_record,
                 recovery_record=recovery_record,
@@ -305,7 +373,11 @@ class SchedulerEngine:
 
         self._advance_schedule(schedule, occurrences=backlog.occurrences)
         uow.schedules.save(schedule)
-        uow.commit()
+        self._commit_with_materialization_lease(
+            uow=uow,
+            handle=materialization_handle,
+            released_at=evaluation_now,
+        )
 
         completed_record = RecoveryEvaluationRecord(
             schedule_id=schedule.id,
@@ -319,6 +391,41 @@ class SchedulerEngine:
             misfire_record=misfire_record,
             recovery_record=completed_record,
         )
+
+    def _release_materialization_best_effort(
+        self,
+        *,
+        handle: ScheduleMaterializationLeaseHandle | None,
+        released_at: Instant,
+    ) -> None:
+        if handle is None or self._materialization_coordinator is None:
+            return
+        self._materialization_coordinator.release(
+            handle=handle,
+            released_at=released_at,
+        )
+
+    @staticmethod
+    def _commit_with_materialization_lease(
+        *,
+        uow: UnitOfWork,
+        handle: ScheduleMaterializationLeaseHandle | None,
+        released_at: Instant,
+    ) -> None:
+        if handle is not None:
+            lease = uow.materialization_leases.get(handle.schedule_id)
+            if lease is None:
+                raise MaterializationLeaseOwnershipError(
+                    "Persisted materialization lease disappeared before commit."
+                )
+            lease.release(
+                worker_id=handle.worker_id,
+                token=handle.token,
+                generation=handle.generation,
+                released_at=released_at,
+            )
+            uow.materialization_leases.save(lease)
+        uow.commit()
 
     @staticmethod
     def _materialize_or_reuse(

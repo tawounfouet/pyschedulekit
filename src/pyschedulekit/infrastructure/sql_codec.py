@@ -24,6 +24,7 @@ from pyschedulekit.domain.retry import (
     ExponentialBackoff,
     FixedBackoff,
     NoBackoff,
+    RetryBackoff,
     RetryPolicy,
 )
 from pyschedulekit.domain.schedule import ScheduleDefinition, TargetRef
@@ -286,6 +287,7 @@ def _decode_retry(payload: dict[str, Any]) -> RetryPolicy:
     backoff_payload = cast(dict[str, Any], payload["backoff"])
     kind = cast(str, backoff_payload["kind"])
 
+    backoff: RetryBackoff
     if kind == "none":
         backoff = NoBackoff()
     elif kind == "fixed":

@@ -10,8 +10,8 @@ from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
-from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
+from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.execution import Execution, ExecutionId
 from pyschedulekit.domain.misfire import MisfirePolicy

@@ -109,9 +109,7 @@ def _raise_integrity_error(exc: sqlite3.IntegrityError) -> NoReturn:
             "SQLite rejected a scheduler write because a database invariant failed."
         ) from exc
 
-    raise PersistenceConflictError(
-        "SQLite rejected a scheduler persistence write."
-    ) from exc
+    raise PersistenceConflictError("SQLite rejected a scheduler persistence write.") from exc
 
 
 def _require_cas_update(

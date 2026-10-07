@@ -10,7 +10,7 @@ from uuid import uuid4
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
-from pyschedulekit.application.outbox import OutboxDispatchResult, OutboxDispatcher
+from pyschedulekit.application.outbox import OutboxDispatcher, OutboxDispatchResult
 from pyschedulekit.application.reconciliation import (
     ReconciliationActiveRuntimeError,
     ReconciliationIncompleteError,

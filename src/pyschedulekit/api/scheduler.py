@@ -12,6 +12,7 @@ from pyschedulekit.application.run_pending import RunPendingResult, RunPendingSe
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.misfire import MisfirePolicy
+from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import (
     Schedule,
     ScheduleDefinition,
@@ -85,6 +86,7 @@ class Scheduler:
         timezone: Timezone | None = None,
         misfire: MisfirePolicy | None = None,
         concurrency: ConcurrencyPolicy | None = None,
+        retry: RetryPolicy | None = None,
     ) -> ScheduleId:
         """Create and persist one Schedule using the current Clock reference."""
 
@@ -102,6 +104,7 @@ class Scheduler:
         effective_concurrency = (
             concurrency if concurrency is not None else ConcurrencyPolicy.allow()
         )
+        effective_retry = retry if retry is not None else RetryPolicy.none()
 
         schedule = Schedule.create(
             schedule_id=schedule_id,
@@ -111,6 +114,7 @@ class Scheduler:
                 timezone=effective_timezone,
                 misfire=effective_misfire,
                 concurrency=effective_concurrency,
+                retry=effective_retry,
             ),
             reference=self._clock.now(),
         )

@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-14 complete — next: LOT-15 Retry Policy Foundations**
+**LOT-15 complete — next: LOT-16 Execution Timeout**
 
 Completed:
 
@@ -25,6 +25,7 @@ Completed:
 - LOT-12 — Misfire Policy Foundations
 - LOT-13 — Catch-Up & Coalescing
 - LOT-14 — Concurrency Policy Foundations
+- LOT-15 — Retry Policy Foundations
 
 The implementation follows a domain-first roadmap:
 
@@ -314,6 +315,35 @@ ConcurrencyCoordinator
 ```
 
 `ConcurrencyPolicy.allow()` preserves the historical behavior. `ConcurrencyPolicy.limit(max_instances=N)` can queue overflow in `WAITING_ADMISSION` or terminate it as `DROPPED`. The V1 coordinator serializes admission across all coordinators in one Python process; distributed enforcement is intentionally deferred.
+
+## Retry policy foundations
+
+LOT-15 turns the RETRY_WAIT state introduced by the execution lifecycle into an operational policy:
+
+```text
+Attempt failure
+    ↓
+RetryEvaluator
+    ├── STOP  → terminal failure
+    └── RETRY → RETRY_WAIT
+                   ↓
+             next_attempt_at
+                   ↓
+             run_pending()
+```
+
+Retries preserve one logical Execution and create numbered Attempts. Backoff is represented as a future deadline rather than `sleep()`, so the one-shot runtime remains non-blocking.
+
+Public configuration:
+
+```python
+RetryPolicy(
+    max_attempts=3,
+    backoff=FixedBackoff(Duration.seconds(5)),
+)
+```
+
+`max_attempts` includes the initial Attempt. The neutral default is one total attempt.
 
 ## Package shape
 

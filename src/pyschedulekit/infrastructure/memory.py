@@ -370,8 +370,7 @@ class InMemoryExecutionRequestRepository:
 
         with self._store._lock:
             committed = [
-                _clone_request(request)
-                for request in self._store._execution_requests.values()
+                _clone_request(request) for request in self._store._execution_requests.values()
             ]
 
         committed.sort(
@@ -605,8 +604,7 @@ class InMemoryExecutionRepository:
 
         with self._store._lock:
             committed = [
-                _clone_execution(execution)
-                for execution in self._store._executions.values()
+                _clone_execution(execution) for execution in self._store._executions.values()
             ]
 
         committed.sort(key=lambda item: (item.created_at.value, item.id.value))

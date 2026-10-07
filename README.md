@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Implementation — LOT-12: Misfire Policy Foundations**
+**LOT-12 complete — next: LOT-13 Catch-Up & Coalescing**
 
 Completed:
 
@@ -22,7 +22,7 @@ Completed:
 - LOT-09 — Execution Lifecycle
 - LOT-10 — Local Executor
 - LOT-11 — run_pending() End-to-End Slice
-- LOT-12 — Misfire Policy Foundations (branch qualification in progress)
+- LOT-12 — Misfire Policy Foundations
 
 The implementation follows a domain-first roadmap:
 

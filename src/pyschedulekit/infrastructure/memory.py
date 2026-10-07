@@ -31,6 +31,7 @@ from pyschedulekit.ports.persistence import (
     DuplicateExecutionRequestError,
     DuplicateScheduleError,
     OptimisticConcurrencyError,
+    UnitOfWork,
     UntrackedEntityError,
     UntrackedScheduleError,
 )
@@ -635,5 +636,5 @@ class InMemoryUnitOfWorkFactory:
     def __init__(self, store: InMemoryStore | None = None) -> None:
         self._store = store or InMemoryStore()
 
-    def __call__(self) -> InMemoryUnitOfWork:
+    def __call__(self) -> UnitOfWork:
         return InMemoryUnitOfWork(self._store)

@@ -8,6 +8,10 @@ from pyschedulekit.application.execution_service import (
     ExecutionNotFoundError,
     ExecutionService,
 )
+from pyschedulekit.application.shutdown import (
+    ShutdownCoordinator,
+    ShutdownInProgressError,
+)
 from pyschedulekit.domain.execution import (
     AttemptId,
     Execution,
@@ -43,6 +47,7 @@ class ExecutionRunner:
         clock: Clock,
         retry_evaluator: RetryEvaluator | None = None,
         cancellation_controller: CancellationController | None = None,
+        shutdown_coordinator: ShutdownCoordinator | None = None,
     ) -> None:
         self._uow_factory = uow_factory
         self._execution_service = execution_service
@@ -50,10 +55,25 @@ class ExecutionRunner:
         self._clock = clock
         self._retry_evaluator = retry_evaluator or RetryEvaluator()
         self._cancellation_controller = cancellation_controller
+        self._shutdown_coordinator = shutdown_coordinator
 
     def run(self, *, execution_id: ExecutionId) -> ExecutionRunResult:
         """Execute one logical Execution without holding a persistence transaction."""
 
+        if self._shutdown_coordinator is not None and not self._shutdown_coordinator.try_enter(
+            execution_id
+        ):
+            raise ShutdownInProgressError(
+                "Cannot start a new Attempt while graceful shutdown is draining."
+            )
+
+        try:
+            return self._run_entered(execution_id)
+        finally:
+            if self._shutdown_coordinator is not None:
+                self._shutdown_coordinator.leave(execution_id)
+
+    def _run_entered(self, execution_id: ExecutionId) -> ExecutionRunResult:
         execution_snapshot = self._load_execution(execution_id)
         prepared = self._executor.prepare(execution_snapshot.target)
 

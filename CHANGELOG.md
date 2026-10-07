@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Graceful shutdown coordination with atomic new-work gating and active Execution tracking.
+- Public `ShutdownMode.WAIT` and `ShutdownMode.CANCEL` policies.
+- Public `Scheduler.shutdown(...)` with operation-wide timeout and structured `ShutdownResult`.
+- Mid-cycle shutdown barriers preventing later Attempts from starting.
+- Cooperative cancellation integration for active shutdown cancellation.
+- Runtime stopped-event coordination and drain qualification.
+- LOT-20 unit and end-to-end graceful shutdown tests.
+
 - Durable-state-driven `WakeUpPlanner` for continuous runtime scheduling.
 - Repository horizon queries for next Schedule and retry wake-ups.
 - Immediate wake-up for PENDING requests and QUEUED Executions.

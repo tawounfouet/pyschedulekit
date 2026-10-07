@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from pyschedulekit.application.concurrency import AdmissionResult, ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
+from pyschedulekit.application.shutdown import (
+    ShutdownCoordinator,
+    ShutdownInProgressError,
+)
 from pyschedulekit.domain.concurrency import ConcurrencyDecisionAction
 from pyschedulekit.domain.execution import Execution
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
@@ -82,12 +86,14 @@ class RunPendingService:
         scheduler_engine: SchedulerEngine,
         concurrency_coordinator: ConcurrencyCoordinator,
         execution_runner: ExecutionRunner,
+        shutdown_coordinator: ShutdownCoordinator | None = None,
     ) -> None:
         self._clock = clock
         self._uow_factory = uow_factory
         self._scheduler_engine = scheduler_engine
         self._concurrency_coordinator = concurrency_coordinator
         self._execution_runner = execution_runner
+        self._shutdown_coordinator = shutdown_coordinator
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking cycle without sleeping or draining backlog."""
@@ -96,6 +102,18 @@ class RunPendingService:
             raise ValueError("limit must be greater than or equal to 1.")
 
         evaluation_now = self._clock.now()
+        if self._shutdown_requested():
+            return RunPendingResult(
+                evaluation_now=evaluation_now,
+                materialized_request_ids=(),
+                executions=(),
+                schedule_conflicts=(),
+                unsupported_policy_schedules=(),
+                recovery_limit_schedules=(),
+                admissions=(),
+                errors=(),
+            )
+
         evaluation = self._scheduler_engine.evaluate(
             evaluation_now=evaluation_now,
             limit=limit,
@@ -104,6 +122,8 @@ class RunPendingService:
         errors: list[RunPendingError] = []
         admissions: list[AdmissionResult] = []
         for request in self._list_admission_candidates(limit=limit):
+            if self._shutdown_requested():
+                break
             try:
                 admissions.append(
                     self._concurrency_coordinator.admit(
@@ -122,8 +142,12 @@ class RunPendingService:
 
         executions: list[ExecutionRunResult] = []
         for execution in self._list_runnable_executions(now=evaluation_now, limit=limit):
+            if self._shutdown_requested():
+                break
             try:
                 executions.append(self._execution_runner.run(execution_id=execution.id))
+            except ShutdownInProgressError:
+                break
             except TargetResolutionError:
                 errors.append(
                     RunPendingError(
@@ -159,6 +183,9 @@ class RunPendingService:
             admissions=tuple(admissions),
             errors=tuple(errors),
         )
+
+    def _shutdown_requested(self) -> bool:
+        return self._shutdown_coordinator is not None and self._shutdown_coordinator.is_requested
 
     def _list_admission_candidates(self, *, limit: int) -> list[ExecutionRequest]:
         with self._uow_factory() as uow:

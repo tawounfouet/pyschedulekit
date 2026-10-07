@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from time import monotonic
 from uuid import uuid4
 
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
@@ -11,9 +12,14 @@ from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
+from pyschedulekit.application.shutdown import (
+    ShutdownCoordinator,
+    ShutdownMode,
+    ShutdownResult,
+)
 from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
-from pyschedulekit.domain.execution import Execution, ExecutionId
+from pyschedulekit.domain.execution import Execution, ExecutionId, ExecutionState
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import (
@@ -55,6 +61,7 @@ class Scheduler:
 
         self._execution_service = ExecutionService(uow_factory=self._uow_factory)
         self._cancellation_controller = InMemoryCancellationController()
+        self._shutdown_coordinator = ShutdownCoordinator()
         execution_runner = ExecutionRunner(
             uow_factory=self._uow_factory,
             execution_service=self._execution_service,
@@ -64,6 +71,7 @@ class Scheduler:
             ),
             clock=self._clock,
             cancellation_controller=self._cancellation_controller,
+            shutdown_coordinator=self._shutdown_coordinator,
         )
 
         self._run_pending_service = RunPendingService(
@@ -72,6 +80,7 @@ class Scheduler:
             scheduler_engine=SchedulerEngine(uow_factory=self._uow_factory),
             concurrency_coordinator=ConcurrencyCoordinator(uow_factory=self._uow_factory),
             execution_runner=execution_runner,
+            shutdown_coordinator=self._shutdown_coordinator,
         )
         self._runtime = ContinuousSchedulerLoop(
             run_pending_service=self._run_pending_service,
@@ -188,6 +197,7 @@ class Scheduler:
             raise ValueError("Use either max_sleep or poll_interval, not both.")
 
         effective_max_sleep = max_sleep or poll_interval or Duration.seconds(1)
+        self._shutdown_coordinator.reset()
         self._runtime.run_forever(
             max_sleep=effective_max_sleep,
             limit=limit,
@@ -197,6 +207,70 @@ class Scheduler:
         """Request interruption of the continuous scheduler loop."""
 
         self._runtime.request_stop()
+
+    def shutdown(
+        self,
+        *,
+        mode: ShutdownMode = ShutdownMode.WAIT,
+        timeout: Duration | None = None,
+    ) -> ShutdownResult:
+        """Stop new runtime work and drain or cooperatively cancel active work."""
+
+        self._shutdown_coordinator.request()
+        self._runtime.request_stop()
+        started = monotonic()
+
+        active = self._shutdown_coordinator.snapshot()
+        if mode is ShutdownMode.CANCEL:
+            for execution_id in active:
+                self._cancellation_controller.cancel(execution_id.value)
+                self._persist_running_cancellation(execution_id)
+
+        drained = self._shutdown_coordinator.wait_until_drained(
+            timeout=self._remaining_timeout(timeout=timeout, started=started),
+        )
+        if not drained:
+            return ShutdownResult(
+                mode=mode,
+                completed=False,
+                timed_out=True,
+                active_execution_ids=self._shutdown_coordinator.snapshot(),
+            )
+
+        stopped = self._runtime.wait_until_stopped(
+            timeout=self._remaining_timeout(timeout=timeout, started=started),
+        )
+        completed = drained and stopped
+        return ShutdownResult(
+            mode=mode,
+            completed=completed,
+            timed_out=not completed,
+            active_execution_ids=self._shutdown_coordinator.snapshot(),
+        )
+
+    def _persist_running_cancellation(self, execution_id: ExecutionId) -> None:
+        with self._uow_factory() as uow:
+            execution = uow.executions.get(execution_id)
+        if execution is None or execution.is_terminal:
+            return
+        if execution.state is not ExecutionState.RUNNING:
+            return
+
+        self._execution_service.request_cancellation(
+            execution_id=execution_id,
+            requested_at=self._clock.now(),
+        )
+
+    @staticmethod
+    def _remaining_timeout(
+        *,
+        timeout: Duration | None,
+        started: float,
+    ) -> Duration | None:
+        if timeout is None:
+            return None
+        remaining = max(0.0, timeout.total_seconds - (monotonic() - started))
+        return Duration.seconds(remaining)
 
     @staticmethod
     def _effective_timezone(

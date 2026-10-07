@@ -81,7 +81,6 @@ class Scheduler:
         self._recovery_done = False
         self._last_recovery_result: CrashRecoveryResult | None = None
         self._reconciliation_service = ReconciliationService(
-            clock=self._clock,
             uow_factory=self._uow_factory,
         )
         self._reconciliation_lock = Lock()

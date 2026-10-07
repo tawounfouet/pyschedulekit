@@ -217,7 +217,7 @@ def test_t_lease_sql_004_v5_database_migrates_to_v6(tmp_path) -> None:
             for row in connection.execute("PRAGMA table_info(schedule_admission_locks)").fetchall()
         }
         assert version is not None
-        assert int(version[0]) == 7
+        assert int(version[0]) == 8
         assert "generation" in claim_columns
         assert "generation" in admission_columns
     finally:

@@ -549,6 +549,20 @@ class InMemoryExecutionRepository:
         )
         return runnable[:limit]
 
+    def list_running(self, *, limit: int) -> list[Execution]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            committed = [
+                _clone_execution(execution)
+                for execution in self._store._executions.values()
+                if execution.state is ExecutionState.RUNNING
+            ]
+
+        committed.sort(key=lambda item: (item.created_at.value, item.id.value))
+        return committed[:limit]
+
     def next_runnable_at(self, *, now: Instant) -> Instant | None:
         with self._store._lock:
             executions = list(self._store._executions.values())

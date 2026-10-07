@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Durable-state-driven `WakeUpPlanner` for continuous runtime scheduling.
+- Repository horizon queries for next Schedule and retry wake-ups.
+- Immediate wake-up for PENDING requests and QUEUED Executions.
+- Mutation-driven runtime wake signals after schedule creation and execution cancellation.
+- `max_sleep` reconciliation ceiling with backward-compatible `poll_interval` alias.
+- LOT-19 wake-up strategy and mutation-interruption qualification.
+
 - Continuous fixed-cadence scheduler runtime built on top of `run_pending()`.
 - Interruptible event-based waiting and explicit stop requests.
 - Public `Scheduler.run_forever(...)` and `Scheduler.stop()` runtime control.

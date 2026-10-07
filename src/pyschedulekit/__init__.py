@@ -24,6 +24,14 @@ from pyschedulekit.application.run_pending import (
 )
 from pyschedulekit.application.runtime import RuntimeAlreadyRunningError
 from pyschedulekit.application.shutdown import ShutdownMode, ShutdownResult
+from pyschedulekit.domain.claim import (
+    ClaimOwnershipError,
+    ClaimToken,
+    ExecutionClaim,
+    ExecutionClaimHandle,
+    ExecutionClaimState,
+    WorkerId,
+)
 from pyschedulekit.domain.concurrency import (
     ConcurrencyDecisionAction,
     ConcurrencyMode,
@@ -68,6 +76,8 @@ from pyschedulekit.ports.outbox import OutboxPublisher
 
 __all__ = [
     "CancellationToken",
+    "ClaimOwnershipError",
+    "ClaimToken",
     "ConcurrencyDecisionAction",
     "ConcurrencyMode",
     "ConcurrencyOverflowPolicy",
@@ -83,6 +93,9 @@ __all__ = [
     "DateTrigger",
     "Duration",
     "ExecutionCancelledError",
+    "ExecutionClaim",
+    "ExecutionClaimHandle",
+    "ExecutionClaimState",
     "ExecutionId",
     "ExponentialBackoff",
     "FixedBackoff",
@@ -116,5 +129,6 @@ __all__ = [
     "SqliteUnitOfWorkFactory",
     "TargetRef",
     "Timezone",
+    "WorkerId",
     "__version__",
 ]

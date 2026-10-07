@@ -57,7 +57,11 @@ def test_t_retry_run_001_failure_parks_execution_until_retry_deadline() -> None:
     service, execution = _dispatch(factory, retry=retry)
     clock = MutableClock(_instant())
     registry = PythonTargetRegistry()
-    registry.register("retry-target", lambda: (_ for _ in ()).throw(RuntimeError("temporary")))
+
+    def target() -> None:
+        raise RuntimeError("temporary")
+
+    registry.register("retry-target", target)
     runner = ExecutionRunner(
         uow_factory=factory,
         execution_service=service,

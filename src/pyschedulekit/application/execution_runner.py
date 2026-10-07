@@ -67,58 +67,59 @@ class ExecutionRunner:
             if self._cancellation_controller is not None
             else None
         )
-        outcome = self._executor.execute(
-            prepared,
-            timeout=execution_snapshot.policy_snapshot.timeout,
-            cancellation_token=cancellation_token,
-        )
-        completed_at = self._clock.now()
+        try:
+            outcome = self._executor.execute(
+                prepared,
+                timeout=execution_snapshot.policy_snapshot.timeout,
+                cancellation_token=cancellation_token,
+            )
+            completed_at = self._clock.now()
 
-        retry_decision: RetryDecision | None = None
-        if outcome.failure is None:
-            execution = self._execution_service.succeed_attempt(
-                attempt_id=attempt.id,
-                completed_at=completed_at,
-            )
-        elif outcome.failure.category is FailureCategory.CANCELLED:
-            execution = self._execution_service.cancel_attempt(
-                attempt_id=attempt.id,
-                completed_at=completed_at,
-            )
-        else:
-            retry_decision = self._retry_evaluator.evaluate(
-                policy=execution_snapshot.policy_snapshot.retry,
-                attempt_number=attempt.number,
-                failure=outcome.failure,
-            )
-            retry_at = (
-                completed_at.add(retry_decision.delay)
-                if retry_decision.should_retry and retry_decision.delay is not None
-                else None
-            )
-            if outcome.failure.category is FailureCategory.TIMEOUT:
-                execution = self._execution_service.timeout_attempt(
+            retry_decision: RetryDecision | None = None
+            if outcome.failure is None:
+                execution = self._execution_service.succeed_attempt(
                     attempt_id=attempt.id,
                     completed_at=completed_at,
-                    retry_at=retry_at,
+                )
+            elif outcome.failure.category is FailureCategory.CANCELLED:
+                execution = self._execution_service.cancel_attempt(
+                    attempt_id=attempt.id,
+                    completed_at=completed_at,
                 )
             else:
-                execution = self._execution_service.fail_attempt(
-                    attempt_id=attempt.id,
+                retry_decision = self._retry_evaluator.evaluate(
+                    policy=execution_snapshot.policy_snapshot.retry,
+                    attempt_number=attempt.number,
                     failure=outcome.failure,
-                    completed_at=completed_at,
-                    retry_at=retry_at,
                 )
+                retry_at = (
+                    completed_at.add(retry_decision.delay)
+                    if retry_decision.should_retry and retry_decision.delay is not None
+                    else None
+                )
+                if outcome.failure.category is FailureCategory.TIMEOUT:
+                    execution = self._execution_service.timeout_attempt(
+                        attempt_id=attempt.id,
+                        completed_at=completed_at,
+                        retry_at=retry_at,
+                    )
+                else:
+                    execution = self._execution_service.fail_attempt(
+                        attempt_id=attempt.id,
+                        failure=outcome.failure,
+                        completed_at=completed_at,
+                        retry_at=retry_at,
+                    )
 
-        if self._cancellation_controller is not None:
-            self._cancellation_controller.release(execution_id.value)
-
-        return ExecutionRunResult(
-            execution=execution,
-            attempt_id=attempt.id,
-            outcome=outcome,
-            retry_decision=retry_decision,
-        )
+            return ExecutionRunResult(
+                execution=execution,
+                attempt_id=attempt.id,
+                outcome=outcome,
+                retry_decision=retry_decision,
+            )
+        finally:
+            if self._cancellation_controller is not None:
+                self._cancellation_controller.release(execution_id.value)
 
     def _load_execution(self, execution_id: ExecutionId) -> Execution:
         with self._uow_factory() as uow:

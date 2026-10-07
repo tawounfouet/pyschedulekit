@@ -47,6 +47,7 @@ class OutboxMessage:
         "_payload",
         "_publish_attempts",
         "_published_at",
+        "_sequence",
         "_state",
         "_version",
     )
@@ -60,6 +61,7 @@ class OutboxMessage:
         aggregate_id: str,
         payload: tuple[tuple[str, str], ...],
         created_at: Instant,
+        sequence: int = 0,
         state: OutboxState = OutboxState.PENDING,
         published_at: Instant | None = None,
         publish_attempts: int = 0,
@@ -72,6 +74,8 @@ class OutboxMessage:
             raise ValueError("aggregate_type must not be empty.")
         if not aggregate_id.strip():
             raise ValueError("aggregate_id must not be empty.")
+        if sequence < 0:
+            raise ValueError("sequence must be non-negative.")
         if publish_attempts < 0:
             raise ValueError("publish_attempts must be non-negative.")
         if version < 0:
@@ -87,6 +91,7 @@ class OutboxMessage:
         self._aggregate_id = aggregate_id
         self._payload = tuple(sorted(payload))
         self._created_at = created_at
+        self._sequence = sequence
         self._state = state
         self._published_at = published_at
         self._publish_attempts = publish_attempts
@@ -102,6 +107,7 @@ class OutboxMessage:
         aggregate_id: str,
         payload: tuple[tuple[str, str], ...],
         created_at: Instant,
+        sequence: int = 0,
     ) -> OutboxMessage:
         return cls(
             message_id=OutboxMessageId.deterministic(
@@ -114,6 +120,7 @@ class OutboxMessage:
             aggregate_id=aggregate_id,
             payload=payload,
             created_at=created_at,
+            sequence=sequence,
         )
 
     @property
@@ -139,6 +146,10 @@ class OutboxMessage:
     @property
     def created_at(self) -> Instant:
         return self._created_at
+
+    @property
+    def sequence(self) -> int:
+        return self._sequence
 
     @property
     def state(self) -> OutboxState:

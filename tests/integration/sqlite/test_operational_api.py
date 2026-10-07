@@ -6,8 +6,8 @@ from pyschedulekit import (
     Duration,
     Instant,
     IntervalTrigger,
-    ScheduleState,
     Scheduler,
+    ScheduleState,
     SqliteUnitOfWorkFactory,
 )
 from pyschedulekit.testing import MutableClock

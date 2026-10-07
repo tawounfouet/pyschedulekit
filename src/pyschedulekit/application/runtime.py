@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from threading import Event, Lock
 
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
@@ -12,14 +11,6 @@ from pyschedulekit.ports.runtime import LoopWaiter
 
 class RuntimeAlreadyRunningError(RuntimeError):
     """Raised when the same runtime is started more than once concurrently."""
-
-
-@dataclass(frozen=True, slots=True)
-class RuntimeCycle:
-    """One completed continuous-runtime cycle."""
-
-    number: int
-    result: RunPendingResult
 
 
 class ContinuousSchedulerLoop:
@@ -36,6 +27,8 @@ class ContinuousSchedulerLoop:
         self._stop_event = Event()
         self._state_lock = Lock()
         self._running = False
+        self._cycles_completed = 0
+        self._last_result: RunPendingResult | None = None
 
     @property
     def is_running(self) -> bool:
@@ -45,6 +38,16 @@ class ContinuousSchedulerLoop:
     @property
     def stop_requested(self) -> bool:
         return self._stop_event.is_set()
+
+    @property
+    def cycles_completed(self) -> int:
+        with self._state_lock:
+            return self._cycles_completed
+
+    @property
+    def last_result(self) -> RunPendingResult | None:
+        with self._state_lock:
+            return self._last_result
 
     def request_stop(self) -> None:
         """Request termination of the loop and interrupt the current wait."""
@@ -56,7 +59,7 @@ class ContinuousSchedulerLoop:
         *,
         poll_interval: Duration,
         limit: int = 100,
-    ) -> tuple[RuntimeCycle, ...]:
+    ) -> None:
         """Run fixed-cadence cycles until request_stop() is called."""
 
         if poll_interval.total_seconds <= 0:
@@ -72,13 +75,12 @@ class ContinuousSchedulerLoop:
             self._running = True
             self._stop_event.clear()
 
-        cycles: list[RuntimeCycle] = []
         try:
-            cycle_number = 0
             while not self._stop_event.is_set():
-                cycle_number += 1
                 result = self._run_pending_service.run_pending(limit=limit)
-                cycles.append(RuntimeCycle(number=cycle_number, result=result))
+                with self._state_lock:
+                    self._cycles_completed += 1
+                    self._last_result = result
 
                 if self._stop_event.is_set():
                     break
@@ -93,4 +95,3 @@ class ContinuousSchedulerLoop:
             with self._state_lock:
                 self._running = False
 
-        return tuple(cycles)

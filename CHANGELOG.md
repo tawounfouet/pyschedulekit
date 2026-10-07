@@ -8,6 +8,17 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Renewable Execution leases spanning the full RUNNING Attempt.
+- Monotonic fencing generation for Execution claims and Schedule admission locks.
+- Execution lease heartbeat with configurable interval.
+- Fenced Attempt start and terminal lifecycle persistence.
+- Fencing-token propagation through the Executor port and trusted Python callables.
+- Lease-aware crash recovery that preserves actively owned RUNNING work.
+- Recovery takeover with stale-worker terminal-write rejection.
+- Atomic admission-lock release plus business-decision CAS fencing.
+- SQLite schema v6 and v5 -> v6 generation migration.
+- LOT-28 lease, heartbeat, recovery, fencing-token, and stale-admission qualification.
+
 - Durable ScheduleAdmissionLock model and repository.
 - Schedule-scoped distributed count-and-admit serialization.
 - Scheduler admission_lock_ttl configuration with 5-second default.

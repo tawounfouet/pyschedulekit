@@ -71,4 +71,4 @@ def test_t_outbox_e2e_001_execution_lifecycle_is_published_from_durable_outbox(
     ]
 
     with factory() as uow:
-        assert uow.outbox.list_pending(limit=10) == ()
+        assert uow.outbox.list_pending(limit=10) == []

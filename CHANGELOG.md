@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- SQLite persistence adapter implementing all existing scheduler repositories and UnitOfWork ports.
+- Versioned JSON codecs for Schedule definitions, policies, results, and normalized failures.
+- Relational persistence for runtime state and wake-up query horizons.
+- Shared in-memory SQLite mode and file-backed durable mode.
+- Public `SqliteUnitOfWorkFactory` integration with `Scheduler`.
+- LOT-21 codec, repository, transaction, reopen, and end-to-end SQLite qualification.
+
 - Graceful shutdown coordination with atomic new-work gating and active Execution tracking.
 - Public `ShutdownMode.WAIT` and `ShutdownMode.CANCEL` policies.
 - Public `Scheduler.shutdown(...)` with operation-wide timeout and structured `ShutdownResult`.

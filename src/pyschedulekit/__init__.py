@@ -38,6 +38,7 @@ from pyschedulekit.domain.triggers import (
     DateTrigger,
     IntervalTrigger,
 )
+from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.ports.cancellation import (
     CancellationToken,
     ExecutionCancelledError,
@@ -76,6 +77,7 @@ __all__ = [
     "Scheduler",
     "ShutdownMode",
     "ShutdownResult",
+    "SqliteUnitOfWorkFactory",
     "TargetRef",
     "Timezone",
     "__version__",

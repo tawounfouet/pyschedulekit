@@ -115,14 +115,12 @@ class ExecutionService:
                 claim = uow.claims.get(execution_id)
                 if claim is None:
                     raise ClaimOwnershipError("Execution has no persisted claim.")
-                if not claim.is_active(now=started_at):
-                    raise ClaimOwnershipError(
-                        "Execution claim is inactive or expired before Attempt start."
-                    )
-                claim.release(
+                claim.renew(
                     worker_id=claim_handle.worker_id,
                     token=claim_handle.token,
-                    released_at=started_at,
+                    generation=claim_handle.generation,
+                    renewed_at=started_at,
+                    expires_at=claim_handle.expires_at,
                 )
                 uow.claims.save(claim)
 
@@ -151,11 +149,18 @@ class ExecutionService:
         *,
         attempt_id: AttemptId,
         completed_at: Instant,
+        claim_handle: ExecutionClaimHandle | None = None,
     ) -> Execution:
         """Persist a successful Attempt and terminal successful Execution."""
 
         with self._uow_factory() as uow:
             attempt, execution = self._load_attempt_and_execution(uow, attempt_id)
+            self._release_execution_lease(
+                uow=uow,
+                execution=execution,
+                claim_handle=claim_handle,
+                released_at=completed_at,
+            )
             attempt.succeed(completed_at=completed_at)
             execution.finish_attempt(attempt=attempt)
 
@@ -177,11 +182,18 @@ class ExecutionService:
         failure: Failure,
         completed_at: Instant,
         retry_at: Instant | None = None,
+        claim_handle: ExecutionClaimHandle | None = None,
     ) -> Execution:
         """Persist a failed Attempt and either fail or park the Execution for retry."""
 
         with self._uow_factory() as uow:
             attempt, execution = self._load_attempt_and_execution(uow, attempt_id)
+            self._release_execution_lease(
+                uow=uow,
+                execution=execution,
+                claim_handle=claim_handle,
+                released_at=completed_at,
+            )
             attempt.fail(failure=failure, completed_at=completed_at)
             execution.finish_attempt(attempt=attempt, retry_at=retry_at)
 
@@ -202,11 +214,18 @@ class ExecutionService:
         attempt_id: AttemptId,
         completed_at: Instant,
         retry_at: Instant | None = None,
+        claim_handle: ExecutionClaimHandle | None = None,
     ) -> Execution:
         """Persist a timed-out Attempt and update its Execution."""
 
         with self._uow_factory() as uow:
             attempt, execution = self._load_attempt_and_execution(uow, attempt_id)
+            self._release_execution_lease(
+                uow=uow,
+                execution=execution,
+                claim_handle=claim_handle,
+                released_at=completed_at,
+            )
             attempt.timeout(completed_at=completed_at)
             execution.finish_attempt(attempt=attempt, retry_at=retry_at)
 
@@ -226,11 +245,18 @@ class ExecutionService:
         *,
         attempt_id: AttemptId,
         completed_at: Instant,
+        claim_handle: ExecutionClaimHandle | None = None,
     ) -> Execution:
         """Persist cancellation of a running Attempt and its Execution."""
 
         with self._uow_factory() as uow:
             attempt, execution = self._load_attempt_and_execution(uow, attempt_id)
+            self._release_execution_lease(
+                uow=uow,
+                execution=execution,
+                claim_handle=claim_handle,
+                released_at=completed_at,
+            )
             attempt.cancel(completed_at=completed_at)
             execution.finish_attempt(attempt=attempt)
 
@@ -320,6 +346,33 @@ class ExecutionService:
             )
             uow.commit()
             return execution
+
+    @staticmethod
+    def _release_execution_lease(
+        *,
+        uow: UnitOfWork,
+        execution: Execution,
+        claim_handle: ExecutionClaimHandle | None,
+        released_at: Instant,
+    ) -> None:
+        if claim_handle is None:
+            return
+        if claim_handle.execution_id != execution.id:
+            raise ClaimOwnershipError(
+                "Execution lease handle belongs to a different Execution."
+            )
+
+        claim = uow.claims.get(execution.id)
+        if claim is None:
+            raise ClaimOwnershipError("Execution has no persisted lease.")
+
+        claim.release(
+            worker_id=claim_handle.worker_id,
+            token=claim_handle.token,
+            generation=claim_handle.generation,
+            released_at=released_at,
+        )
+        uow.claims.save(claim)
 
     @staticmethod
     def _add_attempt_completed_message(

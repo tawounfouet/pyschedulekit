@@ -258,7 +258,7 @@ def test_t_admission_sql_005_stale_generation_rolls_back_admission_write(tmp_pat
             worker_id=acquired.handle.worker_id,
             token=acquired.handle.token,
             generation=acquired.handle.generation,
-            released_at=_instant(1),
+            released_at=Instant(datetime(2026, 1, 1, 10, 0, 1, tzinfo=UTC)),
         )
         stale_uow.admission_locks.save(lock)
 

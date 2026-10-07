@@ -135,9 +135,7 @@ class Scheduler:
         """Request cancellation of one logical Execution."""
 
         normalized = (
-            execution_id
-            if isinstance(execution_id, ExecutionId)
-            else ExecutionId(execution_id)
+            execution_id if isinstance(execution_id, ExecutionId) else ExecutionId(execution_id)
         )
         execution = self._execution_service.request_cancellation(
             execution_id=normalized,

@@ -218,6 +218,8 @@ def test_t_outbox_sql_006_v2_database_migrates_through_current_schema(tmp_path) 
 
     connection = sqlite3.connect(database)
     try:
+        connection.execute("DROP INDEX ix_execution_claims_active")
+        connection.execute("DROP TABLE execution_claims")
         connection.execute("DROP INDEX ix_outbox_pending")
         connection.execute("DROP TABLE outbox_messages")
         connection.execute("UPDATE pyschedulekit_schema SET version = 2")

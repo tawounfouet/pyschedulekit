@@ -251,10 +251,13 @@ Pending messages are selected by:
 
 ```text
 created_at ASC
+aggregate_type ASC
+aggregate_id ASC
+sequence ASC
 id ASC
 ```
 
-This provides deterministic local dispatch order.
+This provides deterministic local dispatch order. Lifecycle events for one aggregate also carry an explicit non-negative `sequence`; for Attempts, `started=0` and `completed=1`, so causal order remains stable even when both events share the same timestamp.
 
 LOT-25 does not claim globally ordered delivery across multiple future workers.
 

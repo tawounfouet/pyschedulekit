@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pyschedulekit.application.outbox import make_outbox_message
 from pyschedulekit.domain.execution import (
     Attempt,
     AttemptId,
@@ -11,7 +12,6 @@ from pyschedulekit.domain.execution import (
     ExecutionState,
     Failure,
 )
-from pyschedulekit.application.outbox import make_outbox_message
 from pyschedulekit.domain.execution_request import (
     ExecutionRequestState,
     InvalidExecutionRequestTransitionError,

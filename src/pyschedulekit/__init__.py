@@ -2,6 +2,11 @@
 
 from pyschedulekit._version import __version__
 from pyschedulekit.api import Scheduler
+from pyschedulekit.application.recovery import (
+    CrashRecoveryError,
+    CrashRecoveryIncompleteError,
+    CrashRecoveryResult,
+)
 from pyschedulekit.application.run_pending import (
     RunPendingError,
     RunPendingResult,
@@ -46,6 +51,9 @@ from pyschedulekit.ports.cancellation import (
 
 __all__ = [
     "CancellationToken",
+    "CrashRecoveryError",
+    "CrashRecoveryIncompleteError",
+    "CrashRecoveryResult",
     "ConcurrencyDecisionAction",
     "ConcurrencyMode",
     "ConcurrencyOverflowPolicy",

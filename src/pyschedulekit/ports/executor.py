@@ -7,6 +7,7 @@ from typing import Protocol
 
 from pyschedulekit.domain.execution import Failure
 from pyschedulekit.domain.schedule import TargetRef
+from pyschedulekit.domain.time import Duration
 
 
 class ExecutorError(RuntimeError):
@@ -46,6 +47,11 @@ class Executor(Protocol):
         """Resolve a TargetRef before an Attempt is started."""
         ...
 
-    def execute(self, prepared: PreparedTarget) -> ExecutorOutcome:
-        """Invoke prepared workload code and normalize target Exceptions."""
+    def execute(
+        self,
+        prepared: PreparedTarget,
+        *,
+        timeout: Duration | None = None,
+    ) -> ExecutorOutcome:
+        """Invoke prepared workload code under an optional execution timeout."""
         ...

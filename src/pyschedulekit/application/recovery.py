@@ -14,11 +14,7 @@ from pyschedulekit.domain.execution import (
 )
 from pyschedulekit.domain.retry import RetryEvaluator
 from pyschedulekit.domain.time import Instant
-from pyschedulekit.ports.persistence import (
-    OptimisticConcurrencyError,
-    PersistenceConflictError,
-    UnitOfWorkFactory,
-)
+from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
 
 
@@ -59,6 +55,14 @@ class CrashRecoveryResult:
         return len(self.cancelled_execution_ids)
 
 
+class CrashRecoveryConsistencyError(RuntimeError):
+    """Raised when persisted RUNNING state cannot be reconciled safely."""
+
+    def __init__(self, *, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+
+
 class CrashRecoveryService:
     """Recover orphaned persisted RUNNING executions after process restart."""
 
@@ -95,6 +99,15 @@ class CrashRecoveryService:
                 )
             except PersistenceConflictError:
                 skipped.append(candidate.id)
+                continue
+            except CrashRecoveryConsistencyError as exc:
+                errors.append(
+                    CrashRecoveryError(
+                        execution_id=candidate.id,
+                        code=exc.code,
+                        message=str(exc),
+                    )
+                )
                 continue
 
             if outcome == "skipped":
@@ -139,15 +152,24 @@ class CrashRecoveryService:
 
             active_number = execution.active_attempt_number
             if active_number is None:
-                return "invalid"
+                raise CrashRecoveryConsistencyError(
+                    code="recovery.missing_active_attempt_number",
+                    message="RUNNING Execution has no active Attempt number.",
+                )
 
             attempt = uow.attempts.get(
                 AttemptId.for_execution(execution.id, active_number)
             )
             if attempt is None:
-                return "missing_attempt"
+                raise CrashRecoveryConsistencyError(
+                    code="recovery.missing_attempt",
+                    message="RUNNING Execution references an Attempt that does not exist.",
+                )
             if attempt.state is not AttemptState.RUNNING:
-                return "attempt_not_running"
+                raise CrashRecoveryConsistencyError(
+                    code="recovery.attempt_not_running",
+                    message="RUNNING Execution references a non-RUNNING Attempt.",
+                )
 
             if execution.cancellation_requested:
                 attempt.cancel(completed_at=recovered_at)

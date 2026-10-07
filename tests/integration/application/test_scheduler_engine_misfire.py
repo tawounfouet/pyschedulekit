@@ -64,9 +64,7 @@ def test_t_mis_020_default_run_now_preserves_pre_misfire_engine_behavior() -> No
     schedule = _interval_schedule(policy=MisfirePolicy.run_now())
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert len(result.requests) == 1
     assert result.requests[0].occurrence_key.scheduled_at == _instant()
@@ -83,9 +81,7 @@ def test_t_mis_021_skip_policy_advances_without_creating_request() -> None:
     schedule = _interval_schedule(policy=MisfirePolicy.skip())
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert result.requests == ()
     assert len(result.misfire_decisions) == 1
@@ -100,14 +96,10 @@ def test_t_mis_021_skip_policy_advances_without_creating_request() -> None:
 
 def test_t_mis_022_skip_policy_materializes_when_late_but_inside_grace() -> None:
     factory = InMemoryUnitOfWorkFactory()
-    schedule = _interval_schedule(
-        policy=MisfirePolicy.skip(grace=GracePeriod.seconds(60))
-    )
+    schedule = _interval_schedule(policy=MisfirePolicy.skip(grace=GracePeriod.seconds(60)))
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(second=30)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(second=30))
 
     assert len(result.requests) == 1
     decision = result.misfire_decisions[0].decision
@@ -117,27 +109,20 @@ def test_t_mis_022_skip_policy_materializes_when_late_but_inside_grace() -> None
 
 def test_t_mis_023_skip_policy_materializes_exactly_at_grace_deadline() -> None:
     factory = InMemoryUnitOfWorkFactory()
-    schedule = _interval_schedule(
-        policy=MisfirePolicy.skip(grace=GracePeriod.seconds(60))
-    )
+    schedule = _interval_schedule(policy=MisfirePolicy.skip(grace=GracePeriod.seconds(60)))
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=1)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=1))
 
     assert len(result.requests) == 1
     assert (
-        result.misfire_decisions[0].decision.classification.status
-        is LatenessStatus.LATE_ELIGIBLE
+        result.misfire_decisions[0].decision.classification.status is LatenessStatus.LATE_ELIGIBLE
     )
 
 
 def test_t_mis_024_skip_policy_skips_strictly_after_grace_deadline() -> None:
     factory = InMemoryUnitOfWorkFactory()
-    schedule = _interval_schedule(
-        policy=MisfirePolicy.skip(grace=GracePeriod.seconds(60))
-    )
+    schedule = _interval_schedule(policy=MisfirePolicy.skip(grace=GracePeriod.seconds(60)))
     _persist(factory, schedule)
 
     result = SchedulerEngine(uow_factory=factory).evaluate(
@@ -150,16 +135,12 @@ def test_t_mis_024_skip_policy_skips_strictly_after_grace_deadline() -> None:
 
 def test_t_mis_025_run_now_preserves_original_occurrence_identity() -> None:
     factory = InMemoryUnitOfWorkFactory()
-    schedule = _interval_schedule(
-        policy=MisfirePolicy.run_now(grace=GracePeriod.seconds(30))
-    )
+    schedule = _interval_schedule(policy=MisfirePolicy.run_now(grace=GracePeriod.seconds(30)))
     original = OccurrencePlanner().current(schedule)
     assert original is not None
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=5)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=5))
 
     assert len(result.requests) == 1
     request = result.requests[0]
@@ -206,9 +187,7 @@ def test_t_mis_027_existing_durable_request_wins_over_later_skip_policy() -> Non
         uow.requests.add(preexisting)
         uow.commit()
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert result.requests == (preexisting,)
     assert result.misfire_decisions == ()
@@ -221,9 +200,7 @@ def test_t_mis_028_catch_up_isolated_without_mutating_schedule() -> None:
     schedule = _interval_schedule(policy=MisfirePolicy.catch_up())
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert result.requests == ()
     assert result.unsupported_policy_schedules == (ScheduleId("schedule-1"),)
@@ -239,9 +216,7 @@ def test_t_mis_029_coalesce_isolated_without_mutating_schedule() -> None:
     schedule = _interval_schedule(policy=MisfirePolicy.coalesce())
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert result.requests == ()
     assert result.unsupported_policy_schedules == (ScheduleId("schedule-1"),)

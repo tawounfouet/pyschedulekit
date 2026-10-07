@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Protocol
 
+from pyschedulekit.domain.claim import ExecutionClaim
 from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
@@ -43,6 +44,10 @@ class DuplicateExecutionError(PersistenceConflictError):
 
 class DuplicateAttemptError(PersistenceConflictError):
     """Raised when an Attempt duplicates an existing ID or attempt number."""
+
+
+class DuplicateExecutionClaimError(PersistenceConflictError):
+    """Raised when an Execution already owns a persisted claim row."""
 
 
 class DuplicateOutboxMessageError(PersistenceConflictError):
@@ -127,6 +132,16 @@ class AttemptRepository(Protocol):
     def list_for_execution(self, execution_id: ExecutionId) -> list[Attempt]: ...
 
 
+class ExecutionClaimRepository(Protocol):
+    """Transactional repository for durable Execution ownership claims."""
+
+    def add(self, claim: ExecutionClaim) -> None: ...
+
+    def get(self, execution_id: ExecutionId) -> ExecutionClaim | None: ...
+
+    def save(self, claim: ExecutionClaim) -> None: ...
+
+
 class OutboxRepository(Protocol):
     """Transactional repository for durable outbox messages."""
 
@@ -146,6 +161,7 @@ class UnitOfWork(Protocol):
     requests: ExecutionRequestRepository
     executions: ExecutionRepository
     attempts: AttemptRepository
+    claims: ExecutionClaimRepository
     outbox: OutboxRepository
 
     def __enter__(self) -> UnitOfWork: ...

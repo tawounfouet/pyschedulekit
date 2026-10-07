@@ -256,9 +256,7 @@ def test_t_e2e_009_unresolved_queued_execution_can_run_after_target_registration
 def test_t_e2e_010_cron_trigger_runs_through_public_scheduler() -> None:
     from pyschedulekit import Instant
 
-    clock = MutableClock(
-        Instant(datetime(2026, 1, 5, 7, 59, tzinfo=UTC))
-    )
+    clock = MutableClock(Instant(datetime(2026, 1, 5, 7, 59, tzinfo=UTC)))
     scheduler = Scheduler(clock=clock)
     calls: list[str] = []
 

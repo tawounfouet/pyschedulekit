@@ -8,6 +8,7 @@ from pyschedulekit.domain.execution import (
     Execution,
     ExecutionId,
     ExecutionPolicySnapshot,
+    ExecutionState,
     Failure,
 )
 from pyschedulekit.domain.execution_request import (
@@ -197,7 +198,7 @@ class ExecutionService:
             if execution.is_terminal:
                 return execution
 
-            if execution.state.value in ("queued", "retry_wait"):
+            if execution.state in (ExecutionState.QUEUED, ExecutionState.RETRY_WAIT):
                 execution.cancel(completed_at=requested_at)
             else:
                 execution.request_cancellation(requested_at=requested_at)

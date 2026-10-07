@@ -13,7 +13,7 @@ from pyschedulekit.domain.schedule import (
     ScheduleId,
     TargetRef,
 )
-from pyschedulekit.domain.time import Duration, Instant
+from pyschedulekit.domain.time import Duration, GracePeriod, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 
@@ -210,7 +210,7 @@ def test_t_rec_006_catch_up_reuses_existing_request_and_creates_missing_ones() -
 def test_t_rec_007_advanced_policy_does_not_expand_backlog_inside_grace() -> None:
     factory = InMemoryUnitOfWorkFactory()
     policy = MisfirePolicy.catch_up(
-        grace=Duration.minutes(10),  # type: ignore[arg-type]
+        grace=GracePeriod(Duration.minutes(10)),
         max_occurrences=10,
     )
     schedule = _schedule(policy=policy)

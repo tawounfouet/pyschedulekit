@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-19 complete — next: LOT-20 Graceful Shutdown**
+**LOT-20 complete — next: LOT-21 SQL Persistence Foundations**
 
 Completed:
 
@@ -30,6 +30,7 @@ Completed:
 - LOT-17 — Cancellation Refinements
 - LOT-18 — Continuous Scheduler Loop
 - LOT-19 — Wake-up Strategy
+- LOT-20 — Graceful Shutdown
 
 The implementation follows a domain-first roadmap:
 
@@ -420,6 +421,28 @@ scheduler.run_forever(
 ```
 
 The older `poll_interval=` argument remains accepted as a compatibility alias for `max_sleep`.
+
+## Graceful shutdown
+
+LOT-20 separates loop stopping from runtime draining:
+
+```python
+scheduler.shutdown(
+    mode=ShutdownMode.WAIT,
+    timeout=Duration.seconds(30),
+)
+```
+
+or cooperative cancellation:
+
+```python
+scheduler.shutdown(
+    mode=ShutdownMode.CANCEL,
+    timeout=Duration.seconds(30),
+)
+```
+
+The shutdown gate prevents new Attempts from starting once drain begins. WAIT lets active work finish; CANCEL signals LOT-17 cancellation tokens. A timeout returns a structured result containing any Execution IDs still active.
 
 ## Package shape
 

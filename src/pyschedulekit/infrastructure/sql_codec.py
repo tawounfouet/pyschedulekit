@@ -217,9 +217,7 @@ def _decode_trigger(payload: dict[str, Any]) -> Trigger:
             timezone=Timezone(cast(str, payload["timezone"])),
             dialect=CronDialect(cast(str, payload["dialect"])),
             ambiguous_time=CronAmbiguousTimePolicy(cast(str, payload["ambiguous_time"])),
-            nonexistent_time=CronNonexistentTimePolicy(
-                cast(str, payload["nonexistent_time"])
-            ),
+            nonexistent_time=CronNonexistentTimePolicy(cast(str, payload["nonexistent_time"])),
         )
 
     raise ValueError(f"Unsupported persisted Trigger kind: {kind!r}.")
@@ -236,9 +234,7 @@ def _encode_misfire(policy: MisfirePolicy) -> dict[str, Any]:
 def _decode_misfire(payload: dict[str, Any]) -> MisfirePolicy:
     return MisfirePolicy(
         action=MisfirePolicyAction(cast(str, payload["action"])),
-        grace=GracePeriod(
-            Duration.seconds(cast(float, payload["grace_seconds"]))
-        ),
+        grace=GracePeriod(Duration.seconds(cast(float, payload["grace_seconds"]))),
         max_occurrences=cast(int, payload["max_occurrences"]),
     )
 
@@ -277,9 +273,7 @@ def _encode_retry(policy: RetryPolicy) -> dict[str, Any]:
             "max_delay_seconds": _duration_seconds(policy.backoff.max_delay),
         }
     else:
-        raise TypeError(
-            f"Unsupported retry backoff for SQL persistence: {type(policy.backoff)!r}."
-        )
+        raise TypeError(f"Unsupported retry backoff for SQL persistence: {type(policy.backoff)!r}.")
 
     return {
         "max_attempts": policy.max_attempts,
@@ -295,14 +289,10 @@ def _decode_retry(payload: dict[str, Any]) -> RetryPolicy:
     if kind == "none":
         backoff = NoBackoff()
     elif kind == "fixed":
-        backoff = FixedBackoff(
-            Duration.seconds(cast(float, backoff_payload["delay_seconds"]))
-        )
+        backoff = FixedBackoff(Duration.seconds(cast(float, backoff_payload["delay_seconds"])))
     elif kind == "exponential":
         backoff = ExponentialBackoff(
-            initial_delay=Duration.seconds(
-                cast(float, backoff_payload["initial_delay_seconds"])
-            ),
+            initial_delay=Duration.seconds(cast(float, backoff_payload["initial_delay_seconds"])),
             multiplier=cast(float, backoff_payload["multiplier"]),
             max_delay=_decode_optional_duration(backoff_payload.get("max_delay_seconds")),
         )
@@ -312,9 +302,7 @@ def _decode_retry(payload: dict[str, Any]) -> RetryPolicy:
     return RetryPolicy(
         max_attempts=cast(int, payload["max_attempts"]),
         backoff=backoff,
-        retryable_categories=frozenset(
-            cast(list[str], payload["retryable_categories"])
-        ),
+        retryable_categories=frozenset(cast(list[str], payload["retryable_categories"])),
     )
 
 

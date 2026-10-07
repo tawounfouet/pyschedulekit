@@ -54,9 +54,7 @@ def test_t_rec_001_catch_up_materializes_bounded_oldest_first_batch() -> None:
     factory = InMemoryUnitOfWorkFactory()
     _persist(factory, _schedule(policy=MisfirePolicy.catch_up(max_occurrences=3)))
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert [request.occurrence_key.scheduled_at for request in result.requests] == [
         _instant(),
@@ -99,9 +97,7 @@ def test_t_rec_003_coalesce_materializes_only_latest_due_occurrence() -> None:
     factory = InMemoryUnitOfWorkFactory()
     _persist(factory, _schedule(policy=MisfirePolicy.coalesce(max_occurrences=10)))
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert [request.occurrence_key.scheduled_at for request in result.requests] == [
         _instant(minute=30)
@@ -128,9 +124,7 @@ def test_t_rec_004_coalesce_fails_closed_when_scan_limit_is_exceeded() -> None:
     factory = InMemoryUnitOfWorkFactory()
     _persist(factory, _schedule(policy=MisfirePolicy.coalesce(max_occurrences=3)))
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert result.requests == ()
     assert result.recovery_limit_schedules == (ScheduleId("schedule-1"),)
@@ -163,9 +157,7 @@ def test_t_rec_005_coalesce_preserves_preexisting_durable_intent() -> None:
         uow.requests.add(existing)
         uow.commit()
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert [request.occurrence_key.scheduled_at for request in result.requests] == [
         _instant(),
@@ -193,9 +185,7 @@ def test_t_rec_006_catch_up_reuses_existing_request_and_creates_missing_ones() -
         uow.requests.add(existing)
         uow.commit()
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=35)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
     assert len(result.requests) == 4
     assert result.requests[0] == existing
@@ -216,9 +206,7 @@ def test_t_rec_007_advanced_policy_does_not_expand_backlog_inside_grace() -> Non
     schedule = _schedule(policy=policy)
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=5)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=5))
 
     assert len(result.requests) == 1
     assert result.recovery_records == ()

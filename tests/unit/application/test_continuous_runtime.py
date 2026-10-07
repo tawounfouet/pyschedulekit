@@ -5,12 +5,14 @@ from threading import Event, Thread
 
 import pytest
 
+from pyschedulekit.application.observability import Observer
 from pyschedulekit.application.run_pending import RunPendingResult
 from pyschedulekit.application.runtime import (
     ContinuousSchedulerLoop,
     RuntimeAlreadyRunningError,
 )
 from pyschedulekit.domain.time import Duration, Instant
+from pyschedulekit.infrastructure.observability import InMemoryObservationSink
 
 
 def _empty_result() -> RunPendingResult:
@@ -133,3 +135,28 @@ def test_t_runtime_004_stop_request_is_idempotent() -> None:
     runtime.request_stop()
 
     assert runtime.stop_requested is True
+
+
+def test_t_runtime_005_emits_cycle_and_wait_observations() -> None:
+    sink = InMemoryObservationSink()
+    service = StubRunPendingService()
+    waiter = StopAfterWaits(waits=1)
+    runtime = ContinuousSchedulerLoop(
+        run_pending_service=service,
+        waiter=waiter,
+        wakeup_planner=StubWakeUpPlanner(),
+        observer=Observer(sink),
+    )
+    waiter.runtime = runtime
+
+    runtime.run_forever(
+        max_sleep=Duration.seconds(2),
+        limit=3,
+    )
+
+    cycles = sink.by_name("runtime.cycle.completed")
+    waits = sink.by_name("runtime.wait.planned")
+    assert len(cycles) == 1
+    assert cycles[0].attribute("cycle_number") == 1
+    assert len(waits) == 1
+    assert waits[0].attribute("delay_seconds") == 2

@@ -18,6 +18,7 @@ from pyschedulekit.domain.schedule import (
 )
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
+from pyschedulekit.infrastructure.sql_codec import encode_schedule_definition
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.ports.persistence import ReferentialIntegrityError
 
@@ -327,7 +328,6 @@ def _create_v1_database(database) -> None:
         )
 
         legacy = _schedule("legacy-schedule")
-        from pyschedulekit.infrastructure.sql_codec import encode_schedule_definition
 
         connection.execute(
             """

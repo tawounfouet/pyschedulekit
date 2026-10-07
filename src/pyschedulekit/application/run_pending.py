@@ -185,10 +185,7 @@ class RunPendingService:
         )
 
     def _shutdown_requested(self) -> bool:
-        return (
-            self._shutdown_coordinator is not None
-            and self._shutdown_coordinator.is_requested
-        )
+        return self._shutdown_coordinator is not None and self._shutdown_coordinator.is_requested
 
     def _list_admission_candidates(self, *, limit: int) -> list[ExecutionRequest]:
         with self._uow_factory() as uow:

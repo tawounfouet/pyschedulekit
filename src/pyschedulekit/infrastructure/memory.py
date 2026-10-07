@@ -364,6 +364,24 @@ class InMemoryExecutionRequestRepository:
                 for request in self._store._execution_requests.values()
             )
 
+    def list_for_reconciliation(self, *, limit: int) -> list[ExecutionRequest]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            committed = [
+                _clone_request(request)
+                for request in self._store._execution_requests.values()
+            ]
+
+        committed.sort(
+            key=lambda item: (
+                item.created_at.value,
+                item.id.value,
+            )
+        )
+        return committed[:limit]
+
     def _validate_commit_locked(self) -> None:
         for request_id in self._new:
             request = self._tracked[request_id]

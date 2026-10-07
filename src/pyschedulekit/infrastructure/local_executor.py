@@ -198,7 +198,9 @@ class LocalExecutor:
                     raise RuntimeError(
                         "Cancellable target requires a cancellation token."
                     )
-                value = prepared.callable(cancellation_token)
+                value = prepared.callable(
+                    cancellation_token=cancellation_token,
+                )
             else:
                 value = prepared.callable()
         except ExecutionCancelledError:

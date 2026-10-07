@@ -7,12 +7,12 @@ from dataclasses import dataclass
 from pyschedulekit.application.execution_runner import ExecutionRunResult, ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
-from pyschedulekit.domain.execution import ExecutionId, ExecutionState
-from pyschedulekit.domain.execution_request import RequestId
+from pyschedulekit.domain.execution import Execution, ExecutionId
+from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.executor import ExecutorError, TargetResolutionError
-from pyschedulekit.ports.persistence import PersistenceConflictError
+from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
 
 
@@ -52,11 +52,13 @@ class RunPendingService:
         self,
         *,
         clock: Clock,
+        uow_factory: UnitOfWorkFactory,
         scheduler_engine: SchedulerEngine,
         execution_service: ExecutionService,
         execution_runner: ExecutionRunner,
     ) -> None:
         self._clock = clock
+        self._uow_factory = uow_factory
         self._scheduler_engine = scheduler_engine
         self._execution_service = execution_service
         self._execution_runner = execution_runner
@@ -64,34 +66,43 @@ class RunPendingService:
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking cycle without sleeping or draining backlog."""
 
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
         evaluation_now = self._clock.now()
         evaluation = self._scheduler_engine.evaluate(
             evaluation_now=evaluation_now,
             limit=limit,
         )
 
-        executions: list[ExecutionRunResult] = []
-        skipped: list[ExecutionId] = []
         errors: list[RunPendingError] = []
+        skipped: list[ExecutionId] = []
 
-        for request in evaluation.requests:
+        for request in self._list_pending_requests(limit=limit):
             try:
-                execution = self._execution_service.dispatch(
+                self._execution_service.dispatch(
                     request_id=request.id,
                     created_at=evaluation_now,
                 )
+            except PersistenceConflictError:
+                errors.append(
+                    RunPendingError(
+                        request_id=request.id,
+                        code="persistence.conflict",
+                        message="Execution dispatch conflicted with committed state.",
+                    )
+                )
 
-                if execution.state is not ExecutionState.QUEUED:
-                    skipped.append(execution.id)
-                    continue
-
+        executions: list[ExecutionRunResult] = []
+        for execution in self._list_queued_executions(limit=limit):
+            try:
                 executions.append(
                     self._execution_runner.run(execution_id=execution.id)
                 )
             except TargetResolutionError:
                 errors.append(
                     RunPendingError(
-                        request_id=request.id,
+                        request_id=execution.request_id,
                         code="executor.target_resolution",
                         message="Execution target could not be resolved.",
                     )
@@ -99,7 +110,7 @@ class RunPendingService:
             except ExecutorError:
                 errors.append(
                     RunPendingError(
-                        request_id=request.id,
+                        request_id=execution.request_id,
                         code="executor.error",
                         message="Executor control-plane operation failed.",
                     )
@@ -107,7 +118,7 @@ class RunPendingService:
             except PersistenceConflictError:
                 errors.append(
                     RunPendingError(
-                        request_id=request.id,
+                        request_id=execution.request_id,
                         code="persistence.conflict",
                         message="Execution lifecycle update conflicted with committed state.",
                     )
@@ -121,3 +132,11 @@ class RunPendingService:
             schedule_conflicts=evaluation.conflicts,
             errors=tuple(errors),
         )
+
+    def _list_pending_requests(self, *, limit: int) -> list[ExecutionRequest]:
+        with self._uow_factory() as uow:
+            return uow.requests.list_pending(limit=limit)
+
+    def _list_queued_executions(self, *, limit: int) -> list[Execution]:
+        with self._uow_factory() as uow:
+            return uow.executions.list_queued(limit=limit)

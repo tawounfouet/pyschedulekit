@@ -8,6 +8,15 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Dependency-neutral Observation and ObservationSink public contracts.
+- Best-effort Observer isolation so telemetry failures never break scheduling.
+- Thread-safe InMemoryObservationSink reference adapter.
+- Structured scheduler.cycle.completed aggregate cycle observations.
+- Structured execution.attempt.completed lifecycle observations.
+- Continuous-runtime cycle and wake-delay observations.
+- Public Scheduler(observation_sink=...) integration.
+- LOT-30 unit, runtime, and end-to-end observability qualification.
+
 - Schedule-scoped durable materialization leases for multi-worker SchedulerEngine ownership.
 - Monotonic materialization fencing generations and stale-owner rollback.
 - Atomic Schedule checkpoint / ExecutionRequest / lease-release commits.

@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-29 complete — next: LOT-30 Observability**
+**LOT-30 complete — next: LOT-31 Operational API**
 
 Completed:
 
@@ -40,6 +40,7 @@ Completed:
 - LOT-27 — Multi-worker Admission
 - LOT-28 — Lease / Fencing Refinements
 - LOT-29 — Distributed Scheduler Coordination
+- LOT-30 — Observability
 
 The implementation follows a domain-first roadmap:
 
@@ -630,6 +631,43 @@ Ownership is scoped by `ScheduleId`, so independent schedules remain horizontall
 Each scheduling cycle also scans for expired Execution leases, allowing an already-running worker to recover crashed foreign work without requiring a restart.
 
 SQLite cross-process wake-up remains bounded by `max_sleep`; correctness does not depend on push notifications.
+
+## Observability
+
+LOT-30 adds dependency-neutral structured observations without making telemetry part of scheduler correctness.
+
+Applications may provide any object implementing `ObservationSink`:
+
+```python
+from pyschedulekit import InMemoryObservationSink, Scheduler
+
+sink = InMemoryObservationSink()
+scheduler = Scheduler(observation_sink=sink)
+```
+
+Core observation names:
+
+```text
+scheduler.cycle.completed
+execution.attempt.completed
+runtime.cycle.completed
+runtime.wait.planned
+```
+
+Cycle observations expose bounded aggregate counts such as materialized requests, executions, successes, failures, retries, coordination denials, admission outcomes, and control-plane errors. Attempt observations expose normalized terminal state, retry scheduling, attempt number, and failure category.
+
+Telemetry delivery is best effort:
+
+```text
+scheduler correctness
+        │
+        ├── durable state / execution
+        │
+        └── observation sink
+                └── failure is isolated
+```
+
+PyScheduleKit intentionally does not require Prometheus, OpenTelemetry, or a logging backend. Vendor-specific metrics, logs, and traces can be implemented as adapters over the stable structured observation port.
 
 ## Package shape
 

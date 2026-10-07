@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import AdmissionResult, ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
+from pyschedulekit.application.observability import Observer
 from pyschedulekit.application.recovery import (
     CrashRecoveryIncompleteError,
     CrashRecoveryService,
@@ -101,6 +102,7 @@ class RunPendingService:
         claim_coordinator: ExecutionClaimCoordinator | None = None,
         distributed_recovery_service: CrashRecoveryService | None = None,
         shutdown_coordinator: ShutdownCoordinator | None = None,
+        observer: Observer | None = None,
     ) -> None:
         self._clock = clock
         self._uow_factory = uow_factory
@@ -110,6 +112,7 @@ class RunPendingService:
         self._claim_coordinator = claim_coordinator
         self._distributed_recovery_service = distributed_recovery_service
         self._shutdown_coordinator = shutdown_coordinator
+        self._observer = observer or Observer()
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking cycle without sleeping or draining backlog."""
@@ -119,7 +122,7 @@ class RunPendingService:
 
         if self._shutdown_requested():
             evaluation_now = self._clock.now()
-            return RunPendingResult(
+            result = RunPendingResult(
                 evaluation_now=evaluation_now,
                 materialized_request_ids=(),
                 executions=(),
@@ -129,6 +132,8 @@ class RunPendingService:
                 admissions=(),
                 errors=(),
             )
+            self._record_cycle(result, shutdown_requested=True)
+            return result
 
         if self._distributed_recovery_service is not None:
             recovery = self._distributed_recovery_service.recover(limit=limit)
@@ -217,7 +222,7 @@ class RunPendingService:
                         message="Execution lifecycle update conflicted with committed state.",
                     )
                 )
-        return RunPendingResult(
+        result = RunPendingResult(
             evaluation_now=evaluation_now,
             materialized_request_ids=tuple(request.id for request in evaluation.requests),
             executions=tuple(executions),
@@ -228,6 +233,34 @@ class RunPendingService:
             errors=tuple(errors),
             claim_denied_execution_ids=tuple(claim_denied),
             materialization_denied_schedule_ids=evaluation.coordination_denied_schedules,
+        )
+        self._record_cycle(result)
+        return result
+
+    def _record_cycle(
+        self,
+        result: RunPendingResult,
+        *,
+        shutdown_requested: bool = False,
+    ) -> None:
+        self._observer.record(
+            name="scheduler.cycle.completed",
+            recorded_at=result.evaluation_now,
+            materialized_requests=len(result.materialized_request_ids),
+            executions=len(result.executions),
+            succeeded=result.succeeded,
+            failed=result.failed,
+            retry_scheduled=result.retry_scheduled,
+            schedule_conflicts=len(result.schedule_conflicts),
+            recovery_limit_schedules=len(result.recovery_limit_schedules),
+            admissions=len(result.admissions),
+            queued=len(result.queued_request_ids),
+            dropped=len(result.dropped_request_ids),
+            admission_lock_denied=len(result.admission_lock_denied_request_ids),
+            claim_denied=len(result.claim_denied_execution_ids),
+            materialization_denied=len(result.materialization_denied_schedule_ids),
+            errors=len(result.errors),
+            shutdown_requested=shutdown_requested,
         )
 
     def _release_unstarted_claim(

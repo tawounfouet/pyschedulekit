@@ -83,6 +83,8 @@ from pyschedulekit.ports.persistence import (
     OutboxRepository,
     PersistenceConflictError,
     ReferentialIntegrityError,
+    RetentionCleanupStats,
+    RetentionRepository,
     ScheduleAdmissionLockRepository,
     ScheduleMaterializationLeaseRepository,
     ScheduleRepository,
@@ -965,8 +967,8 @@ class SqliteExecutionRepository:
                 id, request_id, target_kind, target_reference, created_at,
                 policy_json, idempotency_key, state, version, attempt_count,
                 active_attempt_number, next_attempt_at,
-                cancellation_requested_at, result_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                cancellation_requested_at, result_json, completed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             self._values(execution),
         )
@@ -981,7 +983,7 @@ class SqliteExecutionRepository:
                 created_at = ?, policy_json = ?, idempotency_key = ?,
                 state = ?, version = ?, attempt_count = ?,
                 active_attempt_number = ?, next_attempt_at = ?,
-                cancellation_requested_at = ?, result_json = ?
+                cancellation_requested_at = ?, result_json = ?, completed_at = ?
             WHERE id = ? AND version = ?
             """,
             (*values[1:], values[0], expected),
@@ -1005,6 +1007,9 @@ class SqliteExecutionRepository:
             _instant_text(execution.next_attempt_at),
             _instant_text(execution.cancellation_requested_at),
             encode_execution_result(execution.result),
+            _instant_text(
+                execution.result.completed_at if execution.result is not None else None
+            ),
         )
 
     def _after_commit(self) -> None:

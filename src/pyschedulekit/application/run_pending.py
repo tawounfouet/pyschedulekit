@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pyschedulekit.application.concurrency import AdmissionResult, ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
+from pyschedulekit.domain.concurrency import ConcurrencyDecisionAction
 from pyschedulekit.domain.execution import Execution
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.schedule import ScheduleId
@@ -51,7 +52,7 @@ class RunPendingResult:
         return tuple(
             admission.request_id
             for admission in self.admissions
-            if admission.action.value == "queue"
+            if admission.action is ConcurrencyDecisionAction.QUEUE
         )
 
     @property
@@ -59,7 +60,7 @@ class RunPendingResult:
         return tuple(
             admission.request_id
             for admission in self.admissions
-            if admission.action.value == "drop"
+            if admission.action is ConcurrencyDecisionAction.DROP
         )
 
 

@@ -76,9 +76,7 @@ class CrashRecoveryIncompleteError(RuntimeError):
     """Raised when persisted RUNNING state remains after a recovery pass."""
 
     def __init__(self, result: CrashRecoveryResult) -> None:
-        super().__init__(
-            "Crash recovery did not reconcile every persisted RUNNING Execution."
-        )
+        super().__init__("Crash recovery did not reconcile every persisted RUNNING Execution.")
         self.result = result
 
 
@@ -159,9 +157,7 @@ class CrashRecoveryService:
             cancelled_execution_ids=tuple(cancelled),
             skipped_execution_ids=tuple(skipped),
             errors=tuple(errors),
-            remaining_running_execution_ids=tuple(
-                execution.id for execution in remaining
-            ),
+            remaining_running_execution_ids=tuple(execution.id for execution in remaining),
         )
 
     def _recover_one(
@@ -182,9 +178,7 @@ class CrashRecoveryService:
                     message="RUNNING Execution has no active Attempt number.",
                 )
 
-            attempt = uow.attempts.get(
-                AttemptId.for_execution(execution.id, active_number)
-            )
+            attempt = uow.attempts.get(AttemptId.for_execution(execution.id, active_number))
             if attempt is None:
                 raise CrashRecoveryConsistencyError(
                     code="recovery.missing_attempt",

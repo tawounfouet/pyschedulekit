@@ -63,8 +63,7 @@ For running work, the returned Execution records a durable cancellation request 
 A regular target remains unchanged:
 
 ```python
-def job() -> None:
-    ...
+def job() -> None: ...
 ```
 
 A cooperative target declares exactly one required argument named `cancellation_token`:

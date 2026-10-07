@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Schedule-scoped durable materialization leases for multi-worker SchedulerEngine ownership.
+- Monotonic materialization fencing generations and stale-owner rollback.
+- Atomic Schedule checkpoint / ExecutionRequest / lease-release commits.
+- Explicit materialization coordination denial in SchedulerEvaluationResult and RunPendingResult.
+- Ongoing lease-aware crash recovery during every scheduling cycle.
+- SQLite schema v7 with schedule_materialization_leases.
+- LOT-29 domain, SQLite, fencing, migration, and no-restart recovery qualification.
+
 - Renewable Execution leases spanning the full RUNNING Attempt.
 - Monotonic fencing generation for Execution claims and Schedule admission locks.
 - Execution lease heartbeat with configurable interval.

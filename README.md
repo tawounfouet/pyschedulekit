@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-21 complete — next: LOT-22 Transactions / DB Constraints**
+**LOT-22 complete — next: LOT-23 Crash Recovery**
 
 Completed:
 
@@ -32,6 +32,7 @@ Completed:
 - LOT-19 — Wake-up Strategy
 - LOT-20 — Graceful Shutdown
 - LOT-21 — SQL Persistence Foundations
+- LOT-22 — Transactions / DB Constraints
 
 The implementation follows a domain-first roadmap:
 
@@ -460,6 +461,22 @@ scheduler = Scheduler(
 Runtime query fields remain relational SQL columns, while immutable definitions and policies use versioned JSON snapshots. The adapter preserves the existing identity-map, write-set, commit/rollback, and optimistic-version semantics.
 
 LOT-22 will harden database constraints and transaction guarantees.
+
+## Transaction and database constraints
+
+LOT-22 hardens SQLite as an integrity boundary:
+
+```text
+Domain invariants
+        +
+UnitOfWork semantics
+        +
+SQLite FK / UNIQUE / CHECK
+        +
+versioned compare-and-swap UPDATE
+```
+
+Schema v1 databases from LOT-21 migrate automatically to schema v2. Foreign keys are enabled on every connection, natural execution identities are unique in the database, and stale updates include the expected version in the SQL WHERE predicate.
 
 ## Package shape
 

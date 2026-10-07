@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 from types import TracebackType
-from typing import cast
+from typing import NoReturn, cast
 from uuid import uuid4
 
 from pyschedulekit.domain.execution import (
@@ -49,6 +49,7 @@ from pyschedulekit.infrastructure.sql_codec import (
 from pyschedulekit.infrastructure.sqlite_schema import initialize_sqlite_schema
 from pyschedulekit.ports.persistence import (
     AttemptRepository,
+    DatabaseInvariantError,
     DuplicateAttemptError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
@@ -57,6 +58,7 @@ from pyschedulekit.ports.persistence import (
     ExecutionRequestRepository,
     OptimisticConcurrencyError,
     PersistenceConflictError,
+    ReferentialIntegrityError,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
@@ -74,6 +76,51 @@ def _optional_instant(value: object) -> Instant | None:
 
 def _optional_duration(value: object) -> Duration | None:
     return None if value is None else Duration.seconds(cast(float, value))
+
+
+def _raise_integrity_error(exc: sqlite3.IntegrityError) -> NoReturn:
+    message = str(exc)
+
+    if "UNIQUE constraint failed: schedules.id" in message:
+        raise DuplicateScheduleError("Schedule identity already exists.") from exc
+
+    if "UNIQUE constraint failed: execution_requests." in message:
+        raise DuplicateExecutionRequestError(
+            "ExecutionRequest identity or OccurrenceKey already exists."
+        ) from exc
+
+    if "UNIQUE constraint failed: executions." in message:
+        raise DuplicateExecutionError(
+            "Execution identity, RequestId, or idempotency key already exists."
+        ) from exc
+
+    if "UNIQUE constraint failed: attempts." in message:
+        raise DuplicateAttemptError(
+            "Attempt identity or execution attempt number already exists."
+        ) from exc
+
+    if "FOREIGN KEY constraint failed" in message:
+        raise ReferentialIntegrityError(
+            "SQLite rejected a scheduler write because a referenced record does not exist."
+        ) from exc
+
+    if "CHECK constraint failed" in message:
+        raise DatabaseInvariantError(
+            "SQLite rejected a scheduler write because a database invariant failed."
+        ) from exc
+
+    raise PersistenceConflictError("SQLite rejected a scheduler persistence write.") from exc
+
+
+def _require_cas_update(
+    cursor: sqlite3.Cursor,
+    *,
+    entity: str,
+) -> None:
+    if cursor.rowcount != 1:
+        raise OptimisticConcurrencyError(
+            f"{entity} changed concurrently before the compare-and-swap update."
+        )
 
 
 def _schedule_from_row(row: sqlite3.Row) -> Schedule:
@@ -272,12 +319,13 @@ class SqliteScheduleRepository:
             )
         for schedule_id in self._dirty:
             schedule = self._tracked[schedule_id]
-            self._connection.execute(
+            expected = self._expected_versions[schedule_id]
+            cursor = self._connection.execute(
                 """
                 UPDATE schedules
                 SET definition_json = ?, state = ?, revision = ?,
                     persistence_version = ?, next_run_time = ?
-                WHERE id = ?
+                WHERE id = ? AND persistence_version = ?
                 """,
                 (
                     encode_schedule_definition(schedule.definition),
@@ -286,8 +334,10 @@ class SqliteScheduleRepository:
                     schedule.persistence_version.value,
                     _instant_text(schedule.next_run_time),
                     schedule.id.value,
+                    expected.value,
                 ),
             )
+            _require_cas_update(cursor, entity=f"Schedule {schedule.id.value!r}")
 
     def _after_commit(self) -> None:
         for schedule_id in self._new | self._dirty:
@@ -482,14 +532,15 @@ class SqliteExecutionRequestRepository:
             )
         for request_id in self._dirty:
             request = self._tracked[request_id]
-            self._connection.execute(
+            expected = self._expected_versions[request_id]
+            cursor = self._connection.execute(
                 """
                 UPDATE execution_requests
                 SET schedule_id = ?, schedule_revision = ?, scheduled_at = ?,
                     target_kind = ?, target_reference = ?, created_at = ?,
                     concurrency_json = ?, retry_json = ?, timeout_seconds = ?,
                     state = ?, version = ?
-                WHERE id = ?
+                WHERE id = ? AND version = ?
                 """,
                 (
                     request.occurrence_key.schedule_id.value,
@@ -504,8 +555,10 @@ class SqliteExecutionRequestRepository:
                     request.state.value,
                     request.version,
                     request.id.value,
+                    expected,
                 ),
             )
+            _require_cas_update(cursor, entity=f"ExecutionRequest {request.id.value!r}")
 
     def _after_commit(self) -> None:
         for request_id in self._new | self._dirty:
@@ -735,7 +788,8 @@ class SqliteExecutionRepository:
 
     def _update(self, execution: Execution) -> None:
         values = self._values(execution)
-        self._connection.execute(
+        expected = self._expected_versions[execution.id]
+        cursor = self._connection.execute(
             """
             UPDATE executions
             SET request_id = ?, target_kind = ?, target_reference = ?,
@@ -743,10 +797,11 @@ class SqliteExecutionRepository:
                 state = ?, version = ?, attempt_count = ?,
                 active_attempt_number = ?, next_attempt_at = ?,
                 cancellation_requested_at = ?, result_json = ?
-            WHERE id = ?
+            WHERE id = ? AND version = ?
             """,
-            (*values[1:], values[0]),
+            (*values[1:], values[0], expected),
         )
+        _require_cas_update(cursor, entity=f"Execution {execution.id.value!r}")
 
     @staticmethod
     def _values(execution: Execution) -> tuple[object, ...]:
@@ -902,12 +957,13 @@ class SqliteAttemptRepository:
             )
         for attempt_id in self._dirty:
             attempt = self._tracked[attempt_id]
-            self._connection.execute(
+            expected = self._expected_versions[attempt_id]
+            cursor = self._connection.execute(
                 """
                 UPDATE attempts
                 SET execution_id = ?, number = ?, started_at = ?,
                     state = ?, result_json = ?, version = ?
-                WHERE id = ?
+                WHERE id = ? AND version = ?
                 """,
                 (
                     attempt.execution_id.value,
@@ -917,8 +973,10 @@ class SqliteAttemptRepository:
                     encode_attempt_result(attempt.result),
                     attempt.version,
                     attempt.id.value,
+                    expected,
                 ),
             )
+            _require_cas_update(cursor, entity=f"Attempt {attempt.id.value!r}")
 
     def _after_commit(self) -> None:
         for attempt_id in self._new | self._dirty:
@@ -984,9 +1042,7 @@ class SqliteUnitOfWork:
             self._connection.commit()
         except sqlite3.IntegrityError as exc:
             self._connection.rollback()
-            raise PersistenceConflictError(
-                "SQLite rejected a scheduler persistence write."
-            ) from exc
+            _raise_integrity_error(exc)
         except Exception:
             self._connection.rollback()
             raise
@@ -1038,5 +1094,6 @@ class SqliteUnitOfWorkFactory:
             timeout=30.0,
         )
         connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA busy_timeout = 30000")
         return connection

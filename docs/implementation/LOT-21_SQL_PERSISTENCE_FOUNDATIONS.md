@@ -307,4 +307,4 @@ LOT-21 does not yet implement:
 
 ## Next
 
-`LOT-22 — Transactions / DB Constraints`
+`LOT-22 — Transactions / DB Constraints` (implemented: schema v2 constraints, foreign keys, CAS updates, and v1 → v2 migration)

@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- SQLite schema v2 with foreign keys, natural unique constraints, and lifecycle CHECK constraints.
+- Automatic transactional migration from LOT-21 schema v1 to schema v2.
+- SQL compare-and-swap updates for Schedule, ExecutionRequest, Execution, and Attempt versions.
+- Explicit ReferentialIntegrityError and DatabaseInvariantError persistence semantics.
+- Atomic rollback qualification for late relational constraint failures.
+- LOT-22 relational constraint and migration integration tests.
+
 - SQLite persistence adapter implementing all existing scheduler repositories and UnitOfWork ports.
 - Versioned JSON codecs for Schedule definitions, policies, results, and normalized failures.
 - Relational persistence for runtime state and wake-up query horizons.

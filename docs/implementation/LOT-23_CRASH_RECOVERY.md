@@ -321,4 +321,4 @@ LOT-23 does not implement:
 
 ## Next
 
-`LOT-24 — Reconciliation`
+`LOT-24 — Reconciliation` (implemented: bounded durable graph validation, deterministic repair, and fail-closed startup)

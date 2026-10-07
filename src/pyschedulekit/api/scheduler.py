@@ -10,6 +10,7 @@ from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
+from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.execution import Execution, ExecutionId
@@ -75,6 +76,10 @@ class Scheduler:
         self._runtime = ContinuousSchedulerLoop(
             run_pending_service=self._run_pending_service,
             waiter=EventLoopWaiter(),
+            wakeup_planner=WakeUpPlanner(
+                clock=self._clock,
+                uow_factory=self._uow_factory,
+            ),
         )
 
     def register_target(
@@ -135,6 +140,7 @@ class Scheduler:
             uow.schedules.add(schedule)
             uow.commit()
 
+        self._runtime.wake()
         return schedule.id
 
     def cancel_execution(self, execution_id: ExecutionId | str) -> Execution:
@@ -149,6 +155,7 @@ class Scheduler:
         )
         if not execution.is_terminal:
             self._cancellation_controller.cancel(normalized.value)
+        self._runtime.wake()
         return execution
 
     @property
@@ -171,13 +178,18 @@ class Scheduler:
     def run_forever(
         self,
         *,
+        max_sleep: Duration | None = None,
         poll_interval: Duration | None = None,
         limit: int = 100,
     ) -> None:
-        """Continuously call run_pending() at a fixed polling cadence."""
+        """Continuously run with adaptive wake-up bounded by max_sleep."""
 
+        if max_sleep is not None and poll_interval is not None:
+            raise ValueError("Use either max_sleep or poll_interval, not both.")
+
+        effective_max_sleep = max_sleep or poll_interval or Duration.seconds(1)
         self._runtime.run_forever(
-            poll_interval=poll_interval or Duration.seconds(1),
+            max_sleep=effective_max_sleep,
             limit=limit,
         )
 

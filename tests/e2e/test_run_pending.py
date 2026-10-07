@@ -4,7 +4,16 @@ from datetime import UTC, datetime
 
 import pytest
 
-from pyschedulekit import CronTrigger, Duration, IntervalTrigger, Scheduler, TargetRef, Timezone
+from pyschedulekit import (
+    CronTrigger,
+    Duration,
+    GracePeriod,
+    IntervalTrigger,
+    MisfirePolicy,
+    Scheduler,
+    TargetRef,
+    Timezone,
+)
 from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.testing import MutableClock
 
@@ -293,4 +302,98 @@ def test_t_e2e_011_scheduler_rejects_conflicting_cron_timezone_metadata() -> Non
                 timezone=Timezone("Europe/Paris"),
             ),
             timezone=Timezone("UTC"),
+        )
+
+
+def test_t_e2e_012_skip_misfire_does_not_execute_late_occurrence() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[str] = []
+
+    scheduler.add_schedule(
+        id="skip-late",
+        target=lambda: calls.append("unexpected"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.skip(),
+    )
+
+    clock.advance(Duration.minutes(15))
+    result = scheduler.run_pending()
+
+    assert calls == []
+    assert result.materialized_request_ids == ()
+    assert result.executions == ()
+    assert result.unsupported_policy_schedules == ()
+
+
+def test_t_e2e_013_skip_policy_still_runs_inside_grace_period() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[str] = []
+
+    scheduler.add_schedule(
+        id="graceful-late",
+        target=lambda: calls.append("executed"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.skip(grace=GracePeriod.seconds(10 * 60)),
+    )
+
+    clock.advance(Duration.minutes(15))
+    result = scheduler.run_pending()
+
+    assert calls == ["executed"]
+    assert len(result.materialized_request_ids) == 1
+    assert result.succeeded == 1
+
+
+def test_t_e2e_014_explicit_run_now_executes_true_misfire() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[str] = []
+
+    scheduler.add_schedule(
+        id="run-late",
+        target=lambda: calls.append("executed"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.run_now(grace=GracePeriod.seconds(30)),
+    )
+
+    clock.advance(Duration.minutes(15))
+    result = scheduler.run_pending()
+
+    assert calls == ["executed"]
+    assert len(result.materialized_request_ids) == 1
+    assert result.succeeded == 1
+
+
+@pytest.mark.parametrize(
+    "policy",
+    [
+        MisfirePolicy.catch_up(),
+        MisfirePolicy.coalesce(),
+    ],
+)
+def test_t_e2e_015_public_scheduler_rejects_recovery_modes_not_implemented_yet(
+    policy: MisfirePolicy,
+) -> None:
+    scheduler = Scheduler(clock=MutableClock(_instant()))
+
+    with pytest.raises(ValueError, match="not yet supported"):
+        scheduler.add_schedule(
+            id="future-recovery",
+            target=lambda: None,
+            trigger=IntervalTrigger(
+                every=Duration.minutes(10),
+                anchor=_instant(hour=10, minute=10),
+            ),
+            misfire=policy,
         )

@@ -49,11 +49,11 @@ from pyschedulekit.infrastructure.sql_codec import (
 from pyschedulekit.infrastructure.sqlite_schema import initialize_sqlite_schema
 from pyschedulekit.ports.persistence import (
     AttemptRepository,
+    DatabaseInvariantError,
     DuplicateAttemptError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateScheduleError,
-    DatabaseInvariantError,
     ExecutionRepository,
     ExecutionRequestRepository,
     OptimisticConcurrencyError,

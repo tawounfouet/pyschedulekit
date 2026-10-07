@@ -245,9 +245,7 @@ def test_t_sql_constraints_007_v1_database_migrates_to_v2(tmp_path) -> None:
 
     connection = _raw(database)
     try:
-        version = connection.execute(
-            "SELECT version FROM pyschedulekit_schema"
-        ).fetchone()
+        version = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
         assert version is not None
         assert int(version[0]) == 2
 

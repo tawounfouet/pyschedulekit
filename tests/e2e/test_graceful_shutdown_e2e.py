@@ -140,9 +140,7 @@ def test_t_shutdown_e2e_003_timeout_reports_still_active_execution() -> None:
     )
 
     clock.advance(Duration.minutes(10))
-    runtime_thread = Thread(
-        target=lambda: scheduler.run_forever(max_sleep=Duration.seconds(30))
-    )
+    runtime_thread = Thread(target=lambda: scheduler.run_forever(max_sleep=Duration.seconds(30)))
     runtime_thread.start()
     assert started.wait(1)
 

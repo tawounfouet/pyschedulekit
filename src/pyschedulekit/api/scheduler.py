@@ -54,6 +54,7 @@ class Scheduler:
 
         self._run_pending_service = RunPendingService(
             clock=self._clock,
+            uow_factory=self._uow_factory,
             scheduler_engine=SchedulerEngine(uow_factory=self._uow_factory),
             execution_service=execution_service,
             execution_runner=execution_runner,

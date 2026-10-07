@@ -4,9 +4,9 @@ from datetime import UTC, datetime
 from threading import Event, Thread
 from time import sleep
 
-from pyschedulekit.application.execution_runner import ExecutionRunner
+from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
 from pyschedulekit.application.execution_service import ExecutionService
-from pyschedulekit.domain.execution import AttemptState, ExecutionState
+from pyschedulekit.domain.execution import AttemptState, Execution, ExecutionState
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.retry import RetryPolicy
@@ -27,7 +27,7 @@ def _dispatch(
     factory: InMemoryUnitOfWorkFactory,
     *,
     retry: RetryPolicy | None = None,
-):
+) -> tuple[ExecutionService, Execution]:
     request = ExecutionRequest(
         id=RequestId("request-cancellation"),
         occurrence_key=OccurrenceKey(
@@ -78,7 +78,7 @@ def test_t_cancel_run_002_running_cooperative_target_cancels_without_retry() -> 
     registry = PythonTargetRegistry()
     controller = InMemoryCancellationController()
     started = Event()
-    result_box = []
+    result_box: list[ExecutionRunResult] = []
 
     def target(cancellation_token: CancellationToken) -> None:
         started.set()

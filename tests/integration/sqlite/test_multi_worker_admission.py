@@ -210,7 +210,6 @@ def test_t_admission_sql_004_v4_database_migrates_through_current_schema(tmp_pat
         connection.close()
 
 
-
 def test_t_admission_sql_005_stale_generation_rolls_back_admission_write(tmp_path) -> None:
     database = tmp_path / "scheduler.db"
     factory = SqliteUnitOfWorkFactory(database)

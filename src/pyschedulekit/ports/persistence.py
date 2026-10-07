@@ -69,6 +69,8 @@ class ExecutionRequestRepository(Protocol):
 
     def list_pending(self, *, limit: int) -> list[ExecutionRequest]: ...
 
+    def list_admission_candidates(self, *, limit: int) -> list[ExecutionRequest]: ...
+
 
 class ExecutionRepository(Protocol):
     """Transactional repository for Execution aggregates."""
@@ -82,6 +84,8 @@ class ExecutionRepository(Protocol):
     def save(self, execution: Execution) -> None: ...
 
     def list_queued(self, *, limit: int) -> list[Execution]: ...
+
+    def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int: ...
 
 
 class AttemptRepository(Protocol):

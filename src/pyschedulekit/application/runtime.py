@@ -69,9 +69,7 @@ class ContinuousSchedulerLoop:
 
         with self._state_lock:
             if self._running:
-                raise RuntimeAlreadyRunningError(
-                    "Continuous scheduler runtime is already running."
-                )
+                raise RuntimeAlreadyRunningError("Continuous scheduler runtime is already running.")
             self._running = True
             self._stop_event.clear()
 
@@ -94,4 +92,3 @@ class ContinuousSchedulerLoop:
         finally:
             with self._state_lock:
                 self._running = False
-

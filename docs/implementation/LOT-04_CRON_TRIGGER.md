@@ -99,7 +99,7 @@ This behavior is tested explicitly because Cron dialect differences are a common
 A CronTrigger requires:
 
 ```python
-timezone=Timezone("Europe/Paris")
+timezone = Timezone("Europe/Paris")
 ```
 
 The Trigger converts the absolute reference Instant into that local timezone, evaluates calendar candidates there, then resolves the selected civil time back into an absolute Instant.

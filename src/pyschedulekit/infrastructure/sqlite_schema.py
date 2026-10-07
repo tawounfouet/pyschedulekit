@@ -133,6 +133,8 @@ CREATE TABLE outbox_messages (
         CHECK(length(trim(aggregate_id)) > 0),
     payload_json TEXT NOT NULL,
     created_at TEXT NOT NULL,
+    sequence INTEGER NOT NULL
+        CHECK(sequence >= 0),
     state TEXT NOT NULL
         CHECK(state IN ('pending', 'published')),
     published_at TEXT,
@@ -165,7 +167,9 @@ CREATE INDEX ix_attempts_execution_number
 
 _INDEXES_V3_SQL = """
 CREATE INDEX ix_outbox_pending
-    ON outbox_messages(state, created_at, id);
+    ON outbox_messages(
+        state, created_at, aggregate_type, aggregate_id, sequence, id
+    );
 """
 
 

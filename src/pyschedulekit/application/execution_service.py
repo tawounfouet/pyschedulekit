@@ -358,9 +358,7 @@ class ExecutionService:
         if claim_handle is None:
             return
         if claim_handle.execution_id != execution.id:
-            raise ClaimOwnershipError(
-                "Execution lease handle belongs to a different Execution."
-            )
+            raise ClaimOwnershipError("Execution lease handle belongs to a different Execution.")
 
         claim = uow.claims.get(execution.id)
         if claim is None:

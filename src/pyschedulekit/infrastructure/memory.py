@@ -5,7 +5,7 @@ from __future__ import annotations
 from threading import RLock
 from types import TracebackType
 
-from pyschedulekit.domain.claim import ExecutionClaim, ExecutionClaimState
+from pyschedulekit.domain.claim import ExecutionClaim
 from pyschedulekit.domain.execution import (
     Attempt,
     AttemptId,
@@ -40,6 +40,7 @@ from pyschedulekit.ports.persistence import (
     ExecutionRequestRepository,
     OptimisticConcurrencyError,
     OutboxRepository,
+    ReferentialIntegrityError,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,

@@ -216,3 +216,37 @@ def test_t_e2e_008_no_due_work_is_a_noop() -> None:
     assert result.errors == ()
     assert result.succeeded == 0
     assert result.failed == 0
+
+
+def test_t_e2e_009_unresolved_queued_execution_can_run_after_target_registration() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[str] = []
+
+    scheduler.add_schedule(
+        id="schedule-1",
+        target=TargetRef.python("late-registration"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+    )
+    clock.advance(Duration.minutes(10))
+
+    first = scheduler.run_pending()
+
+    assert first.executions == ()
+    assert len(first.errors) == 1
+    assert first.errors[0].code == "executor.target_resolution"
+
+    scheduler.register_target(
+        "late-registration",
+        lambda: calls.append("recovered"),
+    )
+
+    second = scheduler.run_pending()
+
+    assert calls == ["recovered"]
+    assert len(second.executions) == 1
+    assert second.executions[0].execution.state is ExecutionState.SUCCESS
+    assert second.errors == ()

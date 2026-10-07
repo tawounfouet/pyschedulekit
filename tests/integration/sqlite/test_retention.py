@@ -65,10 +65,13 @@ def test_t_retention_sql_001_cleanup_deletes_graph_in_referential_order(tmp_path
     connection = sqlite3.connect(database)
     try:
         assert connection.execute("SELECT COUNT(*) FROM schedules").fetchone()[0] == 1
-        assert connection.execute(
-            "SELECT COUNT(*) FROM executions WHERE id = ?",
-            (execution_id,),
-        ).fetchone()[0] == 0
+        assert (
+            connection.execute(
+                "SELECT COUNT(*) FROM executions WHERE id = ?",
+                (execution_id,),
+            ).fetchone()[0]
+            == 0
+        )
         assert connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0] == 0
         assert connection.execute("SELECT COUNT(*) FROM execution_requests").fetchone()[0] == 0
         assert connection.execute("SELECT COUNT(*) FROM outbox_messages").fetchone()[0] == 0
@@ -96,9 +99,7 @@ def test_t_retention_sql_002_v7_migration_backfills_completed_at(tmp_path) -> No
 
     connection = sqlite3.connect(database)
     try:
-        version = connection.execute(
-            "SELECT version FROM pyschedulekit_schema"
-        ).fetchone()
+        version = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
         completed_at = connection.execute(
             "SELECT completed_at FROM executions WHERE id = ?",
             (execution_id,),

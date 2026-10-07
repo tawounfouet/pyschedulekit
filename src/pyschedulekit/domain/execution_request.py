@@ -7,6 +7,7 @@ from hashlib import sha256
 
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.occurrence import Occurrence, OccurrenceKey
+from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Instant
 
@@ -68,6 +69,7 @@ class ExecutionRequest:
         "_created_at",
         "_id",
         "_occurrence_key",
+        "_retry_policy",
         "_state",
         "_target",
         "_version",
@@ -81,6 +83,7 @@ class ExecutionRequest:
         target: TargetRef,
         created_at: Instant,
         concurrency_policy: ConcurrencyPolicy | None = None,
+        retry_policy: RetryPolicy | None = None,
         state: ExecutionRequestState = ExecutionRequestState.PENDING,
         version: int = 0,
     ) -> None:
@@ -92,6 +95,7 @@ class ExecutionRequest:
         self._target = target
         self._created_at = created_at
         self._concurrency_policy = concurrency_policy or ConcurrencyPolicy.allow()
+        self._retry_policy = retry_policy or RetryPolicy.none()
         self._state = state
         self._version = version
 
@@ -103,6 +107,7 @@ class ExecutionRequest:
         target: TargetRef,
         created_at: Instant,
         concurrency_policy: ConcurrencyPolicy | None = None,
+        retry_policy: RetryPolicy | None = None,
     ) -> ExecutionRequest:
         return cls(
             id=RequestId.for_occurrence(occurrence.key),
@@ -110,6 +115,7 @@ class ExecutionRequest:
             target=target,
             created_at=created_at,
             concurrency_policy=concurrency_policy,
+            retry_policy=retry_policy,
         )
 
     @property
@@ -131,6 +137,10 @@ class ExecutionRequest:
     @property
     def concurrency_policy(self) -> ConcurrencyPolicy:
         return self._concurrency_policy
+
+    @property
+    def retry_policy(self) -> RetryPolicy:
+        return self._retry_policy
 
     @property
     def state(self) -> ExecutionRequestState:
@@ -198,6 +208,7 @@ class ExecutionRequest:
             and self.target == other.target
             and self.created_at == other.created_at
             and self.concurrency_policy == other.concurrency_policy
+            and self.retry_policy == other.retry_policy
             and self.state == other.state
             and self.version == other.version
         )

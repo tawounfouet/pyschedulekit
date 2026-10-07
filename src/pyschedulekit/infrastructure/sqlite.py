@@ -435,6 +435,27 @@ class SqliteExecutionRequestRepository:
     def has_pending(self) -> bool:
         return bool(self.list_pending(limit=1))
 
+    def list_for_reconciliation(self, *, limit: int) -> list[ExecutionRequest]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        rows = self._connection.execute(
+            """
+            SELECT id
+            FROM execution_requests
+            ORDER BY created_at, id
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
+        result: list[ExecutionRequest] = []
+        for row in rows:
+            request = self.get(RequestId(str(row["id"])))
+            if request is not None:
+                result.append(request)
+        return result
+
     def _list_states(
         self,
         states: tuple[ExecutionRequestState, ...],
@@ -729,6 +750,27 @@ class SqliteExecutionRepository:
             return None
         next_retry = min(retries)
         return now if next_retry <= now else next_retry
+
+    def list_for_reconciliation(self, *, limit: int) -> list[Execution]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        rows = self._connection.execute(
+            """
+            SELECT id
+            FROM executions
+            ORDER BY created_at, id
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
+        result: list[Execution] = []
+        for row in rows:
+            execution = self.get(ExecutionId(str(row["id"])))
+            if execution is not None:
+                result.append(execution)
+        return result
 
     def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int:
         ids = {

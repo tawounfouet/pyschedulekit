@@ -583,9 +583,7 @@ class Execution:
         self._state = ExecutionState.CANCELLED
         self._result = result
         self._next_attempt_at = None
-        self._cancellation_requested_at = (
-            self._cancellation_requested_at or completed_at
-        )
+        self._cancellation_requested_at = self._cancellation_requested_at or completed_at
         self._version += 1
         self._assert_invariants()
         return result

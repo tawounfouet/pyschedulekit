@@ -6,8 +6,17 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol
 
-from pyschedulekit.domain.execution import Failure, FailureCategory
 from pyschedulekit.domain.time import Duration
+
+
+class RetryFailure(Protocol):
+    """Structural failure contract consumed by retry evaluation."""
+
+    @property
+    def category(self) -> StrEnum: ...
+
+    @property
+    def retryable_hint(self) -> bool | None: ...
 
 
 class BackoffStrategy(Protocol):
@@ -73,14 +82,8 @@ class RetryPolicy:
 
     max_attempts: int = 1
     backoff: RetryBackoff = field(default_factory=NoBackoff)
-    retryable_categories: frozenset[FailureCategory] = field(
-        default_factory=lambda: frozenset(
-            (
-                FailureCategory.TRANSIENT,
-                FailureCategory.TIMEOUT,
-                FailureCategory.UNKNOWN,
-            )
-        )
+    retryable_categories: frozenset[str] = field(
+        default_factory=lambda: frozenset(("transient", "timeout", "unknown"))
     )
 
     def __post_init__(self) -> None:
@@ -99,10 +102,10 @@ class RetryPolicy:
         _validate_attempt_number(attempt_number)
         return attempt_number < self.max_attempts
 
-    def considers_retryable(self, failure: Failure) -> bool:
+    def considers_retryable(self, failure: RetryFailure) -> bool:
         if failure.retryable_hint is not None:
             return failure.retryable_hint
-        return failure.category in self.retryable_categories
+        return failure.category.value in self.retryable_categories
 
 
 class RetryDecisionReason(StrEnum):
@@ -142,7 +145,7 @@ class RetryEvaluator:
         *,
         policy: RetryPolicy,
         attempt_number: int,
-        failure: Failure,
+        failure: RetryFailure,
     ) -> RetryDecision:
         _validate_attempt_number(attempt_number)
 

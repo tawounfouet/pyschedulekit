@@ -5,9 +5,9 @@ from datetime import UTC, datetime
 import pytest
 
 from pyschedulekit.domain.misfire import (
+    InvalidRecoveryLimitError,
     LatenessClassifier,
     LatenessStatus,
-    InvalidRecoveryLimitError,
     MisfireDecisionAction,
     MisfireEvaluator,
     MisfirePolicy,

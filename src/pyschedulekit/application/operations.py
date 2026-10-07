@@ -17,6 +17,30 @@ class ScheduleNotFoundError(LookupError):
 
 
 @dataclass(frozen=True, slots=True)
+class SchedulerHealth:
+    """Liveness-oriented process and persistence health report."""
+
+    healthy: bool
+    worker_id: str
+    persistence_available: bool
+    runtime_running: bool
+    shutdown_requested: bool
+    active_execution_count: int
+    cycles_completed: int
+
+
+@dataclass(frozen=True, slots=True)
+class SchedulerReadiness:
+    """Readiness report for accepting scheduling work."""
+
+    ready: bool
+    persistence_available: bool
+    recovered: bool
+    reconciled: bool
+    shutdown_requested: bool
+
+
+@dataclass(frozen=True, slots=True)
 class ScheduleSnapshot:
     """Immutable operational view of one Schedule."""
 

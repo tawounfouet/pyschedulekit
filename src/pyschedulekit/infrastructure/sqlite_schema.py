@@ -221,7 +221,7 @@ def _create_v3_schema(connection: sqlite3.Connection) -> None:
         _execute_sql_batch(connection, _INDEXES_V3_SQL)
         connection.execute(
             "INSERT INTO pyschedulekit_schema(version) VALUES (?)",
-            (2,),
+            (SCHEMA_VERSION,),
         )
         connection.commit()
     except Exception:
@@ -304,7 +304,7 @@ def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
 
         connection.execute(
             "UPDATE pyschedulekit_schema SET version = ?",
-            (SCHEMA_VERSION,),
+            (2,),
         )
         connection.commit()
     except Exception:

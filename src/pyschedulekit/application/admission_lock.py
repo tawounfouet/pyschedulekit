@@ -90,6 +90,7 @@ class ScheduleAdmissionLockCoordinator:
                 schedule_id=schedule_id,
                 worker_id=self._worker_id,
                 token=token,
+                generation=lock.generation,
                 expires_at=expires_at,
             ),
         )
@@ -108,6 +109,7 @@ class ScheduleAdmissionLockCoordinator:
                 changed = lock.release(
                     worker_id=handle.worker_id,
                     token=handle.token,
+                    generation=handle.generation,
                     released_at=released_at,
                 )
                 if not changed:

@@ -2,6 +2,10 @@
 
 from pyschedulekit._version import __version__
 from pyschedulekit.api import Scheduler
+from pyschedulekit.application.outbox import (
+    OutboxDispatchResult,
+    OutboxPublishError,
+)
 from pyschedulekit.application.reconciliation import (
     ReconciliationActiveRuntimeError,
     ReconciliationIncompleteError,
@@ -32,6 +36,11 @@ from pyschedulekit.domain.misfire import (
     MisfirePolicy,
     MisfirePolicyAction,
 )
+from pyschedulekit.domain.outbox import (
+    OutboxMessage,
+    OutboxMessageId,
+    OutboxState,
+)
 from pyschedulekit.domain.retry import (
     ExponentialBackoff,
     FixedBackoff,
@@ -55,6 +64,7 @@ from pyschedulekit.ports.cancellation import (
     CancellationToken,
     ExecutionCancelledError,
 )
+from pyschedulekit.ports.outbox import OutboxPublisher
 
 __all__ = [
     "CancellationToken",
@@ -83,6 +93,12 @@ __all__ = [
     "MisfirePolicy",
     "MisfirePolicyAction",
     "NoBackoff",
+    "OutboxDispatchResult",
+    "OutboxMessage",
+    "OutboxMessageId",
+    "OutboxPublishError",
+    "OutboxPublisher",
+    "OutboxState",
     "ReconciliationActiveRuntimeError",
     "ReconciliationIncompleteError",
     "ReconciliationIssue",

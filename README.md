@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-24 complete — next: LOT-25 Outbox**
+**LOT-25 complete — next: LOT-26 Distributed Claims**
 
 Completed:
 
@@ -35,6 +35,7 @@ Completed:
 - LOT-22 — Transactions / DB Constraints
 - LOT-23 — Crash Recovery
 - LOT-24 — Reconciliation
+- LOT-25 — Transactional Outbox
 
 The implementation follows a domain-first roadmap:
 
@@ -515,6 +516,30 @@ Scheduling
 Safe deterministic drift is repaired automatically: a DISPATCHED request missing its Execution is reconstructed, and a request with an already-existing Execution is restored to DISPATCHED. Ambiguous historical drift is reported instead of guessed.
 
 Reconciliation uses bounded scans and fails closed if the graph cannot be proven complete and coherent.
+
+## Transactional outbox
+
+LOT-25 closes the durable dual-write gap between scheduler state and integration intent:
+
+```text
+business lifecycle mutation
+        +
+OutboxMessage PENDING
+        ↓
+same UnitOfWork / same SQL transaction
+        ↓
+external publication later
+```
+
+Publication is explicitly at-least-once. `OutboxMessage.id` is the consumer idempotency key, and consumers are expected to deduplicate replays with it.
+
+```python
+result = scheduler.dispatch_outbox(publisher)
+```
+
+The external publisher runs outside the scheduler lifecycle transaction; failed publication leaves the message PENDING for a later retry.
+
+With LOT-25, the Durability phase is complete. LOT-26 starts distributed ownership with claims.
 
 ## Package shape
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.application.outbox import make_outbox_message
 from pyschedulekit.domain.execution import (
     AttemptId,
     AttemptState,
@@ -195,6 +196,23 @@ class CrashRecoveryService:
                 execution.finish_attempt(attempt=attempt)
                 uow.attempts.save(attempt)
                 uow.executions.save(execution)
+                uow.outbox.add(
+                    make_outbox_message(
+                        event_type="execution.attempt.completed",
+                        aggregate_type="attempt",
+                        aggregate_id=attempt.id.value,
+                        created_at=recovered_at,
+                        payload={
+                            "attempt_id": attempt.id.value,
+                            "attempt_number": str(attempt.number),
+                            "attempt_state": attempt.state.value,
+                            "execution_id": execution.id.value,
+                            "execution_state": execution.state.value,
+                            "recovery": "crash",
+                        },
+                        sequence=1,
+                    )
+                )
                 uow.commit()
                 return "cancelled"
 
@@ -227,6 +245,22 @@ class CrashRecoveryService:
 
             uow.attempts.save(attempt)
             uow.executions.save(execution)
+            uow.outbox.add(
+                make_outbox_message(
+                    event_type="execution.attempt.completed",
+                    aggregate_type="attempt",
+                    aggregate_id=attempt.id.value,
+                    created_at=recovered_at,
+                    payload={
+                        "attempt_id": attempt.id.value,
+                        "attempt_number": str(attempt.number),
+                        "attempt_state": attempt.state.value,
+                        "execution_id": execution.id.value,
+                        "execution_state": execution.state.value,
+                        "recovery": "crash",
+                    },
+                )
+            )
             uow.commit()
 
             return "retry" if retry_at is not None else "failed"

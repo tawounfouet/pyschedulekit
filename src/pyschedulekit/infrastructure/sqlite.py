@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
 from types import TracebackType
@@ -23,6 +24,7 @@ from pyschedulekit.domain.execution_request import (
     RequestId,
 )
 from pyschedulekit.domain.occurrence import OccurrenceKey
+from pyschedulekit.domain.outbox import OutboxMessage, OutboxMessageId, OutboxState
 from pyschedulekit.domain.schedule import (
     PersistenceVersion,
     Schedule,
@@ -53,10 +55,12 @@ from pyschedulekit.ports.persistence import (
     DuplicateAttemptError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
+    DuplicateOutboxMessageError,
     DuplicateScheduleError,
     ExecutionRepository,
     ExecutionRequestRepository,
     OptimisticConcurrencyError,
+    OutboxRepository,
     PersistenceConflictError,
     ReferentialIntegrityError,
     ScheduleRepository,
@@ -80,6 +84,9 @@ def _optional_duration(value: object) -> Duration | None:
 
 def _raise_integrity_error(exc: sqlite3.IntegrityError) -> NoReturn:
     message = str(exc)
+
+    if "UNIQUE constraint failed: outbox_messages.id" in message:
+        raise DuplicateOutboxMessageError("Outbox message identity already exists.") from exc
 
     if "UNIQUE constraint failed: schedules.id" in message:
         raise DuplicateScheduleError("Schedule identity already exists.") from exc
@@ -121,6 +128,34 @@ def _require_cas_update(
         raise OptimisticConcurrencyError(
             f"{entity} changed concurrently before the compare-and-swap update."
         )
+
+
+def _encode_outbox_payload(payload: tuple[tuple[str, str], ...]) -> str:
+    return json.dumps(dict(payload), separators=(",", ":"), sort_keys=True)
+
+
+def _decode_outbox_payload(value: str) -> tuple[tuple[str, str], ...]:
+    decoded = json.loads(value)
+    if not isinstance(decoded, dict):
+        raise ValueError("Persisted outbox payload must be a JSON object.")
+    return tuple(sorted((str(key), str(item)) for key, item in decoded.items()))
+
+
+def _outbox_from_row(row: sqlite3.Row) -> OutboxMessage:
+    return OutboxMessage(
+        message_id=OutboxMessageId(str(row["id"])),
+        event_type=str(row["event_type"]),
+        aggregate_type=str(row["aggregate_type"]),
+        aggregate_id=str(row["aggregate_id"]),
+        payload=_decode_outbox_payload(str(row["payload_json"])),
+        created_at=Instant.parse(str(row["created_at"])),
+        sequence=int(row["sequence"]),
+        state=OutboxState(str(row["state"])),
+        published_at=_optional_instant(row["published_at"]),
+        publish_attempts=int(row["publish_attempts"]),
+        last_error=None if row["last_error"] is None else str(row["last_error"]),
+        version=int(row["version"]),
+    )
 
 
 def _schedule_from_row(row: sqlite3.Row) -> Schedule:
@@ -1055,6 +1090,163 @@ class SqliteAttemptRepository:
         self._dirty.clear()
 
 
+class SqliteOutboxRepository:
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+        self._tracked: dict[OutboxMessageId, OutboxMessage] = {}
+        self._expected_versions: dict[OutboxMessageId, int] = {}
+        self._new: set[OutboxMessageId] = set()
+        self._dirty: set[OutboxMessageId] = set()
+
+    def add(self, message: OutboxMessage) -> None:
+        if message.id in self._tracked:
+            raise DuplicateOutboxMessageError(
+                f"OutboxMessage {message.id.value!r} is already tracked."
+            )
+        self._tracked[message.id] = message
+        self._new.add(message.id)
+
+    def get(self, message_id: OutboxMessageId) -> OutboxMessage | None:
+        tracked = self._tracked.get(message_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM outbox_messages WHERE id = ?",
+            (message_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _outbox_from_row(row)
+        self._tracked[message_id] = loaded
+        self._expected_versions[message_id] = loaded.version
+        return loaded
+
+    def save(self, message: OutboxMessage) -> None:
+        if self._tracked.get(message.id) is not message:
+            raise UntrackedEntityError(
+                f"OutboxMessage {message.id.value!r} must be loaded before save()."
+            )
+        if message.id in self._new:
+            return
+        if message.id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"OutboxMessage {message.id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(message.id)
+
+    def list_pending(self, *, limit: int) -> list[OutboxMessage]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        rows = self._connection.execute(
+            """
+            SELECT id
+            FROM outbox_messages
+            WHERE state = ?
+            ORDER BY created_at, aggregate_type, aggregate_id, sequence, id
+            LIMIT ?
+            """,
+            (OutboxState.PENDING.value, limit),
+        ).fetchall()
+
+        result: list[OutboxMessage] = []
+        for row in rows:
+            message = self.get(OutboxMessageId(str(row["id"])))
+            if message is not None:
+                result.append(message)
+        return result
+
+    def _validate(self) -> None:
+        for message_id in self._new:
+            row = self._connection.execute(
+                "SELECT 1 FROM outbox_messages WHERE id = ?",
+                (message_id.value,),
+            ).fetchone()
+            if row is not None:
+                raise DuplicateOutboxMessageError(
+                    f"OutboxMessage {message_id.value!r} already exists."
+                )
+
+        for message_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM outbox_messages WHERE id = ?",
+                (message_id.value,),
+            ).fetchone()
+            if row is None or int(row[0]) != self._expected_versions[message_id]:
+                raise OptimisticConcurrencyError(
+                    f"OutboxMessage {message_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for message_id in self._new:
+            message = self._tracked[message_id]
+            self._connection.execute(
+                """
+                INSERT INTO outbox_messages(
+                    id, event_type, aggregate_type, aggregate_id,
+                    payload_json, created_at, sequence, state, published_at,
+                    publish_attempts, last_error, version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    message.id.value,
+                    message.event_type,
+                    message.aggregate_type,
+                    message.aggregate_id,
+                    _encode_outbox_payload(message.payload),
+                    message.created_at.value.isoformat(),
+                    message.sequence,
+                    message.state.value,
+                    _instant_text(message.published_at),
+                    message.publish_attempts,
+                    message.last_error,
+                    message.version,
+                ),
+            )
+
+        for message_id in self._dirty:
+            message = self._tracked[message_id]
+            expected = self._expected_versions[message_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE outbox_messages
+                SET event_type = ?, aggregate_type = ?, aggregate_id = ?,
+                    payload_json = ?, created_at = ?, sequence = ?, state = ?,
+                    published_at = ?, publish_attempts = ?,
+                    last_error = ?, version = ?
+                WHERE id = ? AND version = ?
+                """,
+                (
+                    message.event_type,
+                    message.aggregate_type,
+                    message.aggregate_id,
+                    _encode_outbox_payload(message.payload),
+                    message.created_at.value.isoformat(),
+                    message.sequence,
+                    message.state.value,
+                    _instant_text(message.published_at),
+                    message.publish_attempts,
+                    message.last_error,
+                    message.version,
+                    message.id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(cursor, entity=f"OutboxMessage {message.id.value!r}")
+
+    def _after_commit(self) -> None:
+        for message_id in self._new | self._dirty:
+            self._expected_versions[message_id] = self._tracked[message_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class SqliteUnitOfWork:
     """Explicit write-set UnitOfWork backed by one SQLite connection."""
 
@@ -1066,11 +1258,13 @@ class SqliteUnitOfWork:
         self._requests = SqliteExecutionRequestRepository(connection)
         self._executions = SqliteExecutionRepository(connection)
         self._attempts = SqliteAttemptRepository(connection)
+        self._outbox = SqliteOutboxRepository(connection)
 
         self.schedules: ScheduleRepository = self._schedules
         self.requests: ExecutionRequestRepository = self._requests
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
+        self.outbox: OutboxRepository = self._outbox
 
     def __enter__(self) -> UnitOfWork:
         if self._active:
@@ -1096,6 +1290,7 @@ class SqliteUnitOfWork:
             self._requests,
             self._executions,
             self._attempts,
+            self._outbox,
         )
         try:
             self._connection.execute("BEGIN IMMEDIATE")
@@ -1121,6 +1316,7 @@ class SqliteUnitOfWork:
         self._requests._rollback()
         self._executions._rollback()
         self._attempts._rollback()
+        self._outbox._rollback()
 
     def _require_active(self) -> None:
         if not self._active:

@@ -233,7 +233,7 @@ def test_t_sql_constraints_006_foreign_keys_are_enabled_on_factory_connections(
         assert int(row[0]) == 1
 
 
-def test_t_sql_constraints_007_v1_database_migrates_to_v2(tmp_path) -> None:
+def test_t_sql_constraints_007_v1_database_migrates_to_current_schema(tmp_path) -> None:
     database = tmp_path / "scheduler.db"
     _create_v1_database(database)
 
@@ -247,7 +247,7 @@ def test_t_sql_constraints_007_v1_database_migrates_to_v2(tmp_path) -> None:
     try:
         version = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
         assert version is not None
-        assert int(version[0]) == 2
+        assert int(version[0]) == 3
 
         with pytest.raises(sqlite3.IntegrityError, match="CHECK constraint failed"):
             connection.execute(

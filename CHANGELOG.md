@@ -8,6 +8,15 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Transactional outbox message model with deterministic integration identities.
+- Outbox repository integrated into in-memory and SQLite UnitsOfWork.
+- SQLite schema v3 and automatic v2 → v3 outbox migration.
+- Transactional lifecycle messages for Attempt start/completion and cancellation.
+- Crash-recovery lifecycle messages emitted in the same recovery transaction.
+- Generic OutboxPublisher port and at-least-once OutboxDispatcher.
+- Public `Scheduler.dispatch_outbox(...)` API.
+- LOT-25 unit, integration, migration, retry, atomicity, and end-to-end qualification.
+
 - Durable graph reconciliation across ExecutionRequest, Execution, and Attempt state.
 - Deterministic repair for DISPATCHED requests missing Executions.
 - Deterministic request-state repair when a durable Execution already exists.

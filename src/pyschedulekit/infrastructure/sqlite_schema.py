@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 _TABLES_V2_SQL = """
 CREATE TABLE schedules (
@@ -121,6 +121,36 @@ CREATE TABLE attempts (
 );
 """
 
+_OUTBOX_V3_SQL = """
+CREATE TABLE outbox_messages (
+    id TEXT PRIMARY KEY
+        CHECK(length(trim(id)) > 0),
+    event_type TEXT NOT NULL
+        CHECK(length(trim(event_type)) > 0),
+    aggregate_type TEXT NOT NULL
+        CHECK(length(trim(aggregate_type)) > 0),
+    aggregate_id TEXT NOT NULL
+        CHECK(length(trim(aggregate_id)) > 0),
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    sequence INTEGER NOT NULL
+        CHECK(sequence >= 0),
+    state TEXT NOT NULL
+        CHECK(state IN ('pending', 'published')),
+    published_at TEXT,
+    publish_attempts INTEGER NOT NULL
+        CHECK(publish_attempts >= 0),
+    last_error TEXT,
+    version INTEGER NOT NULL
+        CHECK(version >= 0),
+    CHECK(
+        (state = 'pending' AND published_at IS NULL)
+        OR
+        (state = 'published' AND published_at IS NOT NULL)
+    )
+);
+"""
+
 _INDEXES_V2_SQL = """
 CREATE INDEX ix_schedules_due
     ON schedules(state, next_run_time, id);
@@ -135,6 +165,13 @@ CREATE INDEX ix_attempts_execution_number
     ON attempts(execution_id, number);
 """
 
+_INDEXES_V3_SQL = """
+CREATE INDEX ix_outbox_pending
+    ON outbox_messages(
+        state, created_at, aggregate_type, aggregate_id, sequence, id
+    );
+"""
+
 
 def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
     """Create or migrate the durable SQLite schema to the current version."""
@@ -142,7 +179,7 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
     connection.execute("PRAGMA foreign_keys = ON")
 
     if not _schema_metadata_exists(connection):
-        _create_v2_schema(connection)
+        _create_v3_schema(connection)
         return
 
     row = connection.execute("SELECT version FROM pyschedulekit_schema LIMIT 1").fetchone()
@@ -151,10 +188,13 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
 
     version = int(row[0])
     if version == SCHEMA_VERSION:
-        _verify_v2_schema(connection)
+        _verify_v3_schema(connection)
         return
     if version == 1:
         _migrate_v1_to_v2(connection)
+        version = 2
+    if version == 2:
+        _migrate_v2_to_v3(connection)
         return
 
     raise RuntimeError(f"Unsupported PyScheduleKit SQLite schema version: {version!r}.")
@@ -173,14 +213,16 @@ def _schema_metadata_exists(connection: sqlite3.Connection) -> bool:
     )
 
 
-def _create_v2_schema(connection: sqlite3.Connection) -> None:
+def _create_v3_schema(connection: sqlite3.Connection) -> None:
     connection.execute("BEGIN IMMEDIATE")
     try:
         connection.execute(
             "CREATE TABLE pyschedulekit_schema (version INTEGER NOT NULL CHECK(version >= 1))"
         )
         _execute_sql_batch(connection, _TABLES_V2_SQL)
+        _execute_sql_batch(connection, _OUTBOX_V3_SQL)
         _execute_sql_batch(connection, _INDEXES_V2_SQL)
+        _execute_sql_batch(connection, _INDEXES_V3_SQL)
         connection.execute(
             "INSERT INTO pyschedulekit_schema(version) VALUES (?)",
             (SCHEMA_VERSION,),
@@ -189,7 +231,7 @@ def _create_v2_schema(connection: sqlite3.Connection) -> None:
     except Exception:
         connection.rollback()
         raise
-    _verify_v2_schema(connection)
+    _verify_v3_schema(connection)
 
 
 def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
@@ -266,7 +308,7 @@ def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
 
         connection.execute(
             "UPDATE pyschedulekit_schema SET version = ?",
-            (SCHEMA_VERSION,),
+            (2,),
         )
         connection.commit()
     except Exception:
@@ -278,11 +320,41 @@ def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
     _verify_v2_schema(connection)
 
 
+def _migrate_v2_to_v3(connection: sqlite3.Connection) -> None:
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        _execute_sql_batch(connection, _OUTBOX_V3_SQL)
+        _execute_sql_batch(connection, _INDEXES_V3_SQL)
+        connection.execute(
+            "UPDATE pyschedulekit_schema SET version = ?",
+            (SCHEMA_VERSION,),
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+
+    _verify_v3_schema(connection)
+
+
 def _verify_v2_schema(connection: sqlite3.Connection) -> None:
     connection.execute("PRAGMA foreign_keys = ON")
     violations = connection.execute("PRAGMA foreign_key_check").fetchall()
     if violations:
         raise RuntimeError(f"PyScheduleKit SQLite foreign-key validation failed: {violations!r}.")
+
+
+def _verify_v3_schema(connection: sqlite3.Connection) -> None:
+    _verify_v2_schema(connection)
+    row = connection.execute(
+        """
+        SELECT 1
+        FROM sqlite_master
+        WHERE type = 'table' AND name = 'outbox_messages'
+        """
+    ).fetchone()
+    if row is None:
+        raise RuntimeError("PyScheduleKit SQLite outbox table is missing from schema v3.")
 
 
 def _execute_sql_batch(connection: sqlite3.Connection, sql: str) -> None:

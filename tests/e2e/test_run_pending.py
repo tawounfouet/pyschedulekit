@@ -5,6 +5,8 @@ from datetime import UTC, datetime
 import pytest
 
 from pyschedulekit import (
+    ConcurrencyOverflowPolicy,
+    ConcurrencyPolicy,
     CronTrigger,
     Duration,
     GracePeriod,
@@ -453,3 +455,74 @@ def test_t_e2e_017_coalesce_fails_closed_when_backlog_exceeds_bound() -> None:
     assert result.materialized_request_ids == ()
     assert result.executions == ()
     assert result.recovery_limit_schedules == (ScheduleId("bounded-coalesce"),)
+
+
+def test_t_e2e_018_concurrency_queue_serializes_catch_up_execution() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[int] = []
+
+    scheduler.add_schedule(
+        id="serialized-catch-up",
+        target=lambda: calls.append(len(calls) + 1),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.catch_up(max_occurrences=2),
+        concurrency=ConcurrencyPolicy.limit(max_instances=1),
+    )
+
+    clock.advance(Duration.minutes(25))
+
+    first = scheduler.run_pending()
+
+    assert len(first.materialized_request_ids) == 2
+    assert calls == [1]
+    assert first.succeeded == 1
+    assert len(first.queued_request_ids) == 1
+    assert first.dropped_request_ids == ()
+
+    second = scheduler.run_pending()
+
+    assert second.materialized_request_ids == ()
+    assert calls == [1, 2]
+    assert second.succeeded == 1
+    assert second.queued_request_ids == ()
+    assert second.dropped_request_ids == ()
+
+
+def test_t_e2e_019_concurrency_drop_discards_overflow_catch_up_request() -> None:
+    clock = MutableClock(_instant())
+    scheduler = Scheduler(clock=clock)
+    calls: list[int] = []
+
+    scheduler.add_schedule(
+        id="dropping-catch-up",
+        target=lambda: calls.append(len(calls) + 1),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(hour=10, minute=10),
+        ),
+        misfire=MisfirePolicy.catch_up(max_occurrences=2),
+        concurrency=ConcurrencyPolicy.limit(
+            max_instances=1,
+            overflow=ConcurrencyOverflowPolicy.DROP,
+        ),
+    )
+
+    clock.advance(Duration.minutes(25))
+
+    first = scheduler.run_pending()
+
+    assert len(first.materialized_request_ids) == 2
+    assert calls == [1]
+    assert first.succeeded == 1
+    assert first.queued_request_ids == ()
+    assert len(first.dropped_request_ids) == 1
+
+    second = scheduler.run_pending()
+
+    assert second.materialized_request_ids == ()
+    assert calls == [1]
+    assert second.executions == ()

@@ -37,6 +37,11 @@ class CrashRecoveryResult:
     cancelled_execution_ids: tuple[ExecutionId, ...]
     skipped_execution_ids: tuple[ExecutionId, ...]
     errors: tuple[CrashRecoveryError, ...]
+    remaining_running_execution_ids: tuple[ExecutionId, ...]
+
+    @property
+    def complete(self) -> bool:
+        return not self.remaining_running_execution_ids and not self.errors
 
     @property
     def recovered(self) -> int:
@@ -61,6 +66,16 @@ class CrashRecoveryConsistencyError(RuntimeError):
     def __init__(self, *, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
+
+
+class CrashRecoveryIncompleteError(RuntimeError):
+    """Raised when persisted RUNNING state remains after a recovery pass."""
+
+    def __init__(self, result: CrashRecoveryResult) -> None:
+        super().__init__(
+            "Crash recovery did not reconcile every persisted RUNNING Execution."
+        )
+        self.result = result
 
 
 class CrashRecoveryService:
@@ -130,6 +145,9 @@ class CrashRecoveryService:
                     )
                 )
 
+        with self._uow_factory() as uow:
+            remaining = uow.executions.list_running(limit=limit)
+
         return CrashRecoveryResult(
             recovered_execution_ids=tuple(recovered),
             retried_execution_ids=tuple(retried),
@@ -137,6 +155,9 @@ class CrashRecoveryService:
             cancelled_execution_ids=tuple(cancelled),
             skipped_execution_ids=tuple(skipped),
             errors=tuple(errors),
+            remaining_running_execution_ids=tuple(
+                execution.id for execution in remaining
+            ),
         )
 
     def _recover_one(

@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from threading import Lock
 from time import monotonic
 from uuid import uuid4
 
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
+from pyschedulekit.application.recovery import (
+    CrashRecoveryIncompleteError,
+    CrashRecoveryResult,
+    CrashRecoveryService,
+)
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
@@ -60,6 +66,13 @@ class Scheduler:
         self._registry = registry if registry is not None else PythonTargetRegistry()
 
         self._execution_service = ExecutionService(uow_factory=self._uow_factory)
+        self._recovery_service = CrashRecoveryService(
+            clock=self._clock,
+            uow_factory=self._uow_factory,
+        )
+        self._recovery_lock = Lock()
+        self._recovery_done = False
+        self._last_recovery_result: CrashRecoveryResult | None = None
         self._cancellation_controller = InMemoryCancellationController()
         self._shutdown_coordinator = ShutdownCoordinator()
         execution_runner = ExecutionRunner(
@@ -168,6 +181,10 @@ class Scheduler:
         return execution
 
     @property
+    def last_recovery_result(self) -> CrashRecoveryResult | None:
+        return self._last_recovery_result
+
+    @property
     def is_running(self) -> bool:
         return self._runtime.is_running
 
@@ -179,9 +196,21 @@ class Scheduler:
     def last_result(self) -> RunPendingResult | None:
         return self._runtime.last_result
 
+    def recover(self, *, limit: int = 1000) -> CrashRecoveryResult:
+        """Reconcile persisted orphaned RUNNING Executions before scheduling."""
+
+        with self._recovery_lock:
+            result = self._recovery_service.recover(limit=limit)
+            self._last_recovery_result = result
+            self._recovery_done = result.complete
+            if not result.complete:
+                raise CrashRecoveryIncompleteError(result)
+            return result
+
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking end-to-end scheduling cycle."""
 
+        self._ensure_recovered()
         return self._run_pending_service.run_pending(limit=limit)
 
     def run_forever(
@@ -197,6 +226,7 @@ class Scheduler:
             raise ValueError("Use either max_sleep or poll_interval, not both.")
 
         effective_max_sleep = max_sleep or poll_interval or Duration.seconds(1)
+        self._ensure_recovered()
         self._shutdown_coordinator.reset()
         self._runtime.run_forever(
             max_sleep=effective_max_sleep,
@@ -260,6 +290,20 @@ class Scheduler:
             execution_id=execution_id,
             requested_at=self._clock.now(),
         )
+
+    def _ensure_recovered(self) -> None:
+        if self._recovery_done:
+            return
+
+        with self._recovery_lock:
+            if self._recovery_done:
+                return
+
+            result = self._recovery_service.recover()
+            self._last_recovery_result = result
+            if not result.complete:
+                raise CrashRecoveryIncompleteError(result)
+            self._recovery_done = True
 
     @staticmethod
     def _remaining_timeout(

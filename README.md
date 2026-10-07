@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-23 complete — next: LOT-24 Reconciliation**
+**LOT-24 complete — next: LOT-25 Outbox**
 
 Completed:
 
@@ -34,6 +34,7 @@ Completed:
 - LOT-21 — SQL Persistence Foundations
 - LOT-22 — Transactions / DB Constraints
 - LOT-23 — Crash Recovery
+- LOT-24 — Reconciliation
 
 The implementation follows a domain-first roadmap:
 
@@ -498,6 +499,22 @@ RETRY_WAIT or terminal FAILED
 A previously persisted cancellation request wins over retry and recovers to CANCELLED instead.
 
 Recovery runs automatically before the first `run_pending()` or `run_forever()` cycle and is inspectable through `last_recovery_result`. If persisted RUNNING state cannot be reconciled safely, scheduling fails closed with `CrashRecoveryIncompleteError`.
+
+## Reconciliation
+
+LOT-24 validates the durable execution graph after crash recovery and before new scheduling work.
+
+```text
+Crash Recovery
+      ↓
+Reconciliation
+      ↓
+Scheduling
+```
+
+Safe deterministic drift is repaired automatically: a DISPATCHED request missing its Execution is reconstructed, and a request with an already-existing Execution is restored to DISPATCHED. Ambiguous historical drift is reported instead of guessed.
+
+Reconciliation uses bounded scans and fails closed if the graph cannot be proven complete and coherent.
 
 ## Package shape
 

@@ -83,6 +83,8 @@ class ExecutionRequestRepository(Protocol):
 
     def has_pending(self) -> bool: ...
 
+    def list_for_reconciliation(self, *, limit: int) -> list[ExecutionRequest]: ...
+
 
 class ExecutionRepository(Protocol):
     """Transactional repository for Execution aggregates."""
@@ -104,6 +106,8 @@ class ExecutionRepository(Protocol):
     def next_runnable_at(self, *, now: Instant) -> Instant | None: ...
 
     def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int: ...
+
+    def list_for_reconciliation(self, *, limit: int) -> list[Execution]: ...
 
 
 class AttemptRepository(Protocol):

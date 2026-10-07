@@ -13,6 +13,7 @@ from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.materialization import ScheduleMaterializationCoordinator
+from pyschedulekit.application.observability import Observer
 from pyschedulekit.application.outbox import OutboxDispatcher, OutboxDispatchResult
 from pyschedulekit.application.reconciliation import (
     ReconciliationActiveRuntimeError,
@@ -57,6 +58,7 @@ from pyschedulekit.infrastructure.local_executor import (
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.runtime import EventLoopWaiter
 from pyschedulekit.infrastructure.time import SystemClock
+from pyschedulekit.ports.observability import ObservationSink
 from pyschedulekit.ports.outbox import OutboxPublisher
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
@@ -76,6 +78,7 @@ class Scheduler:
         lease_heartbeat_interval: Duration | None = None,
         admission_lock_ttl: Duration | None = None,
         materialization_lease_ttl: Duration | None = None,
+        observation_sink: ObservationSink | None = None,
     ) -> None:
         self._clock: Clock = clock if clock is not None else SystemClock()
         self._uow_factory: UnitOfWorkFactory = (
@@ -103,6 +106,7 @@ class Scheduler:
             if materialization_lease_ttl is not None
             else Duration.seconds(5)
         )
+        self._observer = Observer(observation_sink)
         self._claim_coordinator = ExecutionClaimCoordinator(
             uow_factory=self._uow_factory,
             worker_id=self._worker_id,
@@ -149,6 +153,7 @@ class Scheduler:
             lease_heartbeat_interval=self._lease_heartbeat_interval,
             cancellation_controller=self._cancellation_controller,
             shutdown_coordinator=self._shutdown_coordinator,
+            observer=self._observer,
         )
 
         self._run_pending_service = RunPendingService(
@@ -167,6 +172,7 @@ class Scheduler:
             claim_coordinator=self._claim_coordinator,
             distributed_recovery_service=self._recovery_service,
             shutdown_coordinator=self._shutdown_coordinator,
+            observer=self._observer,
         )
         self._runtime = ContinuousSchedulerLoop(
             run_pending_service=self._run_pending_service,
@@ -175,6 +181,7 @@ class Scheduler:
                 clock=self._clock,
                 uow_factory=self._uow_factory,
             ),
+            observer=self._observer,
         )
 
     @property

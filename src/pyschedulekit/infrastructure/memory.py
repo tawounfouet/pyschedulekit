@@ -58,6 +58,7 @@ def _clone_request(request: ExecutionRequest) -> ExecutionRequest:
         occurrence_key=request.occurrence_key,
         target=request.target,
         created_at=request.created_at,
+        concurrency_policy=request.concurrency_policy,
         state=request.state,
         version=request.version,
     )
@@ -311,6 +312,37 @@ class InMemoryExecutionRequestRepository:
         )
         return pending[:limit]
 
+    def list_admission_candidates(self, *, limit: int) -> list[ExecutionRequest]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            candidate_ids = set(self._store._execution_requests)
+        candidate_ids.update(self._tracked)
+
+        candidates: list[ExecutionRequest] = []
+        for request_id in candidate_ids:
+            request = self._tracked.get(request_id)
+            if request is None:
+                request = self.get(request_id)
+            if request is None:
+                continue
+            if request.state not in (
+                ExecutionRequestState.PENDING,
+                ExecutionRequestState.WAITING_ADMISSION,
+            ):
+                continue
+            candidates.append(request)
+
+        candidates.sort(
+            key=lambda request: (
+                request.occurrence_key.scheduled_at.value,
+                request.created_at.value,
+                request.id.value,
+            )
+        )
+        return candidates[:limit]
+
     def _validate_commit_locked(self) -> None:
         for request_id in self._new:
             request = self._tracked[request_id]
@@ -449,6 +481,30 @@ class InMemoryExecutionRepository:
             )
         )
         return queued[:limit]
+
+    def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int:
+        with self._store._lock:
+            committed_executions = dict(self._store._executions)
+            committed_requests = dict(self._store._execution_requests)
+
+        candidate_ids = set(committed_executions)
+        candidate_ids.update(self._tracked)
+
+        count = 0
+        for execution_id in candidate_ids:
+            execution = self._tracked.get(execution_id)
+            if execution is None:
+                execution = committed_executions.get(execution_id)
+            if execution is None or execution.is_terminal:
+                continue
+
+            request = committed_requests.get(execution.request_id)
+            if request is None:
+                continue
+            if request.occurrence_key.schedule_id == schedule_id:
+                count += 1
+
+        return count
 
     def _validate_commit_locked(self) -> None:
         for execution_id in self._new:

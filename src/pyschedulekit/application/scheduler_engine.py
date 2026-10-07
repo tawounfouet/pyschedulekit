@@ -336,6 +336,7 @@ class SchedulerEngine:
             occurrence=occurrence,
             target=schedule.definition.target,
             created_at=created_at,
+            concurrency_policy=schedule.definition.concurrency,
         )
         uow.requests.add(request)
         return request

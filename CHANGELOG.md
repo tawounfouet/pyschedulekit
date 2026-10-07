@@ -8,6 +8,16 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Immutable `ConcurrencyPolicy` with ALLOW/LIMIT modes and QUEUE/DROP overflow behavior.
+- Pure `ConcurrencyEvaluator` producing ADMIT, QUEUE, or DROP decisions.
+- Durable concurrency policy snapshots on `ExecutionRequest`.
+- Terminal `ExecutionRequestState.DROPPED` distinct from cancellation.
+- Process-wide serialized `ConcurrencyCoordinator` for local atomic count-and-admit decisions.
+- Admission candidate queries covering PENDING and WAITING_ADMISSION requests.
+- Non-terminal Execution counting by ScheduleId, including QUEUED, RUNNING, and RETRY_WAIT.
+- `RunPendingResult.admissions`, `queued_request_ids`, and `dropped_request_ids`.
+- Public `Scheduler.add_schedule(concurrency=...)` support.
+- LOT-14 unit, integration, threaded, snapshot, and end-to-end qualification for admission behavior.
 - Bounded `OccurrencePlanner.due_backlog()` reconstruction with oldest-first ordering and `has_more`.
 - `MisfirePolicy.max_occurrences` with strict positive validation.
 - End-to-end Catch-Up batches that reuse durable requests and continue across cycles.

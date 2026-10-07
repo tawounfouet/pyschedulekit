@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-13 complete — next: LOT-14 Concurrency Policy Foundations**
+**LOT-14 complete — next: LOT-15 Retry Policy Foundations**
 
 Completed:
 
@@ -24,6 +24,7 @@ Completed:
 - LOT-11 — run_pending() End-to-End Slice
 - LOT-12 — Misfire Policy Foundations
 - LOT-13 — Catch-Up & Coalescing
+- LOT-14 — Concurrency Policy Foundations
 
 The implementation follows a domain-first roadmap:
 
@@ -297,6 +298,22 @@ COALESCE
 ```
 
 Existing durable ExecutionRequests are always preserved.
+
+## Concurrency policy foundations
+
+LOT-14 adds explicit admission control after durable request materialization:
+
+```text
+ExecutionRequest
+    ↓
+ConcurrencyEvaluator
+    ↓
+ADMIT / QUEUE / DROP
+    ↓
+ConcurrencyCoordinator
+```
+
+`ConcurrencyPolicy.allow()` preserves the historical behavior. `ConcurrencyPolicy.limit(max_instances=N)` can queue overflow in `WAITING_ADMISSION` or terminate it as `DROPPED`. The V1 coordinator serializes admission across all coordinators in one Python process; distributed enforcement is intentionally deferred.
 
 ## Package shape
 

@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime
 
+from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingService
@@ -53,7 +54,7 @@ def test_pending_request_from_previous_process_is_dispatched_and_executed() -> N
         clock=clock,
         uow_factory=factory,
         scheduler_engine=SchedulerEngine(uow_factory=factory),
-        execution_service=execution_service,
+        concurrency_coordinator=ConcurrencyCoordinator(uow_factory=factory),
         execution_runner=runner,
     )
 

@@ -526,8 +526,7 @@ def _verify_v6_schema(connection: sqlite3.Connection) -> None:
         str(row[1]) for row in connection.execute("PRAGMA table_info(execution_claims)")
     }
     admission_columns = {
-        str(row[1])
-        for row in connection.execute("PRAGMA table_info(schedule_admission_locks)")
+        str(row[1]) for row in connection.execute("PRAGMA table_info(schedule_admission_locks)")
     }
     if "generation" not in claim_columns:
         raise RuntimeError("PyScheduleKit execution_claims generation column is missing in v6.")

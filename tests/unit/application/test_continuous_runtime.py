@@ -2,7 +2,6 @@
 
 from datetime import UTC, datetime
 from threading import Event, Thread
-from time import sleep
 
 import pytest
 

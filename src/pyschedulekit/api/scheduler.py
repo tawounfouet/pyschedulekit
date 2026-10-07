@@ -37,9 +37,11 @@ class Scheduler:
         uow_factory: UnitOfWorkFactory | None = None,
         registry: PythonTargetRegistry | None = None,
     ) -> None:
-        self._clock = clock or SystemClock()
-        self._uow_factory = uow_factory or InMemoryUnitOfWorkFactory()
-        self._registry = registry or PythonTargetRegistry()
+        self._clock: Clock = clock if clock is not None else SystemClock()
+        self._uow_factory: UnitOfWorkFactory = (
+            uow_factory if uow_factory is not None else InMemoryUnitOfWorkFactory()
+        )
+        self._registry = registry if registry is not None else PythonTargetRegistry()
 
         execution_service = ExecutionService(uow_factory=self._uow_factory)
         execution_runner = ExecutionRunner(

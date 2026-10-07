@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-18 complete — next: LOT-19 Wake-up Strategy**
+**LOT-19 complete — next: LOT-20 Graceful Shutdown**
 
 Completed:
 
@@ -29,6 +29,7 @@ Completed:
 - LOT-16 — Execution Timeout
 - LOT-17 — Cancellation Refinements
 - LOT-18 — Continuous Scheduler Loop
+- LOT-19 — Wake-up Strategy
 
 The implementation follows a domain-first roadmap:
 
@@ -394,6 +395,31 @@ scheduler.run_forever(
 The runtime repeatedly calls `run_pending()` at a fixed cadence. `scheduler.stop()` interrupts the current wait immediately. Runtime state is observable through `is_running`, `cycles_completed`, and `last_result`.
 
 LOT-19 will replace fixed polling with a smarter wake-up strategy without changing the scheduling semantics inside `run_pending()`.
+
+## Wake-up strategy
+
+LOT-19 replaces fixed polling as the primary wait decision with durable-state-driven planning:
+
+```text
+run_pending()
+    ↓
+earliest of:
+- due/pending work
+- retry next_attempt_at
+- schedule next_run_time
+    ↓
+bounded by max_sleep
+```
+
+Runtime mutations such as `add_schedule()` and `cancel_execution()` interrupt the current wait so the plan is recomputed immediately.
+
+```python
+scheduler.run_forever(
+    max_sleep=Duration.seconds(30),
+)
+```
+
+The older `poll_interval=` argument remains accepted as a compatibility alias for `max_sleep`.
 
 ## Package shape
 

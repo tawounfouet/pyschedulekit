@@ -11,9 +11,9 @@ from pyschedulekit.domain.time import Duration
 class LoopWaiter(Protocol):
     """Interruptible waiting strategy between continuous scheduler cycles."""
 
-    def wait(self, *, duration: Duration, stop_event: Event) -> bool:
-        """Wait until duration elapses or stop_event is set.
+    def wait(self, *, duration: Duration, wake_event: Event) -> bool:
+        """Wait until duration elapses or wake_event is set.
 
-        Return True when the stop signal interrupted the wait.
+        Return True when an external signal interrupted the wait.
         """
         ...

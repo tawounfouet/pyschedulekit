@@ -149,6 +149,7 @@ def _outbox_from_row(row: sqlite3.Row) -> OutboxMessage:
         aggregate_id=str(row["aggregate_id"]),
         payload=_decode_outbox_payload(str(row["payload_json"])),
         created_at=Instant.parse(str(row["created_at"])),
+        sequence=int(row["sequence"]),
         state=OutboxState(str(row["state"])),
         published_at=_optional_instant(row["published_at"]),
         publish_attempts=int(row["publish_attempts"]),
@@ -477,7 +478,7 @@ class SqliteExecutionRequestRepository:
             """
             SELECT id
             FROM execution_requests
-            ORDER BY created_at, id
+            ORDER BY created_at, aggregate_type, aggregate_id, sequence, id
             LIMIT ?
             """,
             (limit,),
@@ -1183,9 +1184,9 @@ class SqliteOutboxRepository:
                 """
                 INSERT INTO outbox_messages(
                     id, event_type, aggregate_type, aggregate_id,
-                    payload_json, created_at, state, published_at,
+                    payload_json, created_at, sequence, state, published_at,
                     publish_attempts, last_error, version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     message.id.value,
@@ -1194,6 +1195,7 @@ class SqliteOutboxRepository:
                     message.aggregate_id,
                     _encode_outbox_payload(message.payload),
                     message.created_at.value.isoformat(),
+                    message.sequence,
                     message.state.value,
                     _instant_text(message.published_at),
                     message.publish_attempts,
@@ -1209,7 +1211,7 @@ class SqliteOutboxRepository:
                 """
                 UPDATE outbox_messages
                 SET event_type = ?, aggregate_type = ?, aggregate_id = ?,
-                    payload_json = ?, created_at = ?, state = ?,
+                    payload_json = ?, created_at = ?, sequence = ?, state = ?,
                     published_at = ?, publish_attempts = ?,
                     last_error = ?, version = ?
                 WHERE id = ? AND version = ?
@@ -1220,6 +1222,7 @@ class SqliteOutboxRepository:
                     message.aggregate_id,
                     _encode_outbox_payload(message.payload),
                     message.created_at.value.isoformat(),
+                    message.sequence,
                     message.state.value,
                     _instant_text(message.published_at),
                     message.publish_attempts,

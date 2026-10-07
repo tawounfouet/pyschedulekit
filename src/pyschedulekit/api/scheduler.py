@@ -17,6 +17,7 @@ from pyschedulekit.domain.schedule import (
 )
 from pyschedulekit.domain.time import Timezone
 from pyschedulekit.domain.trigger import Trigger
+from pyschedulekit.domain.triggers import CronTrigger
 from pyschedulekit.infrastructure.local_executor import (
     LocalExecutor,
     PythonTargetRegistry,
@@ -88,12 +89,17 @@ class Scheduler:
             schedule_id=schedule_id,
         )
 
+        effective_timezone = self._effective_timezone(
+            trigger=trigger,
+            timezone=timezone,
+        )
+
         schedule = Schedule.create(
             schedule_id=schedule_id,
             definition=ScheduleDefinition(
                 target=target_ref,
                 trigger=trigger,
-                timezone=timezone or Timezone("UTC"),
+                timezone=effective_timezone,
             ),
             reference=self._clock.now(),
         )
@@ -108,6 +114,21 @@ class Scheduler:
         """Run one non-blocking end-to-end scheduling cycle."""
 
         return self._run_pending_service.run_pending(limit=limit)
+
+    @staticmethod
+    def _effective_timezone(
+        *,
+        trigger: Trigger,
+        timezone: Timezone | None,
+    ) -> Timezone:
+        if isinstance(trigger, CronTrigger):
+            if timezone is not None and timezone != trigger.timezone:
+                raise ValueError(
+                    "Schedule timezone must match CronTrigger timezone when both are provided."
+                )
+            return trigger.timezone
+
+        return timezone if timezone is not None else Timezone("UTC")
 
     def _normalize_target(
         self,

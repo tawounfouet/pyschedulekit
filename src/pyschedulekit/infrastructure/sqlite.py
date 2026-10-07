@@ -5,6 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 from types import TracebackType
+from typing import cast
 from uuid import uuid4
 
 from pyschedulekit.domain.execution import (
@@ -72,7 +73,7 @@ def _optional_instant(value: object) -> Instant | None:
 
 
 def _optional_duration(value: object) -> Duration | None:
-    return None if value is None else Duration.seconds(float(value))
+    return None if value is None else Duration.seconds(cast(float, value))
 
 
 def _schedule_from_row(row: sqlite3.Row) -> Schedule:

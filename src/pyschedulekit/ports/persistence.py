@@ -52,6 +52,10 @@ class DuplicateAdmissionLockError(PersistenceConflictError):
     """Raised when a Schedule already owns a persisted admission lock."""
 
 
+class DuplicateMaterializationLeaseError(PersistenceConflictError):
+    """Raised when a Schedule already owns a materialization lease row."""
+
+
 class DuplicateExecutionClaimError(PersistenceConflictError):
     """Raised when an Execution already owns a persisted claim row."""
 

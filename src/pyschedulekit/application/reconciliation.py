@@ -169,7 +169,8 @@ class ReconciliationService:
                 return ReconciliationIssue(
                     code="reconciliation.terminal_request_has_execution",
                     message=(
-                        f"{request.state.value} ExecutionRequest unexpectedly has a durable Execution."
+                        f"{request.state.value} ExecutionRequest unexpectedly "
+                        "has a durable Execution."
                     ),
                     request_id=request.id,
                     execution_id=execution.id,
@@ -283,12 +284,14 @@ class ReconciliationService:
             )
 
         latest = attempts[-1] if attempts else None
-        if execution.state is ExecutionState.RETRY_WAIT:
-            if latest is None or latest.state not in (
+        if execution.state is ExecutionState.RETRY_WAIT and (
+            latest is None
+            or latest.state not in (
                 AttemptState.FAILED,
                 AttemptState.TIMED_OUT,
-            ):
-                issues.append(
+            )
+        ):
+            issues.append(
                     ReconciliationIssue(
                         code="reconciliation.retry_wait_history_mismatch",
                         message=(

@@ -24,6 +24,9 @@ from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 
 
+_PROCESS_ADMISSION_LOCK = RLock()
+
+
 @dataclass(frozen=True, slots=True)
 class AdmissionResult:
     """Result of one serialized admission attempt."""
@@ -46,7 +49,7 @@ class ConcurrencyCoordinator:
     ) -> None:
         self._uow_factory = uow_factory
         self._evaluator = evaluator or ConcurrencyEvaluator()
-        self._lock = RLock()
+        self._lock = _PROCESS_ADMISSION_LOCK
 
     def admit(
         self,

@@ -190,6 +190,17 @@ class InMemoryScheduleRepository:
         )
         return due[:limit]
 
+    def next_run_time(self) -> Instant | None:
+        with self._store._lock:
+            schedules = list(self._store._schedules.values())
+
+        candidates = [
+            schedule.next_run_time
+            for schedule in schedules
+            if schedule.state is ScheduleState.ACTIVE and schedule.next_run_time is not None
+        ]
+        return min(candidates) if candidates else None
+
     def _validate_commit_locked(self) -> None:
         for schedule_id in self._new:
             if schedule_id in self._store._schedules:
@@ -345,6 +356,13 @@ class InMemoryExecutionRequestRepository:
             )
         )
         return candidates[:limit]
+
+    def has_pending(self) -> bool:
+        with self._store._lock:
+            return any(
+                request.state is ExecutionRequestState.PENDING
+                for request in self._store._execution_requests.values()
+            )
 
     def _validate_commit_locked(self) -> None:
         for request_id in self._new:
@@ -530,6 +548,24 @@ class InMemoryExecutionRepository:
             )
         )
         return runnable[:limit]
+
+    def next_runnable_at(self, *, now: Instant) -> Instant | None:
+        with self._store._lock:
+            executions = list(self._store._executions.values())
+
+        if any(execution.state is ExecutionState.QUEUED for execution in executions):
+            return now
+
+        retry_times = [
+            execution.next_attempt_at
+            for execution in executions
+            if execution.state is ExecutionState.RETRY_WAIT
+            and execution.next_attempt_at is not None
+        ]
+        if not retry_times:
+            return None
+        next_retry = min(retry_times)
+        return now if next_retry <= now else next_retry
 
     def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int:
         with self._store._lock:

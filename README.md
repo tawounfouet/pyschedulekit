@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-31 complete — next: LOT-32 Retention / Cleanup**
+**LOT-32 complete — next: LOT-33 Additional Executors**
 
 Completed:
 
@@ -42,6 +42,7 @@ Completed:
 - LOT-29 — Distributed Scheduler Coordination
 - LOT-30 — Observability
 - LOT-31 — Operational API
+- LOT-32 — Retention / Cleanup
 
 The implementation follows a domain-first roadmap:
 
@@ -701,6 +702,43 @@ readiness = scheduler.readiness()
 `health()` reports whether the persistence boundary is reachable plus process-local runtime state. `readiness()` is stricter: the Scheduler must have completed crash recovery and durable reconciliation and must not be in graceful shutdown.
 
 No HTTP server is embedded in the core. REST, CLI, admin UI, Kubernetes probes, or service-specific control planes can be built as adapters over these Python contracts.
+
+## Retention and cleanup
+
+LOT-32 adds bounded, explicit cleanup of immutable historical state.
+
+Retention is opt-in:
+
+```python
+from pyschedulekit import RetentionPolicy
+
+result = scheduler.cleanup(
+    RetentionPolicy.days(
+        execution_history=30,
+        published_outbox=14,
+    ),
+    limit=1000,
+)
+```
+
+Eligible history is intentionally narrow:
+
+```text
+terminal Execution + Attempts + claim + dispatched ExecutionRequest
+    → removable after execution_history cutoff
+
+DROPPED / CANCELLED request without Execution
+    → removable after execution_history cutoff
+
+PUBLISHED OutboxMessage
+    → removable after published_outbox cutoff
+```
+
+The following are never cleanup candidates: active/non-terminal execution state, pending or admission-waiting requests, pending outbox messages, Schedule rows, or active coordination state.
+
+`limit` is a global logical cleanup budget for one call. Cleanup is transactional and emits `retention.cleanup.completed` through the existing observability port.
+
+SQLite schema v8 adds an indexed `executions.completed_at` column plus retention indexes for executions, requests, and published outbox messages. Existing v7 data is migrated and terminal completion timestamps are backfilled from the durable execution result JSON.
 
 ## Package shape
 

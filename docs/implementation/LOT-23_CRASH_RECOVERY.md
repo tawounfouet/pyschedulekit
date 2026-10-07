@@ -91,7 +91,7 @@ RUNNING Attempt
 Failure(
     category = UNKNOWN,
     code = execution.crash_recovered,
-    retryable_hint = True
+    retryable_hint = None
 )
         ↓
 Attempt FAILED
@@ -111,6 +111,8 @@ Crash recovery never fabricates a successful result.
 ## Retry semantics
 
 The original `ExecutionPolicySnapshot.retry` is reused.
+
+Crash recovery classifies the failure as `UNKNOWN` and leaves `retryable_hint=None`, so the persisted RetryPolicy remains authoritative. The default policy considers `unknown` retryable, while a custom policy may exclude it.
 
 No special retry configuration is created during recovery.
 

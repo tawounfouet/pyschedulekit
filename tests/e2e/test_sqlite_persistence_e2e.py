@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from pyschedulekit import Duration, IntervalTrigger, Scheduler
 from pyschedulekit.domain.execution import ExecutionState
+from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.testing import MutableClock
 
@@ -39,9 +40,6 @@ def test_t_sql_e2e_001_scheduler_runs_on_sqlite_and_survives_reopen(tmp_path) ->
 
     reopened = SqliteUnitOfWorkFactory(database)
     with reopened() as uow:
-        schedule = uow.schedules.get(result.executions[0].execution.request_id and __import__(
-            "pyschedulekit.domain.schedule",
-            fromlist=["ScheduleId"],
-        ).ScheduleId("sqlite-runtime"))
+        schedule = uow.schedules.get(ScheduleId("sqlite-runtime"))
         assert schedule is not None
         assert schedule.next_run_time == _instant(hour=10, minute=20)

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import StrEnum
-from typing import Callable
+from typing import ClassVar
 
 from pyschedulekit.domain.time import (
-    AmbiguousLocalTimeError,
     Duration,
     Instant,
     NonexistentLocalTimeError,
@@ -122,7 +122,7 @@ class CronTrigger:
     _month: _CronField = field(init=False, repr=False, compare=False)
     _day_of_week: _CronField = field(init=False, repr=False, compare=False)
 
-    _MAX_SEARCH_DAYS = 366 * 8
+    _MAX_SEARCH_DAYS: ClassVar[int] = 366 * 8
 
     def __post_init__(self) -> None:
         parts = self.expression.split()
@@ -217,8 +217,6 @@ class CronTrigger:
         except NonexistentLocalTimeError:
             if self.nonexistent_time is CronNonexistentTimePolicy.SKIP:
                 return None
-            raise
-        except AmbiguousLocalTimeError:
             raise
 
 

@@ -193,32 +193,33 @@ def test_t_mis_027_existing_durable_request_wins_over_later_skip_policy() -> Non
     assert committed.next_run_time == _instant(minute=10)
 
 
-def test_t_mis_028_catch_up_isolated_without_mutating_schedule() -> None:
+def test_t_mis_028_catch_up_is_now_supported_by_scheduler_engine() -> None:
     factory = InMemoryUnitOfWorkFactory()
     schedule = _interval_schedule(policy=MisfirePolicy.catch_up())
     _persist(factory, schedule)
 
     result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
-    assert result.requests == ()
-    assert result.unsupported_policy_schedules == (ScheduleId("schedule-1"),)
+    assert len(result.requests) == 4
+    assert result.unsupported_policy_schedules == ()
     assert result.misfire_decisions[0].decision.action is MisfireDecisionAction.CATCH_UP
 
     committed = _load(factory)
-    assert committed.next_run_time == _instant()
-    assert committed.persistence_version == PersistenceVersion(0)
+    assert committed.next_run_time == _instant(minute=40)
 
 
-def test_t_mis_029_coalesce_isolated_without_mutating_schedule() -> None:
+def test_t_mis_029_coalesce_is_now_supported_by_scheduler_engine() -> None:
     factory = InMemoryUnitOfWorkFactory()
     schedule = _interval_schedule(policy=MisfirePolicy.coalesce())
     _persist(factory, schedule)
 
     result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
 
-    assert result.requests == ()
-    assert result.unsupported_policy_schedules == (ScheduleId("schedule-1"),)
+    assert [request.occurrence_key.scheduled_at for request in result.requests] == [
+        _instant(minute=30)
+    ]
+    assert result.unsupported_policy_schedules == ()
     assert result.misfire_decisions[0].decision.action is MisfireDecisionAction.COALESCE
 
     committed = _load(factory)
-    assert committed.next_run_time == _instant()
+    assert committed.next_run_time == _instant(minute=40)

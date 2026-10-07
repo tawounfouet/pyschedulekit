@@ -34,6 +34,7 @@ class RunPendingResult:
     executions: tuple[ExecutionRunResult, ...]
     schedule_conflicts: tuple[ScheduleId, ...]
     unsupported_policy_schedules: tuple[ScheduleId, ...]
+    recovery_limit_schedules: tuple[ScheduleId, ...]
     errors: tuple[RunPendingError, ...]
 
     @property
@@ -126,6 +127,7 @@ class RunPendingService:
             executions=tuple(executions),
             schedule_conflicts=evaluation.conflicts,
             unsupported_policy_schedules=evaluation.unsupported_policy_schedules,
+            recovery_limit_schedules=evaluation.recovery_limit_schedules,
             errors=tuple(errors),
         )
 

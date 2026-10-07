@@ -34,6 +34,14 @@ class Occurrence:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class OccurrenceBacklog:
+    """Bounded due-occurrence reconstruction from one Schedule checkpoint."""
+
+    occurrences: tuple[Occurrence, ...]
+    has_more: bool
+
+
 class OccurrencePlanner:
     """Pure domain service that projects Schedule timing into Occurrences."""
 
@@ -67,6 +75,46 @@ class OccurrencePlanner:
             return None
 
         return self._occurrence(schedule, scheduled_at)
+
+    def due_backlog(
+        self,
+        schedule: Schedule,
+        *,
+        until: Instant,
+        limit: int,
+    ) -> OccurrenceBacklog:
+        """Reconstruct due occurrences oldest-first with bounded work.
+
+        At most limit occurrences are returned. One extra Trigger lookup is
+        used to determine whether more due work exists beyond the returned batch.
+        """
+
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        current = self.current(schedule)
+        if current is None or current.scheduled_at > until:
+            return OccurrenceBacklog(occurrences=(), has_more=False)
+
+        occurrences: list[Occurrence] = [current]
+        last = current
+
+        while len(occurrences) < limit:
+            next_occurrence = self.next_after(schedule, last.scheduled_at)
+            if next_occurrence is None or next_occurrence.scheduled_at > until:
+                return OccurrenceBacklog(
+                    occurrences=tuple(occurrences),
+                    has_more=False,
+                )
+            occurrences.append(next_occurrence)
+            last = next_occurrence
+
+        next_occurrence = self.next_after(schedule, last.scheduled_at)
+        has_more = next_occurrence is not None and next_occurrence.scheduled_at <= until
+        return OccurrenceBacklog(
+            occurrences=tuple(occurrences),
+            has_more=has_more,
+        )
 
     @staticmethod
     def _occurrence(schedule: Schedule, scheduled_at: Instant) -> Occurrence:

@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Bounded `OccurrencePlanner.due_backlog()` reconstruction with oldest-first ordering and `has_more`.
+- `MisfirePolicy.max_occurrences` with strict positive validation.
+- End-to-end Catch-Up batches that reuse durable requests and continue across cycles.
+- Exact Coalesce recovery selecting only the latest due occurrence when the full backlog fits within the configured bound.
+- Fail-closed Coalesce overflow with `recovery_limit_schedules` and no checkpoint mutation.
+- `RecoveryEvaluationRecord` diagnostic evidence for considered and materialized occurrence identities.
+- Oldest-first PENDING and QUEUED in-memory processing based on occurrence scheduled time.
+- LOT-13 unit, integration, and end-to-end qualification for bounded recovery semantics.
 - Explicit lateness classification with ON_TIME, LATE_ELIGIBLE, and MISFIRED states.
 - Immutable `MisfirePolicy` with grace period and SKIP, RUN_NOW, CATCH_UP, and COALESCE actions.
 - Pure `LatenessClassifier` and `MisfireEvaluator`.

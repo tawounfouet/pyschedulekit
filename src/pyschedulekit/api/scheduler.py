@@ -9,7 +9,7 @@ from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
-from pyschedulekit.domain.misfire import MisfirePolicy, MisfirePolicyAction
+from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.schedule import (
     Schedule,
     ScheduleDefinition,
@@ -96,7 +96,6 @@ class Scheduler:
             timezone=timezone,
         )
         effective_misfire = misfire if misfire is not None else MisfirePolicy.run_now()
-        self._validate_supported_misfire(effective_misfire)
 
         schedule = Schedule.create(
             schedule_id=schedule_id,
@@ -134,16 +133,6 @@ class Scheduler:
             return trigger.timezone
 
         return timezone if timezone is not None else Timezone("UTC")
-
-    @staticmethod
-    def _validate_supported_misfire(policy: MisfirePolicy) -> None:
-        if policy.action not in (
-            MisfirePolicyAction.SKIP,
-            MisfirePolicyAction.RUN_NOW,
-        ):
-            raise ValueError(
-                "CATCH_UP and COALESCE are modeled but not yet supported by the public Scheduler."
-            )
 
     def _normalize_target(
         self,

@@ -9,11 +9,12 @@ from pyschedulekit.domain.misfire import (
     MisfireDecision,
     MisfireDecisionAction,
     MisfireEvaluator,
+    MisfirePolicyAction,
 )
-from pyschedulekit.domain.occurrence import OccurrenceKey, OccurrencePlanner
-from pyschedulekit.domain.schedule import ScheduleId, ScheduleState
+from pyschedulekit.domain.occurrence import Occurrence, OccurrenceKey, OccurrencePlanner
+from pyschedulekit.domain.schedule import Schedule, ScheduleId, ScheduleState
 from pyschedulekit.domain.time import Instant
-from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWorkFactory
+from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWork, UnitOfWorkFactory
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +26,17 @@ class MisfireEvaluationRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class RecoveryEvaluationRecord:
+    """Evidence produced while reconstructing a missed-occurrence backlog."""
+
+    schedule_id: ScheduleId
+    action: MisfirePolicyAction
+    considered_occurrence_keys: tuple[OccurrenceKey, ...]
+    materialized_occurrence_keys: tuple[OccurrenceKey, ...]
+    has_more: bool
+
+
+@dataclass(frozen=True, slots=True)
 class SchedulerEvaluationResult:
     """Result of one deterministic SchedulerEngine evaluation cycle."""
 
@@ -33,6 +45,16 @@ class SchedulerEvaluationResult:
     conflicts: tuple[ScheduleId, ...]
     misfire_decisions: tuple[MisfireEvaluationRecord, ...] = ()
     unsupported_policy_schedules: tuple[ScheduleId, ...] = ()
+    recovery_records: tuple[RecoveryEvaluationRecord, ...] = ()
+    recovery_limit_schedules: tuple[ScheduleId, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class _ScheduleEvaluation:
+    requests: tuple[ExecutionRequest, ...] = ()
+    misfire_record: MisfireEvaluationRecord | None = None
+    recovery_record: RecoveryEvaluationRecord | None = None
+    recovery_limit_exceeded: bool = False
 
 
 class SchedulerEngine:
@@ -68,11 +90,12 @@ class SchedulerEngine:
         requests: list[ExecutionRequest] = []
         conflicts: list[ScheduleId] = []
         decisions: list[MisfireEvaluationRecord] = []
-        unsupported: list[ScheduleId] = []
+        recovery_records: list[RecoveryEvaluationRecord] = []
+        recovery_limit_schedules: list[ScheduleId] = []
 
         for schedule_id in schedule_ids:
             try:
-                request, record, policy_supported = self._evaluate_schedule(
+                evaluation = self._evaluate_schedule(
                     schedule_id=schedule_id,
                     evaluation_now=evaluation_now,
                 )
@@ -80,19 +103,22 @@ class SchedulerEngine:
                 conflicts.append(schedule_id)
                 continue
 
-            if request is not None:
-                requests.append(request)
-            if record is not None:
-                decisions.append(record)
-            if not policy_supported:
-                unsupported.append(schedule_id)
+            requests.extend(evaluation.requests)
+            if evaluation.misfire_record is not None:
+                decisions.append(evaluation.misfire_record)
+            if evaluation.recovery_record is not None:
+                recovery_records.append(evaluation.recovery_record)
+            if evaluation.recovery_limit_exceeded:
+                recovery_limit_schedules.append(schedule_id)
 
         return SchedulerEvaluationResult(
             evaluation_now=evaluation_now,
             requests=tuple(requests),
             conflicts=tuple(conflicts),
             misfire_decisions=tuple(decisions),
-            unsupported_policy_schedules=tuple(unsupported),
+            unsupported_policy_schedules=(),
+            recovery_records=tuple(recovery_records),
+            recovery_limit_schedules=tuple(recovery_limit_schedules),
         )
 
     def _discover_due_schedule_ids(
@@ -110,29 +136,31 @@ class SchedulerEngine:
         *,
         schedule_id: ScheduleId,
         evaluation_now: Instant,
-    ) -> tuple[ExecutionRequest | None, MisfireEvaluationRecord | None, bool]:
+    ) -> _ScheduleEvaluation:
         with self._uow_factory() as uow:
             schedule = uow.schedules.get(schedule_id)
-            if schedule is None:
-                return None, None, True
-
-            if schedule.state is not ScheduleState.ACTIVE:
-                return None, None, True
+            if schedule is None or schedule.state is not ScheduleState.ACTIVE:
+                return _ScheduleEvaluation()
 
             checkpoint = schedule.next_run_time
             if checkpoint is None or checkpoint > evaluation_now:
-                return None, None, True
+                return _ScheduleEvaluation()
 
             occurrence = self._occurrence_planner.current(schedule)
             if occurrence is None:
-                return None, None, True
+                return _ScheduleEvaluation()
 
-            existing = uow.requests.get_by_occurrence(occurrence.key)
-            if existing is not None:
-                schedule.advance_next_run_after(reference=occurrence.scheduled_at)
-                uow.schedules.save(schedule)
-                uow.commit()
-                return existing, None, True
+            configured_action = schedule.definition.misfire.action
+            if configured_action not in (
+                MisfirePolicyAction.CATCH_UP,
+                MisfirePolicyAction.COALESCE,
+            ):
+                existing = uow.requests.get_by_occurrence(occurrence.key)
+                if existing is not None:
+                    self._advance_schedule(schedule, occurrences=(occurrence,))
+                    uow.schedules.save(schedule)
+                    uow.commit()
+                    return _ScheduleEvaluation(requests=(existing,))
 
             decision = self._misfire_evaluator.evaluate(
                 scheduled_at=occurrence.scheduled_at,
@@ -144,27 +172,179 @@ class SchedulerEngine:
                 decision=decision,
             )
 
-            if decision.action in (
-                MisfireDecisionAction.CATCH_UP,
-                MisfireDecisionAction.COALESCE,
-            ):
-                return None, record, False
+            if decision.action is MisfireDecisionAction.CATCH_UP:
+                return self._catch_up(
+                    uow=uow,
+                    schedule=schedule,
+                    evaluation_now=evaluation_now,
+                    misfire_record=record,
+                )
+
+            if decision.action is MisfireDecisionAction.COALESCE:
+                return self._coalesce(
+                    uow=uow,
+                    schedule=schedule,
+                    evaluation_now=evaluation_now,
+                    misfire_record=record,
+                )
 
             if decision.action is MisfireDecisionAction.SKIP:
-                schedule.advance_next_run_after(reference=occurrence.scheduled_at)
+                self._advance_schedule(schedule, occurrences=(occurrence,))
                 uow.schedules.save(schedule)
                 uow.commit()
-                return None, record, True
+                return _ScheduleEvaluation(misfire_record=record)
 
-            request = ExecutionRequest.from_occurrence(
+            request = self._materialize_or_reuse(
+                uow=uow,
+                schedule=schedule,
                 occurrence=occurrence,
-                target=schedule.definition.target,
                 created_at=evaluation_now,
             )
-            uow.requests.add(request)
-
-            schedule.advance_next_run_after(reference=occurrence.scheduled_at)
+            self._advance_schedule(schedule, occurrences=(occurrence,))
             uow.schedules.save(schedule)
             uow.commit()
 
-            return request, record, True
+            return _ScheduleEvaluation(
+                requests=(request,),
+                misfire_record=record,
+            )
+
+    def _catch_up(
+        self,
+        *,
+        uow: UnitOfWork,
+        schedule: Schedule,
+        evaluation_now: Instant,
+        misfire_record: MisfireEvaluationRecord,
+    ) -> _ScheduleEvaluation:
+        backlog = self._occurrence_planner.due_backlog(
+            schedule,
+            until=evaluation_now,
+            limit=schedule.definition.misfire.max_occurrences,
+        )
+
+        requests = tuple(
+            self._materialize_or_reuse(
+                uow=uow,
+                schedule=schedule,
+                occurrence=occurrence,
+                created_at=evaluation_now,
+            )
+            for occurrence in backlog.occurrences
+        )
+
+        self._advance_schedule(schedule, occurrences=backlog.occurrences)
+        uow.schedules.save(schedule)
+        uow.commit()
+
+        recovery_record = RecoveryEvaluationRecord(
+            schedule_id=schedule.id,
+            action=MisfirePolicyAction.CATCH_UP,
+            considered_occurrence_keys=tuple(occurrence.key for occurrence in backlog.occurrences),
+            materialized_occurrence_keys=tuple(request.occurrence_key for request in requests),
+            has_more=backlog.has_more,
+        )
+        return _ScheduleEvaluation(
+            requests=requests,
+            misfire_record=misfire_record,
+            recovery_record=recovery_record,
+        )
+
+    def _coalesce(
+        self,
+        *,
+        uow: UnitOfWork,
+        schedule: Schedule,
+        evaluation_now: Instant,
+        misfire_record: MisfireEvaluationRecord,
+    ) -> _ScheduleEvaluation:
+        backlog = self._occurrence_planner.due_backlog(
+            schedule,
+            until=evaluation_now,
+            limit=schedule.definition.misfire.max_occurrences,
+        )
+
+        recovery_record = RecoveryEvaluationRecord(
+            schedule_id=schedule.id,
+            action=MisfirePolicyAction.COALESCE,
+            considered_occurrence_keys=tuple(occurrence.key for occurrence in backlog.occurrences),
+            materialized_occurrence_keys=(),
+            has_more=backlog.has_more,
+        )
+
+        if backlog.has_more:
+            return _ScheduleEvaluation(
+                misfire_record=misfire_record,
+                recovery_record=recovery_record,
+                recovery_limit_exceeded=True,
+            )
+
+        existing_requests: list[ExecutionRequest] = []
+        for occurrence in backlog.occurrences:
+            existing = uow.requests.get_by_occurrence(occurrence.key)
+            if existing is not None:
+                existing_requests.append(existing)
+
+        latest = backlog.occurrences[-1]
+        latest_request = uow.requests.get_by_occurrence(latest.key)
+        if latest_request is None:
+            latest_request = self._materialize_or_reuse(
+                uow=uow,
+                schedule=schedule,
+                occurrence=latest,
+                created_at=evaluation_now,
+            )
+            existing_requests.append(latest_request)
+
+        requests = tuple(
+            sorted(
+                {request.id: request for request in existing_requests}.values(),
+                key=lambda request: request.occurrence_key.scheduled_at.value,
+            )
+        )
+
+        self._advance_schedule(schedule, occurrences=backlog.occurrences)
+        uow.schedules.save(schedule)
+        uow.commit()
+
+        completed_record = RecoveryEvaluationRecord(
+            schedule_id=schedule.id,
+            action=MisfirePolicyAction.COALESCE,
+            considered_occurrence_keys=recovery_record.considered_occurrence_keys,
+            materialized_occurrence_keys=tuple(request.occurrence_key for request in requests),
+            has_more=False,
+        )
+        return _ScheduleEvaluation(
+            requests=requests,
+            misfire_record=misfire_record,
+            recovery_record=completed_record,
+        )
+
+    @staticmethod
+    def _materialize_or_reuse(
+        *,
+        uow: UnitOfWork,
+        schedule: Schedule,
+        occurrence: Occurrence,
+        created_at: Instant,
+    ) -> ExecutionRequest:
+        existing = uow.requests.get_by_occurrence(occurrence.key)
+        if existing is not None:
+            return existing
+
+        request = ExecutionRequest.from_occurrence(
+            occurrence=occurrence,
+            target=schedule.definition.target,
+            created_at=created_at,
+        )
+        uow.requests.add(request)
+        return request
+
+    @staticmethod
+    def _advance_schedule(
+        schedule: Schedule,
+        *,
+        occurrences: tuple[Occurrence, ...],
+    ) -> None:
+        for occurrence in occurrences:
+            schedule.advance_next_run_after(reference=occurrence.scheduled_at)

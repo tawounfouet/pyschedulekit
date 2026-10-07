@@ -114,9 +114,7 @@ def test_t_wakeup_005_waiting_admission_does_not_busy_loop() -> None:
         uow.requests.add(request)
         uow.commit()
 
-    delay = _planner(clock=clock, factory=factory).next_delay(
-        max_sleep=Duration.seconds(30)
-    )
+    delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.seconds(30))
 
     assert delay == Duration.seconds(30)
 
@@ -145,9 +143,7 @@ def test_t_wakeup_006_retry_deadline_precedes_next_schedule() -> None:
     clock.advance(Duration.minutes(10))
     scheduler.run_pending()
 
-    delay = _planner(clock=clock, factory=factory).next_delay(
-        max_sleep=Duration.hours(1)
-    )
+    delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.hours(1))
 
     assert delay == Duration.minutes(5)
 

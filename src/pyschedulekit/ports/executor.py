@@ -54,6 +54,7 @@ class Executor(Protocol):
         *,
         timeout: Duration | None = None,
         cancellation_token: CancellationToken | None = None,
+        fencing_token: int | None = None,
     ) -> ExecutorOutcome:
         """Invoke prepared workload code under optional timeout and cancellation."""
         ...

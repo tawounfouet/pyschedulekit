@@ -66,7 +66,15 @@ class RunPendingResult:
         return tuple(
             admission.request_id
             for admission in self.admissions
-            if admission.action is ConcurrencyDecisionAction.QUEUE
+            if admission.action is ConcurrencyDecisionAction.QUEUE and not admission.lock_denied
+        )
+
+    @property
+    def admission_lock_denied_request_ids(self) -> tuple[RequestId, ...]:
+        return tuple(
+            admission.request_id
+            for admission in self.admissions
+            if admission.lock_denied
         )
 
     @property

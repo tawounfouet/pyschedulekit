@@ -8,6 +8,7 @@ from typing import Protocol
 from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
+from pyschedulekit.domain.outbox import OutboxMessage, OutboxMessageId
 from pyschedulekit.domain.schedule import Schedule, ScheduleId
 from pyschedulekit.domain.time import Instant
 
@@ -42,6 +43,10 @@ class DuplicateExecutionError(PersistenceConflictError):
 
 class DuplicateAttemptError(PersistenceConflictError):
     """Raised when an Attempt duplicates an existing ID or attempt number."""
+
+
+class DuplicateOutboxMessageError(PersistenceConflictError):
+    """Raised when an outbox message uses an already committed identity."""
 
 
 class UntrackedEntityError(RuntimeError):
@@ -122,6 +127,18 @@ class AttemptRepository(Protocol):
     def list_for_execution(self, execution_id: ExecutionId) -> list[Attempt]: ...
 
 
+class OutboxRepository(Protocol):
+    """Transactional repository for durable outbox messages."""
+
+    def add(self, message: OutboxMessage) -> None: ...
+
+    def get(self, message_id: OutboxMessageId) -> OutboxMessage | None: ...
+
+    def save(self, message: OutboxMessage) -> None: ...
+
+    def list_pending(self, *, limit: int) -> list[OutboxMessage]: ...
+
+
 class UnitOfWork(Protocol):
     """Transactional boundary owning scheduling and execution changes."""
 
@@ -129,6 +146,7 @@ class UnitOfWork(Protocol):
     requests: ExecutionRequestRepository
     executions: ExecutionRepository
     attempts: AttemptRepository
+    outbox: OutboxRepository
 
     def __enter__(self) -> UnitOfWork: ...
 

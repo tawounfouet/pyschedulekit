@@ -15,6 +15,7 @@ from pyschedulekit.domain.execution import (
     FailureCategory,
 )
 from pyschedulekit.domain.retry import RetryDecision, RetryEvaluator
+from pyschedulekit.ports.cancellation import CancellationController
 from pyschedulekit.ports.executor import Executor, ExecutorOutcome
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
@@ -41,12 +42,14 @@ class ExecutionRunner:
         executor: Executor,
         clock: Clock,
         retry_evaluator: RetryEvaluator | None = None,
+        cancellation_controller: CancellationController | None = None,
     ) -> None:
         self._uow_factory = uow_factory
         self._execution_service = execution_service
         self._executor = executor
         self._clock = clock
         self._retry_evaluator = retry_evaluator or RetryEvaluator()
+        self._cancellation_controller = cancellation_controller
 
     def run(self, *, execution_id: ExecutionId) -> ExecutionRunResult:
         """Execute one logical Execution without holding a persistence transaction."""
@@ -59,15 +62,26 @@ class ExecutionRunner:
             started_at=self._clock.now(),
         )
 
+        cancellation_token = (
+            self._cancellation_controller.token_for(execution_id.value)
+            if self._cancellation_controller is not None
+            else None
+        )
         outcome = self._executor.execute(
             prepared,
             timeout=execution_snapshot.policy_snapshot.timeout,
+            cancellation_token=cancellation_token,
         )
         completed_at = self._clock.now()
 
         retry_decision: RetryDecision | None = None
         if outcome.failure is None:
             execution = self._execution_service.succeed_attempt(
+                attempt_id=attempt.id,
+                completed_at=completed_at,
+            )
+        elif outcome.failure.category is FailureCategory.CANCELLED:
+            execution = self._execution_service.cancel_attempt(
                 attempt_id=attempt.id,
                 completed_at=completed_at,
             )
@@ -95,6 +109,9 @@ class ExecutionRunner:
                     completed_at=completed_at,
                     retry_at=retry_at,
                 )
+
+        if self._cancellation_controller is not None:
+            self._cancellation_controller.release(execution_id.value)
 
         return ExecutionRunResult(
             execution=execution,

@@ -55,6 +55,8 @@ class ScheduleRepository(Protocol):
 
     def list_due(self, *, now: Instant, limit: int) -> list[Schedule]: ...
 
+    def next_run_time(self) -> Instant | None: ...
+
 
 class ExecutionRequestRepository(Protocol):
     """Transactional repository for ExecutionRequest entities."""
@@ -71,6 +73,8 @@ class ExecutionRequestRepository(Protocol):
 
     def list_admission_candidates(self, *, limit: int) -> list[ExecutionRequest]: ...
 
+    def has_pending(self) -> bool: ...
+
 
 class ExecutionRepository(Protocol):
     """Transactional repository for Execution aggregates."""
@@ -86,6 +90,8 @@ class ExecutionRepository(Protocol):
     def list_queued(self, *, limit: int) -> list[Execution]: ...
 
     def list_runnable(self, *, now: Instant, limit: int) -> list[Execution]: ...
+
+    def next_runnable_at(self, *, now: Instant) -> Instant | None: ...
 
     def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int: ...
 

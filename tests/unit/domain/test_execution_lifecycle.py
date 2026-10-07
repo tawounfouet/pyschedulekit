@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.execution import (
     AttemptState,
     Execution,
@@ -276,3 +277,45 @@ def test_execution_policy_snapshot_is_frozen_at_creation() -> None:
     execution = _execution()
 
     assert execution.policy_snapshot == ExecutionPolicySnapshot(timeout=timeout)
+
+
+def test_request_can_be_dropped_before_dispatch() -> None:
+    request = _request()
+
+    request.drop()
+
+    assert request.state is ExecutionRequestState.DROPPED
+    assert request.version == 1
+
+    with pytest.raises(InvalidExecutionRequestTransitionError):
+        request.mark_dispatched()
+
+
+def test_dropped_request_transition_is_idempotent_only_for_drop() -> None:
+    request = _request()
+    request.drop()
+    version = request.version
+
+    request.drop()
+
+    assert request.version == version
+
+    with pytest.raises(InvalidExecutionRequestTransitionError):
+        request.wait_for_admission()
+
+
+def test_request_concurrency_policy_is_snapshotted() -> None:
+    policy = ConcurrencyPolicy.limit(max_instances=2)
+    request = ExecutionRequest(
+        id=RequestId("request-concurrency"),
+        occurrence_key=OccurrenceKey(
+            schedule_id=ScheduleId("schedule-1"),
+            schedule_revision=ScheduleRevision(1),
+            scheduled_at=_instant(),
+        ),
+        target=TargetRef.python("app.tasks:refresh"),
+        created_at=_instant(hour=9, minute=59),
+        concurrency_policy=policy,
+    )
+
+    assert request.concurrency_policy == policy

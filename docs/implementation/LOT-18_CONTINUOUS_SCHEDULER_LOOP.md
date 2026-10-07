@@ -171,4 +171,4 @@ LOT-18 does not implement:
 
 ## Next
 
-`LOT-19 — Wake-up Strategy`
+`LOT-19 — Wake-up Strategy` (implemented: fixed polling is now a max-sleep fallback behind adaptive durable-state wake-up planning)

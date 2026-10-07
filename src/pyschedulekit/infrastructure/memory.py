@@ -31,16 +31,16 @@ from pyschedulekit.ports.persistence import (
     DuplicateAttemptError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
+    DuplicateOutboxMessageError,
     DuplicateScheduleError,
     ExecutionRepository,
     ExecutionRequestRepository,
-    OutboxRepository,
     OptimisticConcurrencyError,
+    OutboxRepository,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
     UntrackedScheduleError,
-    DuplicateOutboxMessageError,
 )
 
 

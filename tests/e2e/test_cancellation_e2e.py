@@ -12,10 +12,11 @@ from pyschedulekit import (
     RetryPolicy,
     Scheduler,
 )
+from pyschedulekit.application.run_pending import RunPendingResult
 from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.domain.execution_request import RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
-from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision
+from pyschedulekit.domain.schedule import ScheduleRevision
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.testing import MutableClock
 
@@ -31,7 +32,7 @@ def test_t_cancel_e2e_001_public_scheduler_cancels_running_execution() -> None:
     factory = InMemoryUnitOfWorkFactory()
     scheduler = Scheduler(clock=clock, uow_factory=factory)
     started = Event()
-    cycle_box = []
+    cycle_box: list[RunPendingResult] = []
 
     def target(cancellation_token: CancellationToken) -> None:
         started.set()

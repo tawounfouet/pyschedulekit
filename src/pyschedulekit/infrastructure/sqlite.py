@@ -9,6 +9,12 @@ from types import TracebackType
 from typing import NoReturn, cast
 from uuid import uuid4
 
+from pyschedulekit.domain.claim import (
+    ClaimToken,
+    ExecutionClaim,
+    ExecutionClaimState,
+    WorkerId,
+)
 from pyschedulekit.domain.execution import (
     Attempt,
     AttemptId,
@@ -53,10 +59,12 @@ from pyschedulekit.ports.persistence import (
     AttemptRepository,
     DatabaseInvariantError,
     DuplicateAttemptError,
+    DuplicateExecutionClaimError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateOutboxMessageError,
     DuplicateScheduleError,
+    ExecutionClaimRepository,
     ExecutionRepository,
     ExecutionRequestRepository,
     OptimisticConcurrencyError,
@@ -84,6 +92,12 @@ def _optional_duration(value: object) -> Duration | None:
 
 def _raise_integrity_error(exc: sqlite3.IntegrityError) -> NoReturn:
     message = str(exc)
+
+    if "UNIQUE constraint failed: execution_claims.execution_id" in message:
+        raise DuplicateExecutionClaimError("Execution claim already exists.") from exc
+
+    if "UNIQUE constraint failed: execution_claims.token" in message:
+        raise DuplicateExecutionClaimError("Execution claim token already exists.") from exc
 
     if "UNIQUE constraint failed: outbox_messages.id" in message:
         raise DuplicateOutboxMessageError("Outbox message identity already exists.") from exc
@@ -128,6 +142,19 @@ def _require_cas_update(
         raise OptimisticConcurrencyError(
             f"{entity} changed concurrently before the compare-and-swap update."
         )
+
+
+def _claim_from_row(row: sqlite3.Row) -> ExecutionClaim:
+    return ExecutionClaim(
+        execution_id=ExecutionId(str(row["execution_id"])),
+        worker_id=WorkerId(str(row["worker_id"])),
+        token=ClaimToken(str(row["token"])),
+        claimed_at=Instant.parse(str(row["claimed_at"])),
+        expires_at=Instant.parse(str(row["expires_at"])),
+        state=ExecutionClaimState(str(row["state"])),
+        released_at=_optional_instant(row["released_at"]),
+        version=int(row["version"]),
+    )
 
 
 def _encode_outbox_payload(payload: tuple[tuple[str, str], ...]) -> str:
@@ -1090,6 +1117,130 @@ class SqliteAttemptRepository:
         self._dirty.clear()
 
 
+class SqliteExecutionClaimRepository:
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+        self._tracked: dict[ExecutionId, ExecutionClaim] = {}
+        self._expected_versions: dict[ExecutionId, int] = {}
+        self._new: set[ExecutionId] = set()
+        self._dirty: set[ExecutionId] = set()
+
+    def add(self, claim: ExecutionClaim) -> None:
+        if claim.execution_id in self._tracked:
+            raise DuplicateExecutionClaimError(
+                f"ExecutionClaim {claim.execution_id.value!r} is already tracked."
+            )
+        self._tracked[claim.execution_id] = claim
+        self._new.add(claim.execution_id)
+
+    def get(self, execution_id: ExecutionId) -> ExecutionClaim | None:
+        tracked = self._tracked.get(execution_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM execution_claims WHERE execution_id = ?",
+            (execution_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _claim_from_row(row)
+        self._tracked[execution_id] = loaded
+        self._expected_versions[execution_id] = loaded.version
+        return loaded
+
+    def save(self, claim: ExecutionClaim) -> None:
+        if self._tracked.get(claim.execution_id) is not claim:
+            raise UntrackedEntityError(
+                f"ExecutionClaim {claim.execution_id.value!r} must be loaded before save()."
+            )
+        if claim.execution_id in self._new:
+            return
+        if claim.execution_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ExecutionClaim {claim.execution_id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(claim.execution_id)
+
+    def _validate(self) -> None:
+        for execution_id in self._new:
+            row = self._connection.execute(
+                "SELECT 1 FROM execution_claims WHERE execution_id = ?",
+                (execution_id.value,),
+            ).fetchone()
+            if row is not None:
+                raise DuplicateExecutionClaimError(
+                    f"ExecutionClaim {execution_id.value!r} already exists."
+                )
+
+        for execution_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM execution_claims WHERE execution_id = ?",
+                (execution_id.value,),
+            ).fetchone()
+            if row is None or int(row[0]) != self._expected_versions[execution_id]:
+                raise OptimisticConcurrencyError(
+                    f"ExecutionClaim {execution_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for execution_id in self._new:
+            claim = self._tracked[execution_id]
+            self._connection.execute(
+                """
+                INSERT INTO execution_claims(
+                    execution_id, worker_id, token, claimed_at, expires_at,
+                    state, released_at, version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    claim.execution_id.value,
+                    claim.worker_id.value,
+                    claim.token.value,
+                    claim.claimed_at.value.isoformat(),
+                    claim.expires_at.value.isoformat(),
+                    claim.state.value,
+                    _instant_text(claim.released_at),
+                    claim.version,
+                ),
+            )
+
+        for execution_id in self._dirty:
+            claim = self._tracked[execution_id]
+            expected = self._expected_versions[execution_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE execution_claims
+                SET worker_id = ?, token = ?, claimed_at = ?, expires_at = ?,
+                    state = ?, released_at = ?, version = ?
+                WHERE execution_id = ? AND version = ?
+                """,
+                (
+                    claim.worker_id.value,
+                    claim.token.value,
+                    claim.claimed_at.value.isoformat(),
+                    claim.expires_at.value.isoformat(),
+                    claim.state.value,
+                    _instant_text(claim.released_at),
+                    claim.version,
+                    claim.execution_id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(cursor, entity=f"ExecutionClaim {claim.execution_id.value!r}")
+
+    def _after_commit(self) -> None:
+        for execution_id in self._new | self._dirty:
+            self._expected_versions[execution_id] = self._tracked[execution_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class SqliteOutboxRepository:
     def __init__(self, connection: sqlite3.Connection) -> None:
         self._connection = connection
@@ -1258,12 +1409,14 @@ class SqliteUnitOfWork:
         self._requests = SqliteExecutionRequestRepository(connection)
         self._executions = SqliteExecutionRepository(connection)
         self._attempts = SqliteAttemptRepository(connection)
+        self._claims = SqliteExecutionClaimRepository(connection)
         self._outbox = SqliteOutboxRepository(connection)
 
         self.schedules: ScheduleRepository = self._schedules
         self.requests: ExecutionRequestRepository = self._requests
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
+        self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
 
     def __enter__(self) -> UnitOfWork:
@@ -1290,6 +1443,7 @@ class SqliteUnitOfWork:
             self._requests,
             self._executions,
             self._attempts,
+            self._claims,
             self._outbox,
         )
         try:
@@ -1316,6 +1470,7 @@ class SqliteUnitOfWork:
         self._requests._rollback()
         self._executions._rollback()
         self._attempts._rollback()
+        self._claims._rollback()
         self._outbox._rollback()
 
     def _require_active(self) -> None:

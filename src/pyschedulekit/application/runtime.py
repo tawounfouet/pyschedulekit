@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from threading import Event, Lock
 
+from pyschedulekit.application.observability import Observer
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.time import Duration
@@ -23,10 +24,12 @@ class ContinuousSchedulerLoop:
         run_pending_service: RunPendingService,
         waiter: LoopWaiter,
         wakeup_planner: WakeUpPlanner,
+        observer: Observer | None = None,
     ) -> None:
         self._run_pending_service = run_pending_service
         self._waiter = waiter
         self._wakeup_planner = wakeup_planner
+        self._observer = observer or Observer()
         self._stop_event = Event()
         self._wake_event = Event()
         self._stopped_event = Event()
@@ -100,13 +103,25 @@ class ContinuousSchedulerLoop:
                 result = self._run_pending_service.run_pending(limit=limit)
                 with self._state_lock:
                     self._cycles_completed += 1
+                    cycle_number = self._cycles_completed
                     self._last_result = result
+
+                self._observer.record(
+                    name="runtime.cycle.completed",
+                    recorded_at=result.evaluation_now,
+                    cycle_number=cycle_number,
+                )
 
                 if self._stop_event.is_set():
                     break
 
                 self._wake_event.clear()
                 delay = self._wakeup_planner.next_delay(max_sleep=max_sleep)
+                self._observer.record(
+                    name="runtime.wait.planned",
+                    recorded_at=result.evaluation_now,
+                    delay_seconds=delay.total_seconds,
+                )
                 if delay.total_seconds <= 0:
                     continue
 

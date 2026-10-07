@@ -146,6 +146,7 @@ class Scheduler:
             concurrency_coordinator=ConcurrencyCoordinator(
                 uow_factory=self._uow_factory,
                 admission_lock_coordinator=self._admission_lock_coordinator,
+                clock=self._clock,
             ),
             execution_runner=execution_runner,
             claim_coordinator=self._claim_coordinator,

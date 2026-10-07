@@ -86,9 +86,7 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
     """Create the LOT-21 schema and verify its version."""
 
     connection.executescript(_SCHEMA_SQL)
-    row = connection.execute(
-        "SELECT version FROM pyschedulekit_schema LIMIT 1"
-    ).fetchone()
+    row = connection.execute("SELECT version FROM pyschedulekit_schema LIMIT 1").fetchone()
     if row is None:
         connection.execute(
             "INSERT INTO pyschedulekit_schema(version) VALUES (?)",
@@ -98,6 +96,4 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
         return
 
     if int(row[0]) != SCHEMA_VERSION:
-        raise RuntimeError(
-            f"Unsupported PyScheduleKit SQLite schema version: {row[0]!r}."
-        )
+        raise RuntimeError(f"Unsupported PyScheduleKit SQLite schema version: {row[0]!r}.")

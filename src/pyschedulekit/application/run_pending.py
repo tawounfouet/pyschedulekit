@@ -12,8 +12,8 @@ from pyschedulekit.application.shutdown import (
     ShutdownCoordinator,
     ShutdownInProgressError,
 )
-from pyschedulekit.domain.concurrency import ConcurrencyDecisionAction
 from pyschedulekit.domain.claim import ClaimOwnershipError, ExecutionClaimHandle
+from pyschedulekit.domain.concurrency import ConcurrencyDecisionAction
 from pyschedulekit.domain.execution import Execution, ExecutionId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.schedule import ScheduleId

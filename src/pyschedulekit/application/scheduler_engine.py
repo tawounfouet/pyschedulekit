@@ -240,12 +240,8 @@ class SchedulerEngine:
         recovery_record = RecoveryEvaluationRecord(
             schedule_id=schedule.id,
             action=MisfirePolicyAction.CATCH_UP,
-            considered_occurrence_keys=tuple(
-                occurrence.key for occurrence in backlog.occurrences
-            ),
-            materialized_occurrence_keys=tuple(
-                request.occurrence_key for request in requests
-            ),
+            considered_occurrence_keys=tuple(occurrence.key for occurrence in backlog.occurrences),
+            materialized_occurrence_keys=tuple(request.occurrence_key for request in requests),
             has_more=backlog.has_more,
         )
         return _ScheduleEvaluation(
@@ -271,9 +267,7 @@ class SchedulerEngine:
         recovery_record = RecoveryEvaluationRecord(
             schedule_id=schedule.id,
             action=MisfirePolicyAction.COALESCE,
-            considered_occurrence_keys=tuple(
-                occurrence.key for occurrence in backlog.occurrences
-            ),
+            considered_occurrence_keys=tuple(occurrence.key for occurrence in backlog.occurrences),
             materialized_occurrence_keys=(),
             has_more=backlog.has_more,
         )
@@ -317,9 +311,7 @@ class SchedulerEngine:
             schedule_id=schedule.id,
             action=MisfirePolicyAction.COALESCE,
             considered_occurrence_keys=recovery_record.considered_occurrence_keys,
-            materialized_occurrence_keys=tuple(
-                request.occurrence_key for request in requests
-            ),
+            materialized_occurrence_keys=tuple(request.occurrence_key for request in requests),
             has_more=False,
         )
         return _ScheduleEvaluation(

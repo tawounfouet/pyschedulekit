@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import inspect
-from threading import Event, Thread
 from collections.abc import Callable
 from dataclasses import dataclass
+from threading import Event, Thread
 
 from pyschedulekit.domain.execution import Failure, FailureCategory
 from pyschedulekit.domain.schedule import TargetRef

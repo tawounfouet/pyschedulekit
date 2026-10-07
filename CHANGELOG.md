@@ -8,6 +8,15 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Durable ExecutionClaim model with WorkerId and opaque ClaimToken.
+- ExecutionClaimRepository integrated into in-memory and SQLite UnitsOfWork.
+- SQLite schema v4 with execution_claims and automatic v3 -> v4 migration.
+- ExecutionClaimCoordinator for bounded acquisition and expired takeover.
+- Atomic claim consumption during Attempt start.
+- Scheduler worker_id and configurable claim_ttl.
+- Claim contention visibility through RunPendingResult.claim_denied_execution_ids.
+- LOT-26 unit, SQLite integration, migration, stale-owner, and multi-worker qualification.
+
 - Transactional outbox message model with deterministic integration identities.
 - Outbox repository integrated into in-memory and SQLite UnitsOfWork.
 - SQLite schema v3 and automatic v2 → v3 outbox migration.

@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from pyschedulekit.application.outbox import make_outbox_message
+from pyschedulekit.domain.claim import (
+    ClaimOwnershipError,
+    ExecutionClaimHandle,
+)
 from pyschedulekit.domain.execution import (
     Attempt,
     AttemptId,
@@ -94,6 +98,7 @@ class ExecutionService:
         *,
         execution_id: ExecutionId,
         started_at: Instant,
+        claim_handle: ExecutionClaimHandle | None = None,
     ) -> Attempt:
         """Atomically start exactly one new Attempt for an Execution."""
 
@@ -101,6 +106,25 @@ class ExecutionService:
             execution = uow.executions.get(execution_id)
             if execution is None:
                 raise ExecutionNotFoundError(execution_id.value)
+
+            if claim_handle is not None:
+                if claim_handle.execution_id != execution_id:
+                    raise ClaimOwnershipError(
+                        "Execution claim handle belongs to a different Execution."
+                    )
+                claim = uow.claims.get(execution_id)
+                if claim is None:
+                    raise ClaimOwnershipError("Execution has no persisted claim.")
+                if not claim.is_active(now=started_at):
+                    raise ClaimOwnershipError(
+                        "Execution claim is inactive or expired before Attempt start."
+                    )
+                claim.release(
+                    worker_id=claim_handle.worker_id,
+                    token=claim_handle.token,
+                    released_at=started_at,
+                )
+                uow.claims.save(claim)
 
             attempt = execution.start_attempt(started_at=started_at)
             uow.executions.save(execution)

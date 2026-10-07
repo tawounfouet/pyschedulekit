@@ -12,6 +12,7 @@ from pyschedulekit.application.shutdown import (
     ShutdownCoordinator,
     ShutdownInProgressError,
 )
+from pyschedulekit.domain.claim import ExecutionClaimHandle
 from pyschedulekit.domain.execution import (
     AttemptId,
     Execution,
@@ -57,7 +58,12 @@ class ExecutionRunner:
         self._cancellation_controller = cancellation_controller
         self._shutdown_coordinator = shutdown_coordinator
 
-    def run(self, *, execution_id: ExecutionId) -> ExecutionRunResult:
+    def run(
+        self,
+        *,
+        execution_id: ExecutionId,
+        claim_handle: ExecutionClaimHandle | None = None,
+    ) -> ExecutionRunResult:
         """Execute one logical Execution without holding a persistence transaction."""
 
         if self._shutdown_coordinator is not None and not self._shutdown_coordinator.try_enter(
@@ -68,18 +74,27 @@ class ExecutionRunner:
             )
 
         try:
-            return self._run_entered(execution_id)
+            return self._run_entered(
+                execution_id,
+                claim_handle=claim_handle,
+            )
         finally:
             if self._shutdown_coordinator is not None:
                 self._shutdown_coordinator.leave(execution_id)
 
-    def _run_entered(self, execution_id: ExecutionId) -> ExecutionRunResult:
+    def _run_entered(
+        self,
+        execution_id: ExecutionId,
+        *,
+        claim_handle: ExecutionClaimHandle | None,
+    ) -> ExecutionRunResult:
         execution_snapshot = self._load_execution(execution_id)
         prepared = self._executor.prepare(execution_snapshot.target)
 
         attempt = self._execution_service.start_attempt(
             execution_id=execution_id,
             started_at=self._clock.now(),
+            claim_handle=claim_handle,
         )
 
         cancellation_token = (

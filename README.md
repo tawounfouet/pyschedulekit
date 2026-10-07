@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-25 complete — next: LOT-26 Distributed Claims**
+**LOT-26 complete — next: LOT-27 Multi-worker Admission**
 
 Completed:
 
@@ -36,6 +36,7 @@ Completed:
 - LOT-23 — Crash Recovery
 - LOT-24 — Reconciliation
 - LOT-25 — Transactional Outbox
+- LOT-26 — Distributed Claims
 
 The implementation follows a domain-first roadmap:
 
@@ -540,6 +541,32 @@ result = scheduler.dispatch_outbox(publisher)
 The external publisher runs outside the scheduler lifecycle transaction; failed publication leaves the message PENDING for a later retry.
 
 With LOT-25, the Durability phase is complete. LOT-26 starts distributed ownership with claims.
+
+## Distributed execution claims
+
+LOT-26 starts the Distribution phase by closing the race between multiple workers observing the same runnable Execution.
+
+```text
+QUEUED / due RETRY_WAIT
+        ↓
+durable claim
+        ↓
+claim ownership validation
+        ↓
+atomic claim consumption + Attempt start
+        ↓
+RUNNING
+```
+
+```python
+scheduler = Scheduler(
+    uow_factory=SqliteUnitOfWorkFactory("scheduler.db"),
+    worker_id="worker-a",
+    claim_ttl=Duration.seconds(30),
+)
+```
+
+Claims are one-shot admission tokens, not yet renewable execution leases. Expired claims can be taken over, and stale claim handles are rejected at Attempt start.
 
 ## Package shape
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from threading import RLock
 from types import TracebackType
 
+from pyschedulekit.domain.claim import ExecutionClaim
 from pyschedulekit.domain.execution import (
     Attempt,
     AttemptId,
@@ -29,14 +30,17 @@ from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import (
     AttemptRepository,
     DuplicateAttemptError,
+    DuplicateExecutionClaimError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateOutboxMessageError,
     DuplicateScheduleError,
+    ExecutionClaimRepository,
     ExecutionRepository,
     ExecutionRequestRepository,
     OptimisticConcurrencyError,
     OutboxRepository,
+    ReferentialIntegrityError,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
@@ -66,6 +70,19 @@ def _clone_request(request: ExecutionRequest) -> ExecutionRequest:
         timeout=request.timeout,
         state=request.state,
         version=request.version,
+    )
+
+
+def _clone_claim(claim: ExecutionClaim) -> ExecutionClaim:
+    return ExecutionClaim(
+        execution_id=claim.execution_id,
+        worker_id=claim.worker_id,
+        token=claim.token,
+        claimed_at=claim.claimed_at,
+        expires_at=claim.expires_at,
+        state=claim.state,
+        released_at=claim.released_at,
+        version=claim.version,
     )
 
 
@@ -127,6 +144,7 @@ class InMemoryStore:
         self._execution_by_request: dict[RequestId, ExecutionId] = {}
         self._attempts: dict[AttemptId, Attempt] = {}
         self._attempt_by_number: dict[tuple[ExecutionId, int], AttemptId] = {}
+        self._claims: dict[ExecutionId, ExecutionClaim] = {}
         self._outbox_messages: dict[OutboxMessageId, OutboxMessage] = {}
         self._lock = RLock()
 
@@ -805,6 +823,87 @@ class InMemoryAttemptRepository:
         self._dirty.clear()
 
 
+class InMemoryExecutionClaimRepository:
+    """Execution claim repository with optimistic version checks."""
+
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+        self._tracked: dict[ExecutionId, ExecutionClaim] = {}
+        self._expected_versions: dict[ExecutionId, int] = {}
+        self._new: set[ExecutionId] = set()
+        self._dirty: set[ExecutionId] = set()
+
+    def add(self, claim: ExecutionClaim) -> None:
+        if claim.execution_id in self._tracked:
+            raise DuplicateExecutionClaimError(
+                f"ExecutionClaim {claim.execution_id.value!r} is already tracked."
+            )
+        self._tracked[claim.execution_id] = claim
+        self._new.add(claim.execution_id)
+
+    def get(self, execution_id: ExecutionId) -> ExecutionClaim | None:
+        tracked = self._tracked.get(execution_id)
+        if tracked is not None:
+            return tracked
+
+        with self._store._lock:
+            committed = self._store._claims.get(execution_id)
+            if committed is None:
+                return None
+            loaded = _clone_claim(committed)
+            self._tracked[execution_id] = loaded
+            self._expected_versions[execution_id] = committed.version
+            return loaded
+
+    def save(self, claim: ExecutionClaim) -> None:
+        if self._tracked.get(claim.execution_id) is not claim:
+            raise UntrackedEntityError(
+                f"ExecutionClaim {claim.execution_id.value!r} must be loaded before save()."
+            )
+        if claim.execution_id in self._new:
+            return
+        if claim.execution_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ExecutionClaim {claim.execution_id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(claim.execution_id)
+
+    def _validate_commit_locked(self) -> None:
+        for execution_id in self._new:
+            if execution_id in self._store._claims:
+                raise DuplicateExecutionClaimError(
+                    f"ExecutionClaim {execution_id.value!r} already exists."
+                )
+            if execution_id not in self._store._executions:
+                raise ReferentialIntegrityError(
+                    "ExecutionClaim references an Execution that does not exist."
+                )
+
+        for execution_id in self._dirty:
+            committed = self._store._claims.get(execution_id)
+            expected = self._expected_versions[execution_id]
+            if committed is None or committed.version != expected:
+                raise OptimisticConcurrencyError(
+                    f"ExecutionClaim {execution_id.value!r} changed concurrently."
+                )
+
+    def _apply_commit_locked(self) -> None:
+        for execution_id in self._new | self._dirty:
+            self._store._claims[execution_id] = _clone_claim(self._tracked[execution_id])
+
+    def _after_commit(self) -> None:
+        for execution_id in self._new | self._dirty:
+            self._expected_versions[execution_id] = self._tracked[execution_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class InMemoryOutboxRepository:
     """Outbox repository preserving staged transactional semantics."""
 
@@ -923,12 +1022,14 @@ class InMemoryUnitOfWork:
         self._requests = InMemoryExecutionRequestRepository(store)
         self._executions = InMemoryExecutionRepository(store)
         self._attempts = InMemoryAttemptRepository(store)
+        self._claims = InMemoryExecutionClaimRepository(store)
         self._outbox = InMemoryOutboxRepository(store)
 
         self.schedules: ScheduleRepository = self._schedules
         self.requests: ExecutionRequestRepository = self._requests
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
+        self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
 
     def __enter__(self) -> UnitOfWork:
@@ -954,6 +1055,7 @@ class InMemoryUnitOfWork:
             self._requests,
             self._executions,
             self._attempts,
+            self._claims,
             self._outbox,
         )
 
@@ -970,6 +1072,7 @@ class InMemoryUnitOfWork:
         self._requests._rollback()
         self._executions._rollback()
         self._attempts._rollback()
+        self._claims._rollback()
         self._outbox._rollback()
 
     def _require_active(self) -> None:

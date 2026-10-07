@@ -212,12 +212,14 @@ def test_t_outbox_sql_005_pending_messages_are_oldest_first(tmp_path) -> None:
     assert [item.id for item in pending] == [early.id, late.id]
 
 
-def test_t_outbox_sql_006_v2_database_migrates_to_v3(tmp_path) -> None:
+def test_t_outbox_sql_006_v2_database_migrates_through_current_schema(tmp_path) -> None:
     database = tmp_path / "scheduler.db"
     SqliteUnitOfWorkFactory(database)
 
     connection = sqlite3.connect(database)
     try:
+        connection.execute("DROP INDEX ix_execution_claims_active")
+        connection.execute("DROP TABLE execution_claims")
         connection.execute("DROP INDEX ix_outbox_pending")
         connection.execute("DROP TABLE outbox_messages")
         connection.execute("UPDATE pyschedulekit_schema SET version = 2")
@@ -238,7 +240,7 @@ def test_t_outbox_sql_006_v2_database_migrates_to_v3(tmp_path) -> None:
         ).fetchone()
 
         assert version is not None
-        assert int(version[0]) == 3
+        assert int(version[0]) == 4
         assert table is not None
     finally:
         connection.close()

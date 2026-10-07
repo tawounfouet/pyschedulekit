@@ -5,7 +5,13 @@ from __future__ import annotations
 from threading import RLock
 from types import TracebackType
 
-from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
+from pyschedulekit.domain.execution import (
+    Attempt,
+    AttemptId,
+    Execution,
+    ExecutionId,
+    ExecutionState,
+)
 from pyschedulekit.domain.execution_request import (
     ExecutionRequest,
     ExecutionRequestState,
@@ -20,11 +26,16 @@ from pyschedulekit.domain.schedule import (
 )
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import (
+    AttemptRepository,
     DuplicateAttemptError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateScheduleError,
+    ExecutionRepository,
+    ExecutionRequestRepository,
     OptimisticConcurrencyError,
+    ScheduleRepository,
+    UnitOfWork,
     UntrackedEntityError,
     UntrackedScheduleError,
 )
@@ -398,6 +409,26 @@ class InMemoryExecutionRepository:
             )
         self._dirty.add(execution.id)
 
+    def list_queued(self, *, limit: int) -> list[Execution]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            candidate_ids = set(self._store._executions)
+        candidate_ids.update(self._tracked)
+
+        queued: list[Execution] = []
+        for execution_id in candidate_ids:
+            execution = self._tracked.get(execution_id)
+            if execution is None:
+                execution = self.get(execution_id)
+            if execution is None or execution.state is not ExecutionState.QUEUED:
+                continue
+            queued.append(execution)
+
+        queued.sort(key=lambda execution: (execution.created_at.value, execution.id.value))
+        return queued[:limit]
+
     def _validate_commit_locked(self) -> None:
         for execution_id in self._new:
             execution = self._tracked[execution_id]
@@ -554,12 +585,18 @@ class InMemoryUnitOfWork:
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
         self._active = False
-        self.schedules = InMemoryScheduleRepository(store)
-        self.requests = InMemoryExecutionRequestRepository(store)
-        self.executions = InMemoryExecutionRepository(store)
-        self.attempts = InMemoryAttemptRepository(store)
 
-    def __enter__(self) -> InMemoryUnitOfWork:
+        self._schedules = InMemoryScheduleRepository(store)
+        self._requests = InMemoryExecutionRequestRepository(store)
+        self._executions = InMemoryExecutionRepository(store)
+        self._attempts = InMemoryAttemptRepository(store)
+
+        self.schedules: ScheduleRepository = self._schedules
+        self.requests: ExecutionRequestRepository = self._requests
+        self.executions: ExecutionRepository = self._executions
+        self.attempts: AttemptRepository = self._attempts
+
+    def __enter__(self) -> UnitOfWork:
         if self._active:
             raise RuntimeError("UnitOfWork is already active.")
         self._active = True
@@ -578,10 +615,10 @@ class InMemoryUnitOfWork:
     def commit(self) -> None:
         self._require_active()
         repositories = (
-            self.schedules,
-            self.requests,
-            self.executions,
-            self.attempts,
+            self._schedules,
+            self._requests,
+            self._executions,
+            self._attempts,
         )
 
         with self._store._lock:
@@ -593,10 +630,10 @@ class InMemoryUnitOfWork:
                 repository._after_commit()
 
     def rollback(self) -> None:
-        self.schedules._rollback()
-        self.requests._rollback()
-        self.executions._rollback()
-        self.attempts._rollback()
+        self._schedules._rollback()
+        self._requests._rollback()
+        self._executions._rollback()
+        self._attempts._rollback()
 
     def _require_active(self) -> None:
         if not self._active:
@@ -609,5 +646,5 @@ class InMemoryUnitOfWorkFactory:
     def __init__(self, store: InMemoryStore | None = None) -> None:
         self._store = store or InMemoryStore()
 
-    def __call__(self) -> InMemoryUnitOfWork:
+    def __call__(self) -> UnitOfWork:
         return InMemoryUnitOfWork(self._store)

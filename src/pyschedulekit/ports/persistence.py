@@ -81,6 +81,8 @@ class ExecutionRepository(Protocol):
 
     def save(self, execution: Execution) -> None: ...
 
+    def list_queued(self, *, limit: int) -> list[Execution]: ...
+
 
 class AttemptRepository(Protocol):
     """Transactional repository for Attempt entities."""

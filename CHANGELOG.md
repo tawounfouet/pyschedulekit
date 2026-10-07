@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- First public `Scheduler` facade with `register_target()`, `add_schedule()`, and `run_pending()`.
+- Structured `RunPendingResult` and safe per-request `RunPendingError`.
+- End-to-end due Schedule → ExecutionRequest → Execution → Attempt → LocalExecutor flow.
+- Recovery of previously durable PENDING requests and QUEUED executions.
+- Deterministic `list_queued()` execution query.
+- First qualified root API exports for Scheduler, triggers, time values, TargetRef, and run_pending results.
+- LOT-11 end-to-end tests covering due/no-due behavior, workload failures, target-resolution isolation, limits, and durable work resumption.
 - Executor port with explicit target preparation and normalized invocation outcomes.
 - Registry-only synchronous `LocalExecutor` for trusted zero-argument Python callables.
 - `PythonTargetRegistry` with duplicate, async, and required-argument validation.

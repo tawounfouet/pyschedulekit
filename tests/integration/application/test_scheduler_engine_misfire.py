@@ -161,9 +161,7 @@ def test_t_mis_026_skipped_finite_date_trigger_completes_schedule() -> None:
     )
     _persist(factory, schedule)
 
-    result = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant(minute=5)
-    )
+    result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=5))
 
     assert result.requests == ()
     committed = _load(factory, "once")

@@ -212,7 +212,7 @@ def test_t_coord_sql_004_v6_database_migrates_to_v7(tmp_path) -> None:
             """
         ).fetchone()
         assert version is not None
-        assert int(version[0]) == 7
+        assert int(version[0]) == 8
         assert table is not None
     finally:
         connection.close()

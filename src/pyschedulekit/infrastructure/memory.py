@@ -59,6 +59,7 @@ def _clone_request(request: ExecutionRequest) -> ExecutionRequest:
         target=request.target,
         created_at=request.created_at,
         concurrency_policy=request.concurrency_policy,
+        retry_policy=request.retry_policy,
         state=request.state,
         version=request.version,
     )
@@ -481,6 +482,52 @@ class InMemoryExecutionRepository:
             )
         )
         return queued[:limit]
+
+    def list_runnable(self, *, now: Instant, limit: int) -> list[Execution]:
+        """Return queued Executions and retries whose retry deadline is due."""
+
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            candidate_ids = set(self._store._executions)
+            request_scheduled_at = {
+                request_id: request.occurrence_key.scheduled_at.value
+                for request_id, request in self._store._execution_requests.items()
+            }
+        candidate_ids.update(self._tracked)
+
+        runnable: list[Execution] = []
+        for execution_id in candidate_ids:
+            execution = self._tracked.get(execution_id)
+            if execution is None:
+                execution = self.get(execution_id)
+            if execution is None:
+                continue
+            if execution.state is ExecutionState.QUEUED:
+                runnable.append(execution)
+                continue
+            if (
+                execution.state is ExecutionState.RETRY_WAIT
+                and execution.next_attempt_at is not None
+                and execution.next_attempt_at <= now
+            ):
+                runnable.append(execution)
+
+        runnable.sort(
+            key=lambda execution: (
+                execution.next_attempt_at.value
+                if execution.state is ExecutionState.RETRY_WAIT
+                and execution.next_attempt_at is not None
+                else request_scheduled_at.get(
+                    execution.request_id,
+                    execution.created_at.value,
+                ),
+                execution.created_at.value,
+                execution.id.value,
+            )
+        )
+        return runnable[:limit]
 
     def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int:
         with self._store._lock:

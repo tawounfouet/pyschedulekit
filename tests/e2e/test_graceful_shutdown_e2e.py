@@ -7,11 +7,12 @@ from time import sleep
 from pyschedulekit import (
     CancellationToken,
     Duration,
-    ExecutionState,
     IntervalTrigger,
     Scheduler,
     ShutdownMode,
+    ShutdownResult,
 )
+from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.testing import MutableClock
 
 
@@ -58,7 +59,7 @@ def test_t_shutdown_e2e_001_wait_finishes_current_attempt_without_starting_next(
     runtime_thread.start()
     assert started.wait(1)
 
-    result_box = []
+    result_box: list[ShutdownResult] = []
     shutdown_thread = Thread(
         target=lambda: result_box.append(
             scheduler.shutdown(

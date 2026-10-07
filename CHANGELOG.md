@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Durable ScheduleAdmissionLock model and repository.
+- Schedule-scoped distributed count-and-admit serialization.
+- Scheduler admission_lock_ttl configuration with 5-second default.
+- SQLite schema v5 and v4 -> v5 migration.
+- Separate RunPendingResult admission_lock_denied_request_ids visibility.
+- Multi-worker max_instances qualification across shared SQLite workers.
+
 - Durable ExecutionClaim model with WorkerId and opaque ClaimToken.
 - ExecutionClaimRepository integrated into in-memory and SQLite UnitsOfWork.
 - SQLite schema v4 with execution_claims and automatic v3 -> v4 migration.

@@ -23,7 +23,6 @@ from pyschedulekit.domain.execution_request import (
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 
-
 _PROCESS_ADMISSION_LOCK = RLock()
 
 
@@ -59,95 +58,94 @@ class ConcurrencyCoordinator:
     ) -> AdmissionResult:
         """Atomically decide and persist admission within this process."""
 
-        with self._lock:
-            with self._uow_factory() as uow:
-                request = uow.requests.get(request_id)
-                if request is None:
-                    raise ExecutionRequestNotFoundError(request_id.value)
+        with self._lock, self._uow_factory() as uow:
+            request = uow.requests.get(request_id)
+            if request is None:
+                raise ExecutionRequestNotFoundError(request_id.value)
 
-                existing = uow.executions.get_by_request(request.id)
+            existing = uow.executions.get_by_request(request.id)
 
-                if request.state is ExecutionRequestState.DISPATCHED:
-                    if existing is None:
-                        raise ExecutionConsistencyError(
-                            "Dispatched ExecutionRequest has no persisted Execution."
-                        )
-                    return AdmissionResult(
-                        request_id=request.id,
-                        action=ConcurrencyDecisionAction.ADMIT,
-                        decision=None,
-                        execution=existing,
-                        reused=True,
+            if request.state is ExecutionRequestState.DISPATCHED:
+                if existing is None:
+                    raise ExecutionConsistencyError(
+                        "Dispatched ExecutionRequest has no persisted Execution."
                     )
-
-                if request.state is ExecutionRequestState.DROPPED:
-                    return AdmissionResult(
-                        request_id=request.id,
-                        action=ConcurrencyDecisionAction.DROP,
-                        decision=None,
-                        execution=None,
-                        reused=True,
-                    )
-
-                if request.state is ExecutionRequestState.CANCELLED:
-                    raise InvalidExecutionRequestTransitionError(
-                        "Cancelled ExecutionRequest cannot be admitted."
-                    )
-
-                if existing is not None:
-                    request.mark_dispatched()
-                    uow.requests.save(request)
-                    uow.commit()
-                    return AdmissionResult(
-                        request_id=request.id,
-                        action=ConcurrencyDecisionAction.ADMIT,
-                        decision=None,
-                        execution=existing,
-                        reused=True,
-                    )
-
-                active_instances = uow.executions.count_non_terminal_for_schedule(
-                    request.occurrence_key.schedule_id
-                )
-                decision = self._evaluator.evaluate(
-                    policy=request.concurrency_policy,
-                    active_instances=active_instances,
+                return AdmissionResult(
+                    request_id=request.id,
+                    action=ConcurrencyDecisionAction.ADMIT,
+                    decision=None,
+                    execution=existing,
+                    reused=True,
                 )
 
-                if decision.action is ConcurrencyDecisionAction.QUEUE:
-                    request.wait_for_admission()
-                    uow.requests.save(request)
-                    uow.commit()
-                    return AdmissionResult(
-                        request_id=request.id,
-                        action=decision.action,
-                        decision=decision,
-                        execution=None,
-                    )
+            if request.state is ExecutionRequestState.DROPPED:
+                return AdmissionResult(
+                    request_id=request.id,
+                    action=ConcurrencyDecisionAction.DROP,
+                    decision=None,
+                    execution=None,
+                    reused=True,
+                )
 
-                if decision.action is ConcurrencyDecisionAction.DROP:
-                    request.drop()
-                    uow.requests.save(request)
-                    uow.commit()
-                    return AdmissionResult(
-                        request_id=request.id,
-                        action=decision.action,
-                        decision=decision,
-                        execution=None,
-                    )
+            if request.state is ExecutionRequestState.CANCELLED:
+                raise InvalidExecutionRequestTransitionError(
+                    "Cancelled ExecutionRequest cannot be admitted."
+                )
 
+            if existing is not None:
                 request.mark_dispatched()
-                execution = Execution.from_request(
-                    request=request,
-                    created_at=created_at,
-                )
                 uow.requests.save(request)
-                uow.executions.add(execution)
                 uow.commit()
+                return AdmissionResult(
+                    request_id=request.id,
+                    action=ConcurrencyDecisionAction.ADMIT,
+                    decision=None,
+                    execution=existing,
+                    reused=True,
+                )
 
+            active_instances = uow.executions.count_non_terminal_for_schedule(
+                request.occurrence_key.schedule_id
+            )
+            decision = self._evaluator.evaluate(
+                policy=request.concurrency_policy,
+                active_instances=active_instances,
+            )
+
+            if decision.action is ConcurrencyDecisionAction.QUEUE:
+                request.wait_for_admission()
+                uow.requests.save(request)
+                uow.commit()
                 return AdmissionResult(
                     request_id=request.id,
                     action=decision.action,
                     decision=decision,
-                    execution=execution,
+                    execution=None,
                 )
+
+            if decision.action is ConcurrencyDecisionAction.DROP:
+                request.drop()
+                uow.requests.save(request)
+                uow.commit()
+                return AdmissionResult(
+                    request_id=request.id,
+                    action=decision.action,
+                    decision=decision,
+                    execution=None,
+                )
+
+            request.mark_dispatched()
+            execution = Execution.from_request(
+                request=request,
+                created_at=created_at,
+            )
+            uow.requests.save(request)
+            uow.executions.add(execution)
+            uow.commit()
+
+            return AdmissionResult(
+                request_id=request.id,
+                action=decision.action,
+                decision=decision,
+                execution=execution,
+            )

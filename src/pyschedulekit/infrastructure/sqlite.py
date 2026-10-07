@@ -614,13 +614,15 @@ class SqliteExecutionRepository:
             execution = self._tracked.get(execution_id) or self.get(execution_id)
             if execution is None or execution.state not in states:
                 continue
-            if execution.state is ExecutionState.RETRY_WAIT:
-                if (
+            if (
+                execution.state is ExecutionState.RETRY_WAIT
+                and (
                     now is None
                     or execution.next_attempt_at is None
                     or execution.next_attempt_at > now
-                ):
-                    continue
+                )
+            ):
+                continue
             runnable.append(execution)
 
         def sort_key(execution: Execution) -> tuple[object, ...]:
@@ -747,7 +749,7 @@ class SqliteExecutionRepository:
                 cancellation_requested_at = ?, result_json = ?
             WHERE id = ?
             """,
-            values[1:] + (values[0],),
+            (*values[1:], values[0]),
         )
 
     @staticmethod

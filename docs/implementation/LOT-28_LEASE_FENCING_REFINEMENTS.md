@@ -387,9 +387,9 @@ The scheduler-coordination concerns belong to LOT-29.
 LOT-26  Distributed Claims                  ✅
 LOT-27  Multi-worker Admission              ✅
 LOT-28  Lease / Fencing Refinements         ✅
-LOT-29  Distributed Scheduler Coordination  ⏭ NEXT
+LOT-29  Distributed Scheduler Coordination  ✅
 ```
 
 ## Next
 
-`LOT-29 — Distributed Scheduler Coordination`
+`LOT-30 — Observability`

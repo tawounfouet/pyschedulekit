@@ -282,9 +282,7 @@ def _verify_v2_schema(connection: sqlite3.Connection) -> None:
     connection.execute("PRAGMA foreign_keys = ON")
     violations = connection.execute("PRAGMA foreign_key_check").fetchall()
     if violations:
-        raise RuntimeError(
-            f"PyScheduleKit SQLite foreign-key validation failed: {violations!r}."
-        )
+        raise RuntimeError(f"PyScheduleKit SQLite foreign-key validation failed: {violations!r}.")
 
 
 def _execute_sql_batch(connection: sqlite3.Connection, sql: str) -> None:

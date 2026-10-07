@@ -238,9 +238,7 @@ class SqliteScheduleRepository:
                 (schedule_id.value,),
             ).fetchone()
             if row is not None:
-                raise DuplicateScheduleError(
-                    f"Schedule {schedule_id.value!r} already exists."
-                )
+                raise DuplicateScheduleError(f"Schedule {schedule_id.value!r} already exists.")
         for schedule_id in self._dirty:
             row = self._connection.execute(
                 "SELECT persistence_version FROM schedules WHERE id = ?",
@@ -292,9 +290,7 @@ class SqliteScheduleRepository:
 
     def _after_commit(self) -> None:
         for schedule_id in self._new | self._dirty:
-            self._expected_versions[schedule_id] = self._tracked[
-                schedule_id
-            ].persistence_version
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].persistence_version
         self._new.clear()
         self._dirty.clear()
 
@@ -398,9 +394,7 @@ class SqliteExecutionRequestRepository:
             raise ValueError("limit must be greater than or equal to 1.")
         ids = {
             RequestId(str(row["id"]))
-            for row in self._connection.execute(
-                "SELECT id FROM execution_requests"
-            ).fetchall()
+            for row in self._connection.execute("SELECT id FROM execution_requests").fetchall()
         }
         ids.update(self._tracked)
         candidates: list[ExecutionRequest] = []
@@ -420,25 +414,31 @@ class SqliteExecutionRequestRepository:
     def _validate(self) -> None:
         for request_id in self._new:
             request = self._tracked[request_id]
-            if self._connection.execute(
-                "SELECT 1 FROM execution_requests WHERE id = ?",
-                (request_id.value,),
-            ).fetchone() is not None:
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM execution_requests WHERE id = ?",
+                    (request_id.value,),
+                ).fetchone()
+                is not None
+            ):
                 raise DuplicateExecutionRequestError(
                     f"ExecutionRequest {request_id.value!r} already exists."
                 )
-            if self._connection.execute(
-                """
+            if (
+                self._connection.execute(
+                    """
                 SELECT 1 FROM execution_requests
                 WHERE schedule_id = ? AND schedule_revision = ? AND scheduled_at = ?
                 LIMIT 1
                 """,
-                (
-                    request.occurrence_key.schedule_id.value,
-                    request.occurrence_key.schedule_revision.value,
-                    request.occurrence_key.scheduled_at.value.isoformat(),
-                ),
-            ).fetchone() is not None:
+                    (
+                        request.occurrence_key.schedule_id.value,
+                        request.occurrence_key.schedule_revision.value,
+                        request.occurrence_key.scheduled_at.value.isoformat(),
+                    ),
+                ).fetchone()
+                is not None
+            ):
                 raise DuplicateExecutionRequestError(
                     "An ExecutionRequest for this OccurrenceKey already exists."
                 )
@@ -532,13 +532,9 @@ class SqliteExecutionRepository:
 
     def add(self, execution: Execution) -> None:
         if execution.id in self._tracked:
-            raise DuplicateExecutionError(
-                f"Execution {execution.id.value!r} is already tracked."
-            )
+            raise DuplicateExecutionError(f"Execution {execution.id.value!r} is already tracked.")
         if execution.request_id in self._new_by_request:
-            raise DuplicateExecutionError(
-                "An Execution for this RequestId is already staged."
-            )
+            raise DuplicateExecutionError("An Execution for this RequestId is already staged.")
         self._tracked[execution.id] = execution
         self._new.add(execution.id)
         self._new_by_request[execution.request_id] = execution.id
@@ -614,13 +610,8 @@ class SqliteExecutionRepository:
             execution = self._tracked.get(execution_id) or self.get(execution_id)
             if execution is None or execution.state not in states:
                 continue
-            if (
-                execution.state is ExecutionState.RETRY_WAIT
-                and (
-                    now is None
-                    or execution.next_attempt_at is None
-                    or execution.next_attempt_at > now
-                )
+            if execution.state is ExecutionState.RETRY_WAIT and (
+                now is None or execution.next_attempt_at is None or execution.next_attempt_at > now
             ):
                 continue
             runnable.append(execution)
@@ -631,7 +622,9 @@ class SqliteExecutionRepository:
                 execution.next_attempt_at.value
                 if execution.state is ExecutionState.RETRY_WAIT
                 and execution.next_attempt_at is not None
-                else scheduled.value if scheduled is not None else execution.created_at.value
+                else scheduled.value
+                if scheduled is not None
+                else execution.created_at.value
             )
             return (primary, execution.created_at.value, execution.id.value)
 
@@ -694,20 +687,22 @@ class SqliteExecutionRepository:
     def _validate(self) -> None:
         for execution_id in self._new:
             execution = self._tracked[execution_id]
-            if self._connection.execute(
-                "SELECT 1 FROM executions WHERE id = ?",
-                (execution_id.value,),
-            ).fetchone() is not None:
-                raise DuplicateExecutionError(
-                    f"Execution {execution_id.value!r} already exists."
-                )
-            if self._connection.execute(
-                "SELECT 1 FROM executions WHERE request_id = ? LIMIT 1",
-                (execution.request_id.value,),
-            ).fetchone() is not None:
-                raise DuplicateExecutionError(
-                    "An Execution for this RequestId already exists."
-                )
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM executions WHERE id = ?",
+                    (execution_id.value,),
+                ).fetchone()
+                is not None
+            ):
+                raise DuplicateExecutionError(f"Execution {execution_id.value!r} already exists.")
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM executions WHERE request_id = ? LIMIT 1",
+                    (execution.request_id.value,),
+                ).fetchone()
+                is not None
+            ):
+                raise DuplicateExecutionError("An Execution for this RequestId already exists.")
         for execution_id in self._dirty:
             row = self._connection.execute(
                 "SELECT version FROM executions WHERE id = ?",
@@ -796,9 +791,7 @@ class SqliteAttemptRepository:
 
     def add(self, attempt: Attempt) -> None:
         if attempt.id in self._tracked:
-            raise DuplicateAttemptError(
-                f"Attempt {attempt.id.value!r} is already tracked."
-            )
+            raise DuplicateAttemptError(f"Attempt {attempt.id.value!r} is already tracked.")
         self._tracked[attempt.id] = attempt
         self._new.add(attempt.id)
 
@@ -846,8 +839,7 @@ class SqliteAttemptRepository:
         attempts = [
             attempt
             for attempt_id in ids
-            if (attempt := self._tracked.get(attempt_id) or self.get(attempt_id))
-            is not None
+            if (attempt := self._tracked.get(attempt_id) or self.get(attempt_id)) is not None
         ]
         attempts.sort(key=lambda item: item.number)
         return attempts
@@ -855,21 +847,25 @@ class SqliteAttemptRepository:
     def _validate(self) -> None:
         for attempt_id in self._new:
             attempt = self._tracked[attempt_id]
-            if self._connection.execute(
-                "SELECT 1 FROM attempts WHERE id = ?",
-                (attempt_id.value,),
-            ).fetchone() is not None:
-                raise DuplicateAttemptError(
-                    f"Attempt {attempt_id.value!r} already exists."
-                )
-            if self._connection.execute(
-                """
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM attempts WHERE id = ?",
+                    (attempt_id.value,),
+                ).fetchone()
+                is not None
+            ):
+                raise DuplicateAttemptError(f"Attempt {attempt_id.value!r} already exists.")
+            if (
+                self._connection.execute(
+                    """
                 SELECT 1 FROM attempts
                 WHERE execution_id = ? AND number = ?
                 LIMIT 1
                 """,
-                (attempt.execution_id.value, attempt.number),
-            ).fetchone() is not None:
+                    (attempt.execution_id.value, attempt.number),
+                ).fetchone()
+                is not None
+            ):
                 raise DuplicateAttemptError(
                     "An Attempt with this execution_id and number already exists."
                 )
@@ -1018,9 +1014,7 @@ class SqliteUnitOfWorkFactory:
         self._anchor: sqlite3.Connection | None = None
 
         if raw == ":memory:":
-            self._database = (
-                f"file:pyschedulekit-{uuid4().hex}?mode=memory&cache=shared"
-            )
+            self._database = f"file:pyschedulekit-{uuid4().hex}?mode=memory&cache=shared"
             self._uri = True
             self._anchor = self._connect()
             initialize_sqlite_schema(self._anchor)

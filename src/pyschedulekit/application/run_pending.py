@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.application.concurrency import AdmissionResult, ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
-from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.domain.execution import Execution
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
@@ -35,6 +35,7 @@ class RunPendingResult:
     schedule_conflicts: tuple[ScheduleId, ...]
     unsupported_policy_schedules: tuple[ScheduleId, ...]
     recovery_limit_schedules: tuple[ScheduleId, ...]
+    admissions: tuple[AdmissionResult, ...]
     errors: tuple[RunPendingError, ...]
 
     @property
@@ -44,6 +45,22 @@ class RunPendingResult:
     @property
     def failed(self) -> int:
         return len(self.executions) - self.succeeded
+
+    @property
+    def queued_request_ids(self) -> tuple[RequestId, ...]:
+        return tuple(
+            admission.request_id
+            for admission in self.admissions
+            if admission.action.value == "queue"
+        )
+
+    @property
+    def dropped_request_ids(self) -> tuple[RequestId, ...]:
+        return tuple(
+            admission.request_id
+            for admission in self.admissions
+            if admission.action.value == "drop"
+        )
 
 
 class RunPendingService:
@@ -55,13 +72,13 @@ class RunPendingService:
         clock: Clock,
         uow_factory: UnitOfWorkFactory,
         scheduler_engine: SchedulerEngine,
-        execution_service: ExecutionService,
+        concurrency_coordinator: ConcurrencyCoordinator,
         execution_runner: ExecutionRunner,
     ) -> None:
         self._clock = clock
         self._uow_factory = uow_factory
         self._scheduler_engine = scheduler_engine
-        self._execution_service = execution_service
+        self._concurrency_coordinator = concurrency_coordinator
         self._execution_runner = execution_runner
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
@@ -77,18 +94,21 @@ class RunPendingService:
         )
 
         errors: list[RunPendingError] = []
-        for request in self._list_pending_requests(limit=limit):
+        admissions: list[AdmissionResult] = []
+        for request in self._list_admission_candidates(limit=limit):
             try:
-                self._execution_service.dispatch(
-                    request_id=request.id,
-                    created_at=evaluation_now,
+                admissions.append(
+                    self._concurrency_coordinator.admit(
+                        request_id=request.id,
+                        created_at=evaluation_now,
+                    )
                 )
             except PersistenceConflictError:
                 errors.append(
                     RunPendingError(
                         request_id=request.id,
                         code="persistence.conflict",
-                        message="Execution dispatch conflicted with committed state.",
+                        message="Execution admission conflicted with committed state.",
                     )
                 )
 
@@ -128,12 +148,13 @@ class RunPendingService:
             schedule_conflicts=evaluation.conflicts,
             unsupported_policy_schedules=evaluation.unsupported_policy_schedules,
             recovery_limit_schedules=evaluation.recovery_limit_schedules,
+            admissions=tuple(admissions),
             errors=tuple(errors),
         )
 
-    def _list_pending_requests(self, *, limit: int) -> list[ExecutionRequest]:
+    def _list_admission_candidates(self, *, limit: int) -> list[ExecutionRequest]:
         with self._uow_factory() as uow:
-            return uow.requests.list_pending(limit=limit)
+            return uow.requests.list_admission_candidates(limit=limit)
 
     def _list_queued_executions(self, *, limit: int) -> list[Execution]:
         with self._uow_factory() as uow:

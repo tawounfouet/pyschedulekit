@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import AdmissionResult, ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
@@ -12,7 +13,8 @@ from pyschedulekit.application.shutdown import (
     ShutdownInProgressError,
 )
 from pyschedulekit.domain.concurrency import ConcurrencyDecisionAction
-from pyschedulekit.domain.execution import Execution
+from pyschedulekit.domain.claim import ClaimOwnershipError, ExecutionClaimHandle
+from pyschedulekit.domain.execution import Execution, ExecutionId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.domain.time import Instant
@@ -42,6 +44,7 @@ class RunPendingResult:
     recovery_limit_schedules: tuple[ScheduleId, ...]
     admissions: tuple[AdmissionResult, ...]
     errors: tuple[RunPendingError, ...]
+    claim_denied_execution_ids: tuple[ExecutionId, ...] = ()
 
     @property
     def succeeded(self) -> int:
@@ -86,6 +89,7 @@ class RunPendingService:
         scheduler_engine: SchedulerEngine,
         concurrency_coordinator: ConcurrencyCoordinator,
         execution_runner: ExecutionRunner,
+        claim_coordinator: ExecutionClaimCoordinator | None = None,
         shutdown_coordinator: ShutdownCoordinator | None = None,
     ) -> None:
         self._clock = clock
@@ -93,6 +97,7 @@ class RunPendingService:
         self._scheduler_engine = scheduler_engine
         self._concurrency_coordinator = concurrency_coordinator
         self._execution_runner = execution_runner
+        self._claim_coordinator = claim_coordinator
         self._shutdown_coordinator = shutdown_coordinator
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
@@ -141,11 +146,31 @@ class RunPendingService:
                 )
 
         executions: list[ExecutionRunResult] = []
+        claim_denied: list[ExecutionId] = []
         for execution in self._list_runnable_executions(now=evaluation_now, limit=limit):
             if self._shutdown_requested():
                 break
+
+            claim_handle: ExecutionClaimHandle | None = None
+            if self._claim_coordinator is not None:
+                acquisition = self._claim_coordinator.acquire(
+                    execution_id=execution.id,
+                    now=self._clock.now(),
+                )
+                if not acquisition.acquired or acquisition.handle is None:
+                    claim_denied.append(execution.id)
+                    continue
+                claim_handle = acquisition.handle
+
             try:
-                executions.append(self._execution_runner.run(execution_id=execution.id))
+                executions.append(
+                    self._execution_runner.run(
+                        execution_id=execution.id,
+                        claim_handle=claim_handle,
+                    )
+                )
+            except ClaimOwnershipError:
+                claim_denied.append(execution.id)
             except ShutdownInProgressError:
                 break
             except TargetResolutionError:
@@ -172,6 +197,12 @@ class RunPendingService:
                         message="Execution lifecycle update conflicted with committed state.",
                     )
                 )
+            finally:
+                if self._claim_coordinator is not None and claim_handle is not None:
+                    self._claim_coordinator.release(
+                        handle=claim_handle,
+                        released_at=self._clock.now(),
+                    )
 
         return RunPendingResult(
             evaluation_now=evaluation_now,
@@ -182,6 +213,7 @@ class RunPendingService:
             recovery_limit_schedules=evaluation.recovery_limit_schedules,
             admissions=tuple(admissions),
             errors=tuple(errors),
+            claim_denied_execution_ids=tuple(claim_denied),
         )
 
     def _shutdown_requested(self) -> bool:

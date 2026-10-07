@@ -176,8 +176,10 @@ class RunPendingService:
             except ClaimOwnershipError:
                 claim_denied.append(execution.id)
             except ShutdownInProgressError:
+                self._release_unstarted_claim(claim_handle)
                 break
             except TargetResolutionError:
+                self._release_unstarted_claim(claim_handle)
                 errors.append(
                     RunPendingError(
                         request_id=execution.request_id,
@@ -186,6 +188,7 @@ class RunPendingService:
                     )
                 )
             except ExecutorError:
+                self._release_unstarted_claim(claim_handle)
                 errors.append(
                     RunPendingError(
                         request_id=execution.request_id,
@@ -201,13 +204,6 @@ class RunPendingService:
                         message="Execution lifecycle update conflicted with committed state.",
                     )
                 )
-            finally:
-                if self._claim_coordinator is not None and claim_handle is not None:
-                    self._claim_coordinator.release(
-                        handle=claim_handle,
-                        released_at=self._clock.now(),
-                    )
-
         return RunPendingResult(
             evaluation_now=evaluation_now,
             materialized_request_ids=tuple(request.id for request in evaluation.requests),
@@ -218,6 +214,17 @@ class RunPendingService:
             admissions=tuple(admissions),
             errors=tuple(errors),
             claim_denied_execution_ids=tuple(claim_denied),
+        )
+
+    def _release_unstarted_claim(
+        self,
+        handle: ExecutionClaimHandle | None,
+    ) -> None:
+        if self._claim_coordinator is None or handle is None:
+            return
+        self._claim_coordinator.release(
+            handle=handle,
+            released_at=self._clock.now(),
         )
 
     def _shutdown_requested(self) -> bool:

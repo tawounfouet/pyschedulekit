@@ -10,7 +10,6 @@ from pyschedulekit.application.execution_service import (
 )
 from pyschedulekit.domain.execution import AttemptId, Execution, ExecutionId
 from pyschedulekit.domain.retry import RetryDecision, RetryEvaluator
-from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.ports.executor import Executor, ExecutorOutcome
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock

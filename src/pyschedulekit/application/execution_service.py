@@ -241,7 +241,9 @@ class ExecutionService:
                 execution.cancel(completed_at=requested_at)
                 event_type = "execution.cancelled"
             else:
-                execution.request_cancellation(requested_at=requested_at)
+                changed = execution.request_cancellation(requested_at=requested_at)
+                if not changed:
+                    return execution
                 event_type = "execution.cancellation.requested"
 
             uow.executions.save(execution)
@@ -273,6 +275,9 @@ class ExecutionService:
             execution = uow.executions.get(execution_id)
             if execution is None:
                 raise ExecutionNotFoundError(execution_id.value)
+
+            if execution.is_terminal:
+                return execution
 
             execution.cancel(completed_at=completed_at)
             uow.executions.save(execution)

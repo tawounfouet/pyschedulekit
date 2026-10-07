@@ -11,6 +11,7 @@ from pyschedulekit.domain.execution import (
     ExecutionState,
     Failure,
 )
+from pyschedulekit.application.outbox import make_outbox_message
 from pyschedulekit.domain.execution_request import (
     ExecutionRequestState,
     InvalidExecutionRequestTransitionError,
@@ -104,6 +105,20 @@ class ExecutionService:
             attempt = execution.start_attempt(started_at=started_at)
             uow.executions.save(execution)
             uow.attempts.add(attempt)
+            uow.outbox.add(
+                make_outbox_message(
+                    event_type="execution.attempt.started",
+                    aggregate_type="attempt",
+                    aggregate_id=attempt.id.value,
+                    created_at=started_at,
+                    payload={
+                        "attempt_id": attempt.id.value,
+                        "attempt_number": str(attempt.number),
+                        "execution_id": execution.id.value,
+                        "state": attempt.state.value,
+                    },
+                )
+            )
             uow.commit()
             return attempt
 
@@ -122,6 +137,12 @@ class ExecutionService:
 
             uow.attempts.save(attempt)
             uow.executions.save(execution)
+            self._add_attempt_completed_message(
+                uow=uow,
+                attempt=attempt,
+                execution=execution,
+                completed_at=completed_at,
+            )
             uow.commit()
             return execution
 
@@ -142,6 +163,12 @@ class ExecutionService:
 
             uow.attempts.save(attempt)
             uow.executions.save(execution)
+            self._add_attempt_completed_message(
+                uow=uow,
+                attempt=attempt,
+                execution=execution,
+                completed_at=completed_at,
+            )
             uow.commit()
             return execution
 
@@ -161,6 +188,12 @@ class ExecutionService:
 
             uow.attempts.save(attempt)
             uow.executions.save(execution)
+            self._add_attempt_completed_message(
+                uow=uow,
+                attempt=attempt,
+                execution=execution,
+                completed_at=completed_at,
+            )
             uow.commit()
             return execution
 
@@ -179,6 +212,12 @@ class ExecutionService:
 
             uow.attempts.save(attempt)
             uow.executions.save(execution)
+            self._add_attempt_completed_message(
+                uow=uow,
+                attempt=attempt,
+                execution=execution,
+                completed_at=completed_at,
+            )
             uow.commit()
             return execution
 
@@ -200,10 +239,25 @@ class ExecutionService:
 
             if execution.state in (ExecutionState.QUEUED, ExecutionState.RETRY_WAIT):
                 execution.cancel(completed_at=requested_at)
+                event_type = "execution.cancelled"
             else:
                 execution.request_cancellation(requested_at=requested_at)
+                event_type = "execution.cancellation.requested"
 
             uow.executions.save(execution)
+            uow.outbox.add(
+                make_outbox_message(
+                    event_type=event_type,
+                    aggregate_type="execution",
+                    aggregate_id=execution.id.value,
+                    created_at=requested_at,
+                    payload={
+                        "execution_id": execution.id.value,
+                        "request_id": execution.request_id.value,
+                        "state": execution.state.value,
+                    },
+                )
+            )
             uow.commit()
             return execution
 
@@ -222,8 +276,45 @@ class ExecutionService:
 
             execution.cancel(completed_at=completed_at)
             uow.executions.save(execution)
+            uow.outbox.add(
+                make_outbox_message(
+                    event_type="execution.cancelled",
+                    aggregate_type="execution",
+                    aggregate_id=execution.id.value,
+                    created_at=completed_at,
+                    payload={
+                        "execution_id": execution.id.value,
+                        "request_id": execution.request_id.value,
+                        "state": execution.state.value,
+                    },
+                )
+            )
             uow.commit()
             return execution
+
+    @staticmethod
+    def _add_attempt_completed_message(
+        *,
+        uow: UnitOfWork,
+        attempt: Attempt,
+        execution: Execution,
+        completed_at: Instant,
+    ) -> None:
+        uow.outbox.add(
+            make_outbox_message(
+                event_type="execution.attempt.completed",
+                aggregate_type="attempt",
+                aggregate_id=attempt.id.value,
+                created_at=completed_at,
+                payload={
+                    "attempt_id": attempt.id.value,
+                    "attempt_number": str(attempt.number),
+                    "attempt_state": attempt.state.value,
+                    "execution_id": execution.id.value,
+                    "execution_state": execution.state.value,
+                },
+            )
+        )
 
     @staticmethod
     def _load_attempt_and_execution(

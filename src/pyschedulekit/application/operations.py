@@ -110,9 +110,7 @@ class ExecutionSnapshot:
                 else None
             ),
             failure_code=(
-                result.failure.code
-                if result is not None and result.failure is not None
-                else None
+                result.failure.code if result is not None and result.failure is not None else None
             ),
             completed_at=result.completed_at if result is not None else None,
         )

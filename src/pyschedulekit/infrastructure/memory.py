@@ -18,6 +18,7 @@ from pyschedulekit.domain.execution_request import (
     RequestId,
 )
 from pyschedulekit.domain.occurrence import OccurrenceKey
+from pyschedulekit.domain.outbox import OutboxMessage, OutboxMessageId, OutboxState
 from pyschedulekit.domain.schedule import (
     PersistenceVersion,
     Schedule,
@@ -33,11 +34,13 @@ from pyschedulekit.ports.persistence import (
     DuplicateScheduleError,
     ExecutionRepository,
     ExecutionRequestRepository,
+    OutboxRepository,
     OptimisticConcurrencyError,
     ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
     UntrackedScheduleError,
+    DuplicateOutboxMessageError,
 )
 
 
@@ -84,6 +87,22 @@ def _clone_execution(execution: Execution) -> Execution:
     )
 
 
+def _clone_outbox_message(message: OutboxMessage) -> OutboxMessage:
+    return OutboxMessage(
+        message_id=message.id,
+        event_type=message.event_type,
+        aggregate_type=message.aggregate_type,
+        aggregate_id=message.aggregate_id,
+        payload=message.payload,
+        created_at=message.created_at,
+        state=message.state,
+        published_at=message.published_at,
+        publish_attempts=message.publish_attempts,
+        last_error=message.last_error,
+        version=message.version,
+    )
+
+
 def _clone_attempt(attempt: Attempt) -> Attempt:
     return Attempt(
         attempt_id=attempt.id,
@@ -107,6 +126,7 @@ class InMemoryStore:
         self._execution_by_request: dict[RequestId, ExecutionId] = {}
         self._attempts: dict[AttemptId, Attempt] = {}
         self._attempt_by_number: dict[tuple[ExecutionId, int], AttemptId] = {}
+        self._outbox_messages: dict[OutboxMessageId, OutboxMessage] = {}
         self._lock = RLock()
 
 
@@ -784,6 +804,105 @@ class InMemoryAttemptRepository:
         self._dirty.clear()
 
 
+class InMemoryOutboxRepository:
+    """Outbox repository preserving staged transactional semantics."""
+
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+        self._tracked: dict[OutboxMessageId, OutboxMessage] = {}
+        self._expected_versions: dict[OutboxMessageId, int] = {}
+        self._new: set[OutboxMessageId] = set()
+        self._dirty: set[OutboxMessageId] = set()
+
+    def add(self, message: OutboxMessage) -> None:
+        if message.id in self._tracked:
+            raise DuplicateOutboxMessageError(
+                f"OutboxMessage {message.id.value!r} is already tracked."
+            )
+        self._tracked[message.id] = message
+        self._new.add(message.id)
+
+    def get(self, message_id: OutboxMessageId) -> OutboxMessage | None:
+        tracked = self._tracked.get(message_id)
+        if tracked is not None:
+            return tracked
+
+        with self._store._lock:
+            committed = self._store._outbox_messages.get(message_id)
+            if committed is None:
+                return None
+            loaded = _clone_outbox_message(committed)
+            self._tracked[message_id] = loaded
+            self._expected_versions[message_id] = committed.version
+            return loaded
+
+    def save(self, message: OutboxMessage) -> None:
+        if self._tracked.get(message.id) is not message:
+            raise UntrackedEntityError(
+                f"OutboxMessage {message.id.value!r} must be loaded before save()."
+            )
+        if message.id in self._new:
+            return
+        if message.id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"OutboxMessage {message.id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(message.id)
+
+    def list_pending(self, *, limit: int) -> list[OutboxMessage]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            ids = [
+                message_id
+                for message_id, message in self._store._outbox_messages.items()
+                if message.state is OutboxState.PENDING
+            ]
+
+        result: list[OutboxMessage] = []
+        for message_id in ids:
+            message = self.get(message_id)
+            if message is not None:
+                result.append(message)
+
+        result.sort(key=lambda item: (item.created_at.value, item.id.value))
+        return result[:limit]
+
+    def _validate_commit_locked(self) -> None:
+        for message_id in self._new:
+            if message_id in self._store._outbox_messages:
+                raise DuplicateOutboxMessageError(
+                    f"OutboxMessage {message_id.value!r} already exists."
+                )
+
+        for message_id in self._dirty:
+            committed = self._store._outbox_messages.get(message_id)
+            expected = self._expected_versions[message_id]
+            if committed is None or committed.version != expected:
+                raise OptimisticConcurrencyError(
+                    f"OutboxMessage {message_id.value!r} changed concurrently."
+                )
+
+    def _apply_commit_locked(self) -> None:
+        for message_id in self._new | self._dirty:
+            self._store._outbox_messages[message_id] = _clone_outbox_message(
+                self._tracked[message_id]
+            )
+
+    def _after_commit(self) -> None:
+        for message_id in self._new | self._dirty:
+            self._expected_versions[message_id] = self._tracked[message_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
 class InMemoryUnitOfWork:
     """Explicit transaction across scheduling and execution repositories."""
 
@@ -795,11 +914,13 @@ class InMemoryUnitOfWork:
         self._requests = InMemoryExecutionRequestRepository(store)
         self._executions = InMemoryExecutionRepository(store)
         self._attempts = InMemoryAttemptRepository(store)
+        self._outbox = InMemoryOutboxRepository(store)
 
         self.schedules: ScheduleRepository = self._schedules
         self.requests: ExecutionRequestRepository = self._requests
         self.executions: ExecutionRepository = self._executions
         self.attempts: AttemptRepository = self._attempts
+        self.outbox: OutboxRepository = self._outbox
 
     def __enter__(self) -> UnitOfWork:
         if self._active:
@@ -824,6 +945,7 @@ class InMemoryUnitOfWork:
             self._requests,
             self._executions,
             self._attempts,
+            self._outbox,
         )
 
         with self._store._lock:
@@ -839,6 +961,7 @@ class InMemoryUnitOfWork:
         self._requests._rollback()
         self._executions._rollback()
         self._attempts._rollback()
+        self._outbox._rollback()
 
     def _require_active(self) -> None:
         if not self._active:

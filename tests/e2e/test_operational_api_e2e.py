@@ -9,8 +9,8 @@ from pyschedulekit import (
     ExecutionNotFoundError,
     Instant,
     IntervalTrigger,
-    ScheduleState,
     Scheduler,
+    ScheduleState,
 )
 from pyschedulekit.testing import MutableClock
 

@@ -53,9 +53,7 @@ def test_t_shutdown_e2e_001_wait_finishes_current_attempt_without_starting_next(
         )
 
     clock.advance(Duration.minutes(10))
-    runtime_thread = Thread(
-        target=lambda: scheduler.run_forever(max_sleep=Duration.seconds(30))
-    )
+    runtime_thread = Thread(target=lambda: scheduler.run_forever(max_sleep=Duration.seconds(30)))
     runtime_thread.start()
     assert started.wait(1)
 

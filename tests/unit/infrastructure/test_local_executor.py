@@ -172,3 +172,25 @@ def test_callable_return_value_is_not_interpreted_as_scheduler_state() -> None:
     outcome = executor.execute(executor.prepare(TargetRef.python("returns-value")))
 
     assert outcome.succeeded
+
+
+def test_local_executor_injects_fencing_token_when_requested() -> None:
+    registry = PythonTargetRegistry()
+    observed: list[int] = []
+
+    def target(fencing_token: int) -> None:
+        observed.append(fencing_token)
+
+    registry.register("fenced", target)
+    executor = LocalExecutor(
+        registry=registry,
+        clock=MutableClock(_instant()),
+    )
+
+    outcome = executor.execute(
+        executor.prepare(TargetRef.python("fenced")),
+        fencing_token=7,
+    )
+
+    assert outcome.succeeded
+    assert observed == [7]

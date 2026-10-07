@@ -56,6 +56,7 @@ def test_t_admission_lock_unit_003_expired_lock_can_be_reassigned() -> None:
     )
     assert lock.worker_id == WorkerId("worker-b")
     assert lock.state is ScheduleAdmissionLockState.ACTIVE
+    assert lock.generation == 2
     assert lock.version == 1
 
 
@@ -65,5 +66,6 @@ def test_t_admission_lock_unit_004_wrong_owner_cannot_release() -> None:
         lock.release(
             worker_id=WorkerId("worker-b"),
             token=AdmissionToken("token-a"),
+            generation=1,
             released_at=_instant(1),
         )

@@ -72,6 +72,7 @@ class Scheduler:
         registry: PythonTargetRegistry | None = None,
         worker_id: str | WorkerId | None = None,
         claim_ttl: Duration | None = None,
+        lease_heartbeat_interval: Duration | None = None,
         admission_lock_ttl: Duration | None = None,
     ) -> None:
         self._clock: Clock = clock if clock is not None else SystemClock()
@@ -83,6 +84,15 @@ class Scheduler:
             worker_id if isinstance(worker_id, WorkerId) else WorkerId(worker_id or uuid4().hex)
         )
         self._claim_ttl = claim_ttl if claim_ttl is not None else Duration.seconds(30)
+        self._lease_heartbeat_interval = (
+            lease_heartbeat_interval
+            if lease_heartbeat_interval is not None
+            else Duration.seconds(self._claim_ttl.total_seconds / 3)
+        )
+        if self._lease_heartbeat_interval.total_seconds <= 0:
+            raise ValueError("lease_heartbeat_interval must be greater than zero.")
+        if self._lease_heartbeat_interval >= self._claim_ttl:
+            raise ValueError("lease_heartbeat_interval must be shorter than claim_ttl.")
         self._admission_lock_ttl = (
             admission_lock_ttl if admission_lock_ttl is not None else Duration.seconds(5)
         )
@@ -102,6 +112,7 @@ class Scheduler:
         self._recovery_service = CrashRecoveryService(
             clock=self._clock,
             uow_factory=self._uow_factory,
+            claim_coordinator=self._claim_coordinator,
         )
         self._recovery_lock = Lock()
         self._recovery_done = False
@@ -122,6 +133,8 @@ class Scheduler:
                 clock=self._clock,
             ),
             clock=self._clock,
+            claim_coordinator=self._claim_coordinator,
+            lease_heartbeat_interval=self._lease_heartbeat_interval,
             cancellation_controller=self._cancellation_controller,
             shutdown_coordinator=self._shutdown_coordinator,
         )
@@ -133,6 +146,7 @@ class Scheduler:
             concurrency_coordinator=ConcurrencyCoordinator(
                 uow_factory=self._uow_factory,
                 admission_lock_coordinator=self._admission_lock_coordinator,
+                clock=self._clock,
             ),
             execution_runner=execution_runner,
             claim_coordinator=self._claim_coordinator,

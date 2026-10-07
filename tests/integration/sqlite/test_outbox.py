@@ -242,7 +242,7 @@ def test_t_outbox_sql_006_v2_database_migrates_through_current_schema(tmp_path) 
         ).fetchone()
 
         assert version is not None
-        assert int(version[0]) == 5
+        assert int(version[0]) == 6
         assert table is not None
     finally:
         connection.close()

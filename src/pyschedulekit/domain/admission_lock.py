@@ -34,6 +34,7 @@ class ScheduleAdmissionLock:
     __slots__ = (
         "_acquired_at",
         "_expires_at",
+        "_generation",
         "_released_at",
         "_schedule_id",
         "_state",
@@ -50,12 +51,15 @@ class ScheduleAdmissionLock:
         token: AdmissionToken,
         acquired_at: Instant,
         expires_at: Instant,
+        generation: int = 1,
         state: ScheduleAdmissionLockState = ScheduleAdmissionLockState.ACTIVE,
         released_at: Instant | None = None,
         version: int = 0,
     ) -> None:
         if expires_at <= acquired_at:
             raise ValueError("Admission lock expires_at must be after acquired_at.")
+        if generation < 1:
+            raise ValueError("Admission lock generation must be greater than or equal to 1.")
         if version < 0:
             raise ValueError("Admission lock version must be non-negative.")
         if state is ScheduleAdmissionLockState.ACTIVE and released_at is not None:
@@ -68,6 +72,7 @@ class ScheduleAdmissionLock:
         self._token = token
         self._acquired_at = acquired_at
         self._expires_at = expires_at
+        self._generation = generation
         self._state = state
         self._released_at = released_at
         self._version = version
@@ -91,6 +96,10 @@ class ScheduleAdmissionLock:
     @property
     def expires_at(self) -> Instant:
         return self._expires_at
+
+    @property
+    def generation(self) -> int:
+        return self._generation
 
     @property
     def state(self) -> ScheduleAdmissionLockState:
@@ -124,6 +133,7 @@ class ScheduleAdmissionLock:
         self._token = token
         self._acquired_at = acquired_at
         self._expires_at = expires_at
+        self._generation += 1
         self._state = ScheduleAdmissionLockState.ACTIVE
         self._released_at = None
         self._version += 1
@@ -133,12 +143,15 @@ class ScheduleAdmissionLock:
         *,
         worker_id: WorkerId,
         token: AdmissionToken,
+        generation: int,
         released_at: Instant,
     ) -> bool:
-        if self._worker_id != worker_id or self._token != token:
-            raise AdmissionLockOwnershipError("Admission lock ownership token does not match.")
+        if self._worker_id != worker_id or self._token != token or self._generation != generation:
+            raise AdmissionLockOwnershipError("Admission lock fencing identity does not match.")
         if self._state is ScheduleAdmissionLockState.RELEASED:
             return False
+        if not self.is_active(now=released_at):
+            raise AdmissionLockOwnershipError("Admission lock is expired or inactive.")
         if released_at < self._acquired_at:
             raise ValueError("Admission lock release cannot precede acquisition.")
 
@@ -153,4 +166,5 @@ class ScheduleAdmissionLockHandle:
     schedule_id: ScheduleId
     worker_id: WorkerId
     token: AdmissionToken
+    generation: int
     expires_at: Instant

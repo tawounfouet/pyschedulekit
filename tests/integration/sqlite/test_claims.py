@@ -110,6 +110,8 @@ def test_t_claim_sql_002_expired_claim_can_be_taken_over(tmp_path) -> None:
     assert takeover.acquired
     assert takeover.handle is not None
     assert takeover.handle.worker_id == WorkerId("worker-b")
+    assert original.handle is not None
+    assert takeover.handle.generation == original.handle.generation + 1
 
 
 def test_t_claim_sql_003_stale_owner_cannot_start_attempt_after_takeover(tmp_path) -> None:
@@ -148,8 +150,20 @@ def test_t_claim_sql_003_stale_owner_cannot_start_attempt_after_takeover(tmp_pat
     with factory() as uow:
         claim = uow.claims.get(execution.id)
         assert claim is not None
-        assert claim.state is ExecutionClaimState.RELEASED
+        assert claim.state is ExecutionClaimState.ACTIVE
         assert claim.worker_id == WorkerId("worker-b")
+        assert claim.generation == takeover.handle.generation
+
+    service.succeed_attempt(
+        attempt_id=attempt.id,
+        completed_at=_instant(31),
+        claim_handle=takeover.handle,
+    )
+
+    with factory() as uow:
+        released = uow.claims.get(execution.id)
+        assert released is not None
+        assert released.state is ExecutionClaimState.RELEASED
 
 
 def test_t_claim_sql_004_v3_database_migrates_through_current_schema(tmp_path) -> None:
@@ -180,7 +194,7 @@ def test_t_claim_sql_004_v3_database_migrates_through_current_schema(tmp_path) -
         ).fetchone()
 
         assert version is not None
-        assert int(version[0]) == 5
+        assert int(version[0]) == 6
         assert table is not None
     finally:
         connection.close()

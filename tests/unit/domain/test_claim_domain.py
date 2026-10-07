@@ -62,6 +62,7 @@ def test_t_claim_unit_003_expired_claim_can_be_reassigned() -> None:
     assert claim.worker_id == WorkerId("worker-b")
     assert claim.token == ClaimToken("token-b")
     assert claim.state is ExecutionClaimState.ACTIVE
+    assert claim.generation == 2
     assert claim.version == 1
 
 
@@ -72,6 +73,7 @@ def test_t_claim_unit_004_wrong_owner_cannot_release() -> None:
         claim.release(
             worker_id=WorkerId("worker-b"),
             token=ClaimToken("token-a"),
+            generation=1,
             released_at=_instant(5),
         )
 
@@ -82,11 +84,47 @@ def test_t_claim_unit_005_release_is_idempotent_for_same_owner() -> None:
     assert claim.release(
         worker_id=WorkerId("worker-a"),
         token=ClaimToken("token-a"),
+        generation=1,
         released_at=_instant(5),
     )
     assert not claim.release(
         worker_id=WorkerId("worker-a"),
         token=ClaimToken("token-a"),
+        generation=1,
         released_at=_instant(6),
     )
     assert claim.state is ExecutionClaimState.RELEASED
+
+
+def test_t_claim_unit_006_renew_extends_lease_without_changing_generation() -> None:
+    claim = _claim()
+
+    claim.renew(
+        worker_id=WorkerId("worker-a"),
+        token=ClaimToken("token-a"),
+        generation=1,
+        renewed_at=_instant(10),
+        expires_at=_instant(40),
+    )
+
+    assert claim.expires_at == _instant(40)
+    assert claim.generation == 1
+    assert claim.version == 1
+
+
+def test_t_claim_unit_007_stale_generation_is_fenced() -> None:
+    claim = _claim()
+    claim.reassign(
+        worker_id=WorkerId("worker-b"),
+        token=ClaimToken("token-b"),
+        claimed_at=_instant(30),
+        expires_at=Instant(datetime(2026, 1, 1, 10, 1, 0, tzinfo=UTC)),
+    )
+
+    with pytest.raises(ClaimOwnershipError, match="fencing"):
+        claim.assert_owner(
+            worker_id=WorkerId("worker-a"),
+            token=ClaimToken("token-a"),
+            generation=1,
+            now=_instant(31),
+        )

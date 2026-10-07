@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.application.claims import (
+    ExecutionClaimCoordinator,
+    ExecutionLeaseHeartbeat,
+)
 from pyschedulekit.application.execution_service import (
     ExecutionNotFoundError,
     ExecutionService,
@@ -12,7 +16,7 @@ from pyschedulekit.application.shutdown import (
     ShutdownCoordinator,
     ShutdownInProgressError,
 )
-from pyschedulekit.domain.claim import ExecutionClaimHandle
+from pyschedulekit.domain.claim import ClaimOwnershipError, ExecutionClaimHandle
 from pyschedulekit.domain.execution import (
     AttemptId,
     Execution,
@@ -20,6 +24,7 @@ from pyschedulekit.domain.execution import (
     FailureCategory,
 )
 from pyschedulekit.domain.retry import RetryDecision, RetryEvaluator
+from pyschedulekit.domain.time import Duration
 from pyschedulekit.ports.cancellation import CancellationController
 from pyschedulekit.ports.executor import Executor, ExecutorOutcome
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
@@ -47,6 +52,8 @@ class ExecutionRunner:
         executor: Executor,
         clock: Clock,
         retry_evaluator: RetryEvaluator | None = None,
+        claim_coordinator: ExecutionClaimCoordinator | None = None,
+        lease_heartbeat_interval: Duration | None = None,
         cancellation_controller: CancellationController | None = None,
         shutdown_coordinator: ShutdownCoordinator | None = None,
     ) -> None:
@@ -55,6 +62,8 @@ class ExecutionRunner:
         self._executor = executor
         self._clock = clock
         self._retry_evaluator = retry_evaluator or RetryEvaluator()
+        self._claim_coordinator = claim_coordinator
+        self._lease_heartbeat_interval = lease_heartbeat_interval
         self._cancellation_controller = cancellation_controller
         self._shutdown_coordinator = shutdown_coordinator
 
@@ -97,29 +106,58 @@ class ExecutionRunner:
             claim_handle=claim_handle,
         )
 
+        active_claim_handle = claim_handle
+        heartbeat: ExecutionLeaseHeartbeat | None = None
+        if claim_handle is not None and self._claim_coordinator is not None:
+            interval = self._lease_heartbeat_interval or Duration.seconds(
+                self._claim_coordinator.ttl.total_seconds / 3
+            )
+            heartbeat = ExecutionLeaseHeartbeat(
+                coordinator=self._claim_coordinator,
+                clock=self._clock,
+                handle=claim_handle,
+                interval=interval,
+            )
+            heartbeat.start()
+
         cancellation_token = (
             self._cancellation_controller.token_for(execution_id.value)
             if self._cancellation_controller is not None
             else None
         )
+
         try:
             outcome = self._executor.execute(
                 prepared,
                 timeout=execution_snapshot.policy_snapshot.timeout,
                 cancellation_token=cancellation_token,
+                fencing_token=(
+                    active_claim_handle.generation if active_claim_handle is not None else None
+                ),
             )
             completed_at = self._clock.now()
+
+            if heartbeat is not None:
+                active_claim_handle = heartbeat.stop()
+                lease_lost = heartbeat.lost
+                heartbeat = None
+                if lease_lost:
+                    raise ClaimOwnershipError(
+                        "Execution lease ownership was lost before Attempt completion."
+                    )
 
             retry_decision: RetryDecision | None = None
             if outcome.failure is None:
                 execution = self._execution_service.succeed_attempt(
                     attempt_id=attempt.id,
                     completed_at=completed_at,
+                    claim_handle=active_claim_handle,
                 )
             elif outcome.failure.category is FailureCategory.CANCELLED:
                 execution = self._execution_service.cancel_attempt(
                     attempt_id=attempt.id,
                     completed_at=completed_at,
+                    claim_handle=active_claim_handle,
                 )
             else:
                 retry_decision = self._retry_evaluator.evaluate(
@@ -137,6 +175,7 @@ class ExecutionRunner:
                         attempt_id=attempt.id,
                         completed_at=completed_at,
                         retry_at=retry_at,
+                        claim_handle=active_claim_handle,
                     )
                 else:
                     execution = self._execution_service.fail_attempt(
@@ -144,6 +183,7 @@ class ExecutionRunner:
                         failure=outcome.failure,
                         completed_at=completed_at,
                         retry_at=retry_at,
+                        claim_handle=active_claim_handle,
                     )
 
             return ExecutionRunResult(
@@ -153,6 +193,8 @@ class ExecutionRunner:
                 retry_decision=retry_decision,
             )
         finally:
+            if heartbeat is not None:
+                heartbeat.stop()
             if self._cancellation_controller is not None:
                 self._cancellation_controller.release(execution_id.value)
 

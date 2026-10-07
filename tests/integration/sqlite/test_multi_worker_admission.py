@@ -1,5 +1,6 @@
 """LOT-27 integration tests for multi-worker admission."""
 
+import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 
@@ -155,3 +156,36 @@ def test_t_admission_sql_003_expired_lock_can_be_recovered(tmp_path) -> None:
 
     assert result.action is ConcurrencyDecisionAction.ADMIT
     assert result.execution is not None
+
+
+def test_t_admission_sql_004_v4_database_migrates_to_v5(tmp_path) -> None:
+    database = tmp_path / "scheduler.db"
+    SqliteUnitOfWorkFactory(database)
+
+    connection = sqlite3.connect(database)
+    try:
+        connection.execute("DROP INDEX ix_schedule_admission_locks_active")
+        connection.execute("DROP TABLE schedule_admission_locks")
+        connection.execute("UPDATE pyschedulekit_schema SET version = 4")
+        connection.commit()
+    finally:
+        connection.close()
+
+    SqliteUnitOfWorkFactory(database)
+
+    connection = sqlite3.connect(database)
+    try:
+        version = connection.execute(
+            "SELECT version FROM pyschedulekit_schema"
+        ).fetchone()
+        table = connection.execute(
+            """
+            SELECT 1 FROM sqlite_master
+            WHERE type = 'table' AND name = 'schedule_admission_locks'
+            """
+        ).fetchone()
+        assert version is not None
+        assert int(version[0]) == 5
+        assert table is not None
+    finally:
+        connection.close()

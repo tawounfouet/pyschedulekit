@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from pyschedulekit.domain.execution import (
     Execution,
+    ExecutionId,
     ExecutionPolicySnapshot,
     ExecutionState,
     IdempotencyKey,
@@ -19,10 +20,7 @@ def _instant(second: int = 0) -> Instant:
 
 def _execution() -> Execution:
     return Execution(
-        execution_id=__import__(
-            "pyschedulekit.domain.execution",
-            fromlist=["ExecutionId"],
-        ).ExecutionId("execution-cancel"),
+        execution_id=ExecutionId("execution-cancel"),
         request_id=RequestId("request-cancel"),
         target=TargetRef.python("job"),
         created_at=_instant(),

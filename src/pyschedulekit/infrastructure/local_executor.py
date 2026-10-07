@@ -195,9 +195,7 @@ class LocalExecutor:
         try:
             if prepared.accepts_cancellation_token:
                 if cancellation_token is None:
-                    raise RuntimeError(
-                        "Cancellable target requires a cancellation token."
-                    )
+                    raise RuntimeError("Cancellable target requires a cancellation token.")
                 value = prepared.callable(
                     cancellation_token=cancellation_token,
                 )

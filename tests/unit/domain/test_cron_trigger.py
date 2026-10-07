@@ -33,12 +33,8 @@ def _instant(
 def test_t_cron_001_daily_expression_returns_next_strict_occurrence() -> None:
     trigger = CronTrigger("0 9 * * *", timezone=Timezone("UTC"))
 
-    assert trigger.next_after(_instant(2026, 1, 5, 8, 59)) == _instant(
-        2026, 1, 5, 9, 0
-    )
-    assert trigger.next_after(_instant(2026, 1, 5, 9, 0)) == _instant(
-        2026, 1, 6, 9, 0
-    )
+    assert trigger.next_after(_instant(2026, 1, 5, 8, 59)) == _instant(2026, 1, 5, 9, 0)
+    assert trigger.next_after(_instant(2026, 1, 5, 9, 0)) == _instant(2026, 1, 6, 9, 0)
 
 
 def test_t_cron_002_lists_ranges_and_steps_are_supported() -> None:
@@ -47,12 +43,8 @@ def test_t_cron_002_lists_ranges_and_steps_are_supported() -> None:
         timezone=Timezone("UTC"),
     )
 
-    assert trigger.next_after(_instant(2026, 1, 5, 9, 7)) == _instant(
-        2026, 1, 5, 9, 15
-    )
-    assert trigger.next_after(_instant(2026, 1, 5, 10, 45)) == _instant(
-        2026, 1, 6, 9, 0
-    )
+    assert trigger.next_after(_instant(2026, 1, 5, 9, 7)) == _instant(2026, 1, 5, 9, 15)
+    assert trigger.next_after(_instant(2026, 1, 5, 10, 45)) == _instant(2026, 1, 6, 9, 0)
 
 
 def test_t_cron_003_sunday_accepts_zero_and_seven() -> None:
@@ -72,9 +64,7 @@ def test_t_cron_004_vixie_day_of_month_and_week_use_or_semantics() -> None:
         timezone=Timezone("UTC"),
     )
 
-    assert trigger.next_after(_instant(2026, 1, 6)) == _instant(
-        2026, 1, 12, 9, 0
-    )
+    assert trigger.next_after(_instant(2026, 1, 6)) == _instant(2026, 1, 12, 9, 0)
 
 
 def test_t_cron_005_wildcard_day_of_month_makes_weekday_authoritative() -> None:
@@ -94,9 +84,7 @@ def test_t_cron_006_wildcard_weekday_makes_day_of_month_authoritative() -> None:
         timezone=Timezone("UTC"),
     )
 
-    assert trigger.next_after(_instant(2026, 1, 6)) == _instant(
-        2026, 1, 13, 9, 0
-    )
+    assert trigger.next_after(_instant(2026, 1, 6)) == _instant(2026, 1, 13, 9, 0)
 
 
 def test_t_cron_007_leap_day_can_be_found_across_multiple_years() -> None:
@@ -105,9 +93,7 @@ def test_t_cron_007_leap_day_can_be_found_across_multiple_years() -> None:
         timezone=Timezone("UTC"),
     )
 
-    assert trigger.next_after(_instant(2026, 3, 1)) == _instant(
-        2028, 2, 29, 12, 0
-    )
+    assert trigger.next_after(_instant(2026, 3, 1)) == _instant(2028, 2, 29, 12, 0)
 
 
 def test_t_cron_008_timezone_changes_absolute_occurrence() -> None:
@@ -116,9 +102,7 @@ def test_t_cron_008_timezone_changes_absolute_occurrence() -> None:
         timezone=Timezone("Europe/Paris"),
     )
 
-    assert trigger.next_after(_instant(2026, 1, 5, 7, 59)) == _instant(
-        2026, 1, 5, 8, 0
-    )
+    assert trigger.next_after(_instant(2026, 1, 5, 7, 59)) == _instant(2026, 1, 5, 8, 0)
 
 
 def test_t_cron_009_nonexistent_dst_time_is_skipped_by_default() -> None:
@@ -127,9 +111,7 @@ def test_t_cron_009_nonexistent_dst_time_is_skipped_by_default() -> None:
         timezone=Timezone("Europe/Paris"),
     )
 
-    assert trigger.next_after(_instant(2026, 3, 28, 2, 0)) == _instant(
-        2026, 3, 30, 0, 30
-    )
+    assert trigger.next_after(_instant(2026, 3, 28, 2, 0)) == _instant(2026, 3, 30, 0, 30)
 
 
 def test_t_cron_010_nonexistent_dst_time_can_raise_explicitly() -> None:
@@ -149,9 +131,7 @@ def test_t_cron_011_ambiguous_dst_time_uses_first_fold_by_default() -> None:
         timezone=Timezone("Europe/Paris"),
     )
 
-    assert trigger.next_after(_instant(2026, 10, 24, 3, 0)) == _instant(
-        2026, 10, 25, 0, 30
-    )
+    assert trigger.next_after(_instant(2026, 10, 24, 3, 0)) == _instant(2026, 10, 25, 0, 30)
 
 
 def test_t_cron_012_ambiguous_dst_time_can_choose_second_fold() -> None:
@@ -161,9 +141,7 @@ def test_t_cron_012_ambiguous_dst_time_can_choose_second_fold() -> None:
         ambiguous_time=CronAmbiguousTimePolicy.SECOND,
     )
 
-    assert trigger.next_after(_instant(2026, 10, 24, 3, 0)) == _instant(
-        2026, 10, 25, 1, 30
-    )
+    assert trigger.next_after(_instant(2026, 10, 24, 3, 0)) == _instant(2026, 10, 25, 1, 30)
 
 
 def test_t_cron_013_ambiguous_dst_time_can_raise_explicitly() -> None:

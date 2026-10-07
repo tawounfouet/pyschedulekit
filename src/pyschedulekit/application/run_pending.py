@@ -93,9 +93,7 @@ class RunPendingService:
         executions: list[ExecutionRunResult] = []
         for execution in self._list_queued_executions(limit=limit):
             try:
-                executions.append(
-                    self._execution_runner.run(execution_id=execution.id)
-                )
+                executions.append(self._execution_runner.run(execution_id=execution.id))
             except TargetResolutionError:
                 errors.append(
                     RunPendingError(

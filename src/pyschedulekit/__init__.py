@@ -7,6 +7,7 @@ from pyschedulekit.application.run_pending import (
     RunPendingResult,
 )
 from pyschedulekit.application.runtime import RuntimeAlreadyRunningError
+from pyschedulekit.application.shutdown import ShutdownMode, ShutdownResult
 from pyschedulekit.domain.concurrency import (
     ConcurrencyDecisionAction,
     ConcurrencyMode,
@@ -71,6 +72,8 @@ __all__ = [
     "RunPendingError",
     "RunPendingResult",
     "RuntimeAlreadyRunningError",
+    "ShutdownMode",
+    "ShutdownResult",
     "ScheduleId",
     "Scheduler",
     "TargetRef",

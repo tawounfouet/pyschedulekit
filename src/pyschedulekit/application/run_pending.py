@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from pyschedulekit.application.execution_runner import ExecutionRunResult, ExecutionRunner
+from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.domain.execution import Execution

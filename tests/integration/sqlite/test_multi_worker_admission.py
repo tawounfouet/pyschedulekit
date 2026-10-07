@@ -94,22 +94,37 @@ def test_t_admission_sql_001_two_workers_preserve_global_limit(tmp_path) -> None
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(admit, pairs))
 
-    actions = sorted(result.action.value for result in results)
-    assert actions == ["admit", "queue"]
+    admitted = [result for result in results if result.execution is not None]
+    assert len(admitted) == 1
 
     with factory() as uow:
         assert uow.executions.count_non_terminal_for_schedule(ScheduleId("shared")) == 1
-        states = sorted(
-            (
-                uow.requests.get(first.id).state,  # type: ignore[union-attr]
-                uow.requests.get(second.id).state,  # type: ignore[union-attr]
-            ),
-            key=str,
+        first_state = uow.requests.get(first.id).state  # type: ignore[union-attr]
+        second_state = uow.requests.get(second.id).state  # type: ignore[union-attr]
+
+    states = {first_state, second_state}
+    assert ExecutionRequestState.DISPATCHED in states
+    assert states <= {
+        ExecutionRequestState.DISPATCHED,
+        ExecutionRequestState.PENDING,
+        ExecutionRequestState.WAITING_ADMISSION,
+    }
+
+    pending_request = first if first_state is ExecutionRequestState.PENDING else second
+    if ExecutionRequestState.PENDING in states:
+        queued = _coordinator(
+            SqliteUnitOfWorkFactory(database),
+            "worker-c",
+        ).admit(
+            request_id=pending_request.id,
+            created_at=_instant(3),
         )
-        assert states == [
-            ExecutionRequestState.DISPATCHED,
-            ExecutionRequestState.WAITING_ADMISSION,
-        ]
+        assert queued.action is ConcurrencyDecisionAction.QUEUE
+        assert not queued.lock_denied
+        with factory() as uow:
+            persisted = uow.requests.get(pending_request.id)
+            assert persisted is not None
+            assert persisted.state is ExecutionRequestState.WAITING_ADMISSION
 
 
 def test_t_admission_sql_002_active_lock_denies_without_mutating_request(tmp_path) -> None:

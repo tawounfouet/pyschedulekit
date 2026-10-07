@@ -60,9 +60,8 @@ class ExecutionRunner:
     def run(self, *, execution_id: ExecutionId) -> ExecutionRunResult:
         """Execute one logical Execution without holding a persistence transaction."""
 
-        if (
-            self._shutdown_coordinator is not None
-            and not self._shutdown_coordinator.try_enter(execution_id)
+        if self._shutdown_coordinator is not None and not self._shutdown_coordinator.try_enter(
+            execution_id
         ):
             raise ShutdownInProgressError(
                 "Cannot start a new Attempt while graceful shutdown is draining."

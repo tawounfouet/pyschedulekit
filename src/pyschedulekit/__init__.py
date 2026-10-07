@@ -36,6 +36,10 @@ from pyschedulekit.domain.triggers import (
     DateTrigger,
     IntervalTrigger,
 )
+from pyschedulekit.ports.cancellation import (
+    CancellationToken,
+    ExecutionCancelledError,
+)
 
 __all__ = [
     "CancellationToken",

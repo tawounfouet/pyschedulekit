@@ -1007,9 +1007,7 @@ class SqliteExecutionRepository:
             _instant_text(execution.next_attempt_at),
             _instant_text(execution.cancellation_requested_at),
             encode_execution_result(execution.result),
-            _instant_text(
-                execution.result.completed_at if execution.result is not None else None
-            ),
+            _instant_text(execution.result.completed_at if execution.result is not None else None),
         )
 
     def _after_commit(self) -> None:

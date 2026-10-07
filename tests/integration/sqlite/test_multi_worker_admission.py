@@ -175,9 +175,7 @@ def test_t_admission_sql_004_v4_database_migrates_to_v5(tmp_path) -> None:
 
     connection = sqlite3.connect(database)
     try:
-        version = connection.execute(
-            "SELECT version FROM pyschedulekit_schema"
-        ).fetchone()
+        version = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
         table = connection.execute(
             """
             SELECT 1 FROM sqlite_master

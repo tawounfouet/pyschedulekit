@@ -267,9 +267,7 @@ def _expand_cron_term(
         try:
             step = int(step_text)
         except ValueError as exc:
-            raise InvalidCronExpressionError(
-                f"Invalid Cron step value: {step_text!r}."
-            ) from exc
+            raise InvalidCronExpressionError(f"Invalid Cron step value: {step_text!r}.") from exc
         if step <= 0:
             raise InvalidCronExpressionError("Cron step must be strictly positive.")
 
@@ -283,9 +281,7 @@ def _expand_cron_term(
         start = _parse_cron_integer(start_text, minimum=minimum, maximum=maximum)
         end = _parse_cron_integer(end_text, minimum=minimum, maximum=maximum)
         if start > end:
-            raise InvalidCronExpressionError(
-                f"Cron range start must not exceed end: {base!r}."
-            )
+            raise InvalidCronExpressionError(f"Cron range start must not exceed end: {base!r}.")
     else:
         start = _parse_cron_integer(base, minimum=minimum, maximum=maximum)
         end = maximum if separator else start

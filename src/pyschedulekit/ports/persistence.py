@@ -20,6 +20,14 @@ class OptimisticConcurrencyError(PersistenceConflictError):
     """Raised when committed state changed since an entity was loaded."""
 
 
+class ReferentialIntegrityError(PersistenceConflictError):
+    """Raised when a persistence write violates a relational reference."""
+
+
+class DatabaseInvariantError(PersistenceConflictError):
+    """Raised when a database-level invariant rejects persisted state."""
+
+
 class DuplicateScheduleError(PersistenceConflictError):
     """Raised when a new Schedule uses an already committed ScheduleId."""
 

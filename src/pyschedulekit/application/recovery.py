@@ -210,6 +210,7 @@ class CrashRecoveryService:
                             "execution_state": execution.state.value,
                             "recovery": "crash",
                         },
+                        sequence=1,
                     )
                 )
                 uow.commit()

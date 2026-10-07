@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from threading import RLock
 
+from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
 from pyschedulekit.application.execution_service import (
     ExecutionConsistencyError,
     ExecutionRequestNotFoundError,
@@ -35,19 +36,22 @@ class AdmissionResult:
     decision: ConcurrencyDecision | None
     execution: Execution | None
     reused: bool = False
+    lock_denied: bool = False
 
 
 class ConcurrencyCoordinator:
-    """Serialize count-and-admit decisions inside one process."""
+    """Coordinate count-and-admit with optional durable Schedule ownership."""
 
     def __init__(
         self,
         *,
         uow_factory: UnitOfWorkFactory,
         evaluator: ConcurrencyEvaluator | None = None,
+        admission_lock_coordinator: ScheduleAdmissionLockCoordinator | None = None,
     ) -> None:
         self._uow_factory = uow_factory
         self._evaluator = evaluator or ConcurrencyEvaluator()
+        self._admission_lock_coordinator = admission_lock_coordinator
         self._lock = _PROCESS_ADMISSION_LOCK
 
     def admit(
@@ -56,9 +60,55 @@ class ConcurrencyCoordinator:
         request_id: RequestId,
         created_at: Instant,
     ) -> AdmissionResult:
-        """Atomically decide and persist admission within this process."""
+        """Atomically decide and persist one admission."""
 
-        with self._lock, self._uow_factory() as uow:
+        if self._admission_lock_coordinator is None:
+            with self._lock:
+                return self._admit_locked(
+                    request_id=request_id,
+                    created_at=created_at,
+                )
+
+        schedule_id = self._schedule_id_for_request(request_id)
+        acquisition = self._admission_lock_coordinator.acquire(
+            schedule_id=schedule_id,
+            now=created_at,
+        )
+        if not acquisition.acquired or acquisition.handle is None:
+            return AdmissionResult(
+                request_id=request_id,
+                action=ConcurrencyDecisionAction.QUEUE,
+                decision=None,
+                execution=None,
+                reused=False,
+                lock_denied=True,
+            )
+
+        try:
+            return self._admit_locked(
+                request_id=request_id,
+                created_at=created_at,
+            )
+        finally:
+            self._admission_lock_coordinator.release(
+                handle=acquisition.handle,
+                released_at=created_at,
+            )
+
+    def _schedule_id_for_request(self, request_id: RequestId):
+        with self._uow_factory() as uow:
+            request = uow.requests.get(request_id)
+            if request is None:
+                raise ExecutionRequestNotFoundError(request_id.value)
+            return request.occurrence_key.schedule_id
+
+    def _admit_locked(
+        self,
+        *,
+        request_id: RequestId,
+        created_at: Instant,
+    ) -> AdmissionResult:
+        with self._uow_factory() as uow:
             request = uow.requests.get(request_id)
             if request is None:
                 raise ExecutionRequestNotFoundError(request_id.value)

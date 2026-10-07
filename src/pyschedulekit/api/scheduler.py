@@ -78,9 +78,7 @@ class Scheduler:
         )
         self._registry = registry if registry is not None else PythonTargetRegistry()
         self._worker_id = (
-            worker_id
-            if isinstance(worker_id, WorkerId)
-            else WorkerId(worker_id or uuid4().hex)
+            worker_id if isinstance(worker_id, WorkerId) else WorkerId(worker_id or uuid4().hex)
         )
         self._claim_ttl = claim_ttl if claim_ttl is not None else Duration.seconds(30)
         self._claim_coordinator = ExecutionClaimCoordinator(

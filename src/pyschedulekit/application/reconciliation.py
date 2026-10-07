@@ -17,7 +17,6 @@ from pyschedulekit.domain.execution_request import (
     RequestId,
 )
 from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWorkFactory
-from pyschedulekit.ports.time import Clock
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,10 +69,8 @@ class ReconciliationService:
     def __init__(
         self,
         *,
-        clock: Clock,
         uow_factory: UnitOfWorkFactory,
     ) -> None:
-        self._clock = clock
         self._uow_factory = uow_factory
 
     def reconcile(self, *, limit: int = 1000) -> ReconciliationResult:

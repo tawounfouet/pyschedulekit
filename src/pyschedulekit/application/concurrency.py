@@ -21,6 +21,7 @@ from pyschedulekit.domain.execution_request import (
     InvalidExecutionRequestTransitionError,
     RequestId,
 )
+from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 
@@ -95,7 +96,7 @@ class ConcurrencyCoordinator:
                 released_at=created_at,
             )
 
-    def _schedule_id_for_request(self, request_id: RequestId):
+    def _schedule_id_for_request(self, request_id: RequestId) -> ScheduleId:
         with self._uow_factory() as uow:
             request = uow.requests.get(request_id)
             if request is None:

@@ -6,8 +6,13 @@ from pyschedulekit.application.run_pending import (
     RunPendingError,
     RunPendingResult,
 )
+from pyschedulekit.domain.misfire import (
+    LatenessStatus,
+    MisfirePolicy,
+    MisfirePolicyAction,
+)
 from pyschedulekit.domain.schedule import ScheduleId, TargetRef
-from pyschedulekit.domain.time import Duration, Instant, Timezone
+from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
 from pyschedulekit.domain.triggers import (
     CronAmbiguousTimePolicy,
     CronDialect,
@@ -24,8 +29,12 @@ __all__ = [
     "CronTrigger",
     "DateTrigger",
     "Duration",
+    "GracePeriod",
     "Instant",
     "IntervalTrigger",
+    "LatenessStatus",
+    "MisfirePolicy",
+    "MisfirePolicyAction",
     "RunPendingError",
     "RunPendingResult",
     "ScheduleId",

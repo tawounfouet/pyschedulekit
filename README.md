@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-04 complete — next: LOT-12 Misfire Policy Foundations**
+**LOT-12 complete — next: LOT-13 Catch-Up & Coalescing**
 
 Completed:
 
@@ -22,6 +22,7 @@ Completed:
 - LOT-09 — Execution Lifecycle
 - LOT-10 — Local Executor
 - LOT-11 — run_pending() End-to-End Slice
+- LOT-12 — Misfire Policy Foundations
 
 The implementation follows a domain-first roadmap:
 
@@ -260,6 +261,24 @@ Python callable
 ```
 
 The cycle is one-shot and non-blocking. It also resumes durable PENDING requests and QUEUED executions left by earlier cycles.
+
+## Misfire policy foundations
+
+LOT-12 makes lateness explicit:
+
+```text
+scheduled_at
+    +
+GracePeriod
+    +
+evaluation_now
+    ↓
+ON_TIME / LATE_ELIGIBLE / MISFIRED
+    ↓
+MisfirePolicy
+```
+
+`SKIP` and `RUN_NOW` are executable end-to-end. `CATCH_UP` and `COALESCE` are modeled but intentionally not enabled publicly until bounded backlog semantics are implemented.
 
 ## Package shape
 

@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Explicit lateness classification with ON_TIME, LATE_ELIGIBLE, and MISFIRED states.
+- Immutable `MisfirePolicy` with grace period and SKIP, RUN_NOW, CATCH_UP, and COALESCE actions.
+- Pure `LatenessClassifier` and `MisfireEvaluator`.
+- SchedulerEngine SKIP and RUN_NOW behavior with inspectable misfire decision records.
+- Durable-intent precedence when an ExecutionRequest already exists for an occurrence.
+- Public Scheduler support for SKIP and RUN_NOW, with advanced recovery modes rejected until LOT-13.
+- `RunPendingResult.unsupported_policy_schedules` for lower-level capability diagnostics.
+- LOT-12 unit, integration, and end-to-end qualification for grace boundaries and misfire behavior.
 - Five-field numeric `CronTrigger` with wildcard, list, range, and step syntax.
 - Explicit IANA timezone evaluation with Vixie day-of-month/day-of-week semantics.
 - Explicit DST ambiguity policies (FIRST, SECOND, RAISE) and nonexistent-time policies (SKIP, RAISE).

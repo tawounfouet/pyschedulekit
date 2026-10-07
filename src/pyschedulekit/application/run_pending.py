@@ -33,6 +33,7 @@ class RunPendingResult:
     materialized_request_ids: tuple[RequestId, ...]
     executions: tuple[ExecutionRunResult, ...]
     schedule_conflicts: tuple[ScheduleId, ...]
+    unsupported_policy_schedules: tuple[ScheduleId, ...]
     errors: tuple[RunPendingError, ...]
 
     @property
@@ -124,6 +125,7 @@ class RunPendingService:
             materialized_request_ids=tuple(request.id for request in evaluation.requests),
             executions=tuple(executions),
             schedule_conflicts=evaluation.conflicts,
+            unsupported_policy_schedules=evaluation.unsupported_policy_schedules,
             errors=tuple(errors),
         )
 

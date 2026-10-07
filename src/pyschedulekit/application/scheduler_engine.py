@@ -338,6 +338,7 @@ class SchedulerEngine:
             created_at=created_at,
             concurrency_policy=schedule.definition.concurrency,
             retry_policy=schedule.definition.retry,
+            timeout=schedule.definition.timeout,
         )
         uow.requests.add(request)
         return request

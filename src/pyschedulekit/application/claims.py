@@ -11,6 +11,7 @@ from pyschedulekit.domain.claim import (
     ExecutionClaimHandle,
     WorkerId,
 )
+from pyschedulekit.domain.claim import ClaimOwnershipError
 from pyschedulekit.domain.execution import ExecutionId, ExecutionState
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWorkFactory
@@ -44,11 +45,40 @@ class ExecutionClaimCoordinator:
     def worker_id(self) -> WorkerId:
         return self._worker_id
 
+    @property
+    def ttl(self) -> Duration:
+        return self._ttl
+
     def acquire(
         self,
         *,
         execution_id: ExecutionId,
         now: Instant,
+    ) -> ClaimAcquisition:
+        return self._acquire(
+            execution_id=execution_id,
+            now=now,
+            allow_running=False,
+        )
+
+    def acquire_for_recovery(
+        self,
+        *,
+        execution_id: ExecutionId,
+        now: Instant,
+    ) -> ClaimAcquisition:
+        return self._acquire(
+            execution_id=execution_id,
+            now=now,
+            allow_running=True,
+        )
+
+    def _acquire(
+        self,
+        *,
+        execution_id: ExecutionId,
+        now: Instant,
+        allow_running: bool,
     ) -> ClaimAcquisition:
         token = ClaimToken(uuid4().hex)
         expires_at = now.add(self._ttl)
@@ -69,6 +99,8 @@ class ExecutionClaimCoordinator:
                             acquired=False,
                             reason="execution_not_runnable",
                         )
+                elif execution.state is ExecutionState.RUNNING and allow_running:
+                    pass
                 elif execution.state is not ExecutionState.QUEUED:
                     return ClaimAcquisition(
                         execution_id=execution_id,
@@ -116,9 +148,40 @@ class ExecutionClaimCoordinator:
                 execution_id=execution_id,
                 worker_id=self._worker_id,
                 token=token,
+                generation=claim.generation,
                 expires_at=expires_at,
             ),
         )
+
+    def renew(
+        self,
+        *,
+        handle: ExecutionClaimHandle,
+        renewed_at: Instant,
+    ) -> ExecutionClaimHandle | None:
+        try:
+            with self._uow_factory() as uow:
+                claim = uow.claims.get(handle.execution_id)
+                if claim is None:
+                    return None
+                claim.renew(
+                    worker_id=handle.worker_id,
+                    token=handle.token,
+                    generation=handle.generation,
+                    renewed_at=renewed_at,
+                    expires_at=renewed_at.add(self._ttl),
+                )
+                uow.claims.save(claim)
+                uow.commit()
+                return ExecutionClaimHandle(
+                    execution_id=claim.execution_id,
+                    worker_id=claim.worker_id,
+                    token=claim.token,
+                    generation=claim.generation,
+                    expires_at=claim.expires_at,
+                )
+        except (PersistenceConflictError, ClaimOwnershipError):
+            return None
 
     def release(
         self,
@@ -134,6 +197,7 @@ class ExecutionClaimCoordinator:
                 changed = claim.release(
                     worker_id=handle.worker_id,
                     token=handle.token,
+                    generation=handle.generation,
                     released_at=released_at,
                 )
                 if not changed:

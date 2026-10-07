@@ -60,6 +60,7 @@ def _clone_request(request: ExecutionRequest) -> ExecutionRequest:
         created_at=request.created_at,
         concurrency_policy=request.concurrency_policy,
         retry_policy=request.retry_policy,
+        timeout=request.timeout,
         state=request.state,
         version=request.version,
     )

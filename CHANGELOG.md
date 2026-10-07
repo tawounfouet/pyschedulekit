@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Five-field numeric `CronTrigger` with wildcard, list, range, and step syntax.
+- Explicit IANA timezone evaluation with Vixie day-of-month/day-of-week semantics.
+- Explicit DST ambiguity policies (FIRST, SECOND, RAISE) and nonexistent-time policies (SKIP, RAISE).
+- Bounded eight-year calendar lookup with `CronSearchLimitError`.
+- Public Cron exports and Scheduler timezone-consistency validation.
+- LOT-04 unit and end-to-end qualification for parsing, leap years, DST, dialect semantics, and `run_pending()`.
 - First public `Scheduler` facade with `register_target()`, `add_schedule()`, and `run_pending()`.
 - Structured `RunPendingResult` and safe per-request `RunPendingError`.
 - End-to-end due Schedule → ExecutionRequest → Execution → Attempt → LocalExecutor flow.

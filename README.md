@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-27 complete — next: LOT-28 Lease / Fencing Refinements**
+**LOT-28 complete — next: LOT-29 Distributed Scheduler Coordination**
 
 Completed:
 
@@ -38,6 +38,7 @@ Completed:
 - LOT-25 — Transactional Outbox
 - LOT-26 — Distributed Claims
 - LOT-27 — Multi-worker Admission
+- LOT-28 — Lease / Fencing Refinements
 
 The implementation follows a domain-first roadmap:
 
@@ -586,6 +587,28 @@ release
 ```
 
 Admission-lock contention is reported separately from a real policy QUEUE. SQLite schema v5 persists the short-lived Schedule-scoped locks.
+
+## Lease and fencing refinements
+
+LOT-28 extends Execution claims across the full RUNNING Attempt:
+
+```text
+claim generation N
+        ↓
+Attempt RUNNING
+        ↓
+heartbeat renewals
+        ↓
+fenced completion
+        ↓
+claim RELEASED
+```
+
+Takeover increments the generation. A stale worker cannot finalize scheduler state after a newer owner or recovery pass has taken control.
+
+Trusted local callables may explicitly request `fencing_token`, which is the current Execution lease generation.
+
+Crash recovery now preserves RUNNING work protected by an active lease instead of treating every RUNNING row as orphaned. Admission decisions are also fenced by committing lock release and ADMIT/QUEUE/DROP in one UnitOfWork.
 
 ## Package shape
 

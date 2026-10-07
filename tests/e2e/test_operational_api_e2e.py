@@ -32,20 +32,20 @@ def test_t_operational_e2e_001_schedule_control_and_inspection() -> None:
         ),
     )
 
-    initial = scheduler.inspect_schedule(schedule_id)
+    initial = scheduler.inspect_schedule("controlled")
     assert initial.state is ScheduleState.ACTIVE
     assert initial.next_run_time == _instant(10)
 
-    paused = scheduler.pause_schedule(schedule_id)
+    paused = scheduler.pause_schedule("controlled")
     assert paused.state is ScheduleState.PAUSED
     assert paused.next_run_time is None
 
     clock.set(_instant(25))
-    resumed = scheduler.resume_schedule(schedule_id)
+    resumed = scheduler.resume_schedule("controlled")
     assert resumed.state is ScheduleState.ACTIVE
     assert resumed.next_run_time == _instant(30)
 
-    cancelled = scheduler.cancel_schedule(schedule_id)
+    cancelled = scheduler.cancel_schedule("controlled")
     assert cancelled.state is ScheduleState.CANCELLED
     assert scheduler.inspect_schedule(schedule_id).state is ScheduleState.CANCELLED
 

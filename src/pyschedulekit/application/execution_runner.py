@@ -12,6 +12,7 @@ from pyschedulekit.application.execution_service import (
     ExecutionNotFoundError,
     ExecutionService,
 )
+from pyschedulekit.application.observability import Observer
 from pyschedulekit.application.shutdown import (
     ShutdownCoordinator,
     ShutdownInProgressError,
@@ -56,6 +57,7 @@ class ExecutionRunner:
         lease_heartbeat_interval: Duration | None = None,
         cancellation_controller: CancellationController | None = None,
         shutdown_coordinator: ShutdownCoordinator | None = None,
+        observer: Observer | None = None,
     ) -> None:
         self._uow_factory = uow_factory
         self._execution_service = execution_service
@@ -66,6 +68,7 @@ class ExecutionRunner:
         self._lease_heartbeat_interval = lease_heartbeat_interval
         self._cancellation_controller = cancellation_controller
         self._shutdown_coordinator = shutdown_coordinator
+        self._observer = observer or Observer()
 
     def run(
         self,
@@ -186,12 +189,24 @@ class ExecutionRunner:
                         claim_handle=active_claim_handle,
                     )
 
-            return ExecutionRunResult(
+            result = ExecutionRunResult(
                 execution=execution,
                 attempt_id=attempt.id,
                 outcome=outcome,
                 retry_decision=retry_decision,
             )
+            self._observer.record(
+                name="execution.attempt.completed",
+                recorded_at=completed_at,
+                attempt_number=attempt.number,
+                state=execution.state.value,
+                succeeded=outcome.succeeded,
+                retry_scheduled=not execution.is_terminal,
+                failure_category=(
+                    outcome.failure.category.value if outcome.failure is not None else "NONE"
+                ),
+            )
+            return result
         finally:
             if heartbeat is not None:
                 heartbeat.stop()

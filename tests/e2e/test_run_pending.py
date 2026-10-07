@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from pyschedulekit import Duration, IntervalTrigger, Scheduler, TargetRef
+from pyschedulekit import CronTrigger, Duration, IntervalTrigger, Scheduler, TargetRef, Timezone
 from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.testing import MutableClock
 
@@ -249,3 +249,50 @@ def test_t_e2e_009_unresolved_queued_execution_can_run_after_target_registration
     assert len(second.executions) == 1
     assert second.executions[0].execution.state is ExecutionState.SUCCESS
     assert second.errors == ()
+
+
+def test_t_e2e_010_cron_trigger_runs_through_public_scheduler() -> None:
+    from pyschedulekit import Instant
+
+    clock = MutableClock(
+        Instant(datetime(2026, 1, 5, 7, 59, tzinfo=UTC))
+    )
+    scheduler = Scheduler(clock=clock)
+    calls: list[str] = []
+
+    scheduler.add_schedule(
+        id="paris-morning",
+        target=lambda: calls.append("cron"),
+        trigger=CronTrigger(
+            "0 9 * * 1-5",
+            timezone=Timezone("Europe/Paris"),
+        ),
+    )
+
+    before_due = scheduler.run_pending()
+    assert calls == []
+    assert before_due.executions == ()
+
+    clock.advance(Duration.minutes(1))
+    due = scheduler.run_pending()
+
+    assert calls == ["cron"]
+    assert due.succeeded == 1
+    assert due.errors == ()
+
+
+def test_t_e2e_011_scheduler_rejects_conflicting_cron_timezone_metadata() -> None:
+    scheduler = Scheduler(clock=MutableClock(_instant()))
+
+    import pytest
+
+    with pytest.raises(ValueError, match="must match CronTrigger timezone"):
+        scheduler.add_schedule(
+            id="conflicting-timezone",
+            target=lambda: None,
+            trigger=CronTrigger(
+                "0 9 * * *",
+                timezone=Timezone("Europe/Paris"),
+            ),
+            timezone=Timezone("UTC"),
+        )

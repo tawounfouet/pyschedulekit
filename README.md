@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Implementation — LOT-11: run_pending() End-to-End Slice**
+**LOT-11 complete — next: LOT-04 CronTrigger**
 
 Completed:
 
@@ -20,7 +20,7 @@ Completed:
 - LOT-08 — SchedulerEngine
 - LOT-09 — Execution Lifecycle
 - LOT-10 — Local Executor
-- LOT-11 — run_pending() End-to-End Slice (branch qualification in progress)
+- LOT-11 — run_pending() End-to-End Slice
 
 The implementation follows a domain-first roadmap:
 

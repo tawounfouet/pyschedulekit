@@ -5,6 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 from hashlib import sha256
 
+from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.occurrence import Occurrence, OccurrenceKey
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Instant
@@ -55,6 +56,7 @@ class ExecutionRequestState(StrEnum):
     PENDING = "pending"
     WAITING_ADMISSION = "waiting_admission"
     DISPATCHED = "dispatched"
+    DROPPED = "dropped"
     CANCELLED = "cancelled"
 
 
@@ -62,6 +64,7 @@ class ExecutionRequest:
     """Entity controlling the lifecycle of one durable execution intent."""
 
     __slots__ = (
+        "_concurrency_policy",
         "_created_at",
         "_id",
         "_occurrence_key",
@@ -77,6 +80,7 @@ class ExecutionRequest:
         occurrence_key: OccurrenceKey,
         target: TargetRef,
         created_at: Instant,
+        concurrency_policy: ConcurrencyPolicy | None = None,
         state: ExecutionRequestState = ExecutionRequestState.PENDING,
         version: int = 0,
     ) -> None:
@@ -87,6 +91,7 @@ class ExecutionRequest:
         self._occurrence_key = occurrence_key
         self._target = target
         self._created_at = created_at
+        self._concurrency_policy = concurrency_policy or ConcurrencyPolicy.allow()
         self._state = state
         self._version = version
 
@@ -97,12 +102,14 @@ class ExecutionRequest:
         occurrence: Occurrence,
         target: TargetRef,
         created_at: Instant,
+        concurrency_policy: ConcurrencyPolicy | None = None,
     ) -> ExecutionRequest:
         return cls(
             id=RequestId.for_occurrence(occurrence.key),
             occurrence_key=occurrence.key,
             target=target,
             created_at=created_at,
+            concurrency_policy=concurrency_policy,
         )
 
     @property
@@ -120,6 +127,10 @@ class ExecutionRequest:
     @property
     def created_at(self) -> Instant:
         return self._created_at
+
+    @property
+    def concurrency_policy(self) -> ConcurrencyPolicy:
+        return self._concurrency_policy
 
     @property
     def state(self) -> ExecutionRequestState:
@@ -150,6 +161,18 @@ class ExecutionRequest:
             )
         self._transition(ExecutionRequestState.DISPATCHED)
 
+    def drop(self) -> None:
+        if self._state is ExecutionRequestState.DROPPED:
+            return
+        if self._state not in (
+            ExecutionRequestState.PENDING,
+            ExecutionRequestState.WAITING_ADMISSION,
+        ):
+            raise InvalidExecutionRequestTransitionError(
+                f"Cannot drop request from state {self._state.value!r}."
+            )
+        self._transition(ExecutionRequestState.DROPPED)
+
     def cancel(self) -> None:
         if self._state is ExecutionRequestState.CANCELLED:
             return
@@ -174,6 +197,7 @@ class ExecutionRequest:
             and self.occurrence_key == other.occurrence_key
             and self.target == other.target
             and self.created_at == other.created_at
+            and self.concurrency_policy == other.concurrency_policy
             and self.state == other.state
             and self.version == other.version
         )

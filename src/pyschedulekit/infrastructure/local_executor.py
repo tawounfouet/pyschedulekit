@@ -136,7 +136,13 @@ class LocalExecutor:
             return self._cancelled_outcome()
 
         if timeout is None:
-            return self._invoke(prepared, cancellation_token=cancellation_token)
+            outcome = self._invoke(
+                prepared,
+                cancellation_token=cancellation_token,
+            )
+            if cancellation_token is not None and cancellation_token.is_cancelled:
+                return self._cancelled_outcome()
+            return outcome
 
         if timeout.total_seconds <= 0:
             raise ValueError("Executor timeout must be greater than zero.")

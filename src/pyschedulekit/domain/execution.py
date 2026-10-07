@@ -389,7 +389,8 @@ class Execution:
             request_id=request.id,
             target=request.target,
             created_at=created_at,
-            policy_snapshot=policy_snapshot or ExecutionPolicySnapshot(
+            policy_snapshot=policy_snapshot
+            or ExecutionPolicySnapshot(
                 retry=request.retry_policy,
             ),
             idempotency_key=IdempotencyKey.for_request(request.id),

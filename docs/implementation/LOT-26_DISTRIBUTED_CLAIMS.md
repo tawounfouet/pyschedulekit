@@ -29,7 +29,7 @@ Execution RUNNING
 
 ## Scope
 
-LOT-26 introduces **one-shot execution claims**.
+LOT-26 originally introduced **one-shot execution claims**. LOT-28 refines the same durable entity into a renewable fenced Execution lease while preserving the acquisition semantics established here.
 
 It does not yet implement a renewable lease protocol, long-running heartbeat, generalized fencing token, or global scheduler leadership.
 

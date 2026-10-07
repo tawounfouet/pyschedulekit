@@ -7,7 +7,12 @@ import pytest
 from pyschedulekit.domain.execution import ExecutionPolicySnapshot
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
-from pyschedulekit.domain.schedule import ScheduleDefinition, ScheduleId, ScheduleRevision, TargetRef
+from pyschedulekit.domain.schedule import (
+    ScheduleDefinition,
+    ScheduleId,
+    ScheduleRevision,
+    TargetRef,
+)
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 

@@ -100,9 +100,7 @@ def test_t_coord_sql_001_active_owner_denies_second_materializer(tmp_path) -> No
         lease = uow.materialization_leases.get(schedule.id)
         assert persisted is not None
         assert lease is not None
-        assert persisted.next_run_time == Instant(
-            datetime(2026, 1, 1, 10, 10, tzinfo=UTC)
-        )
+        assert persisted.next_run_time == Instant(datetime(2026, 1, 1, 10, 10, tzinfo=UTC))
         assert lease.state is ScheduleMaterializationLeaseState.RELEASED
         assert lease.worker_id == WorkerId("worker-b")
         assert lease.generation == held.handle.generation + 1

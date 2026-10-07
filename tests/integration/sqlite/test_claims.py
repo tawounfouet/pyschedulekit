@@ -152,12 +152,14 @@ def test_t_claim_sql_003_stale_owner_cannot_start_attempt_after_takeover(tmp_pat
         assert claim.worker_id == WorkerId("worker-b")
 
 
-def test_t_claim_sql_004_v3_database_migrates_to_v4(tmp_path) -> None:
+def test_t_claim_sql_004_v3_database_migrates_through_current_schema(tmp_path) -> None:
     database = tmp_path / "scheduler.db"
     SqliteUnitOfWorkFactory(database)
 
     connection = sqlite3.connect(database)
     try:
+        connection.execute("DROP INDEX ix_schedule_admission_locks_active")
+        connection.execute("DROP TABLE schedule_admission_locks")
         connection.execute("DROP INDEX ix_execution_claims_active")
         connection.execute("DROP TABLE execution_claims")
         connection.execute("UPDATE pyschedulekit_schema SET version = 3")
@@ -178,7 +180,7 @@ def test_t_claim_sql_004_v3_database_migrates_to_v4(tmp_path) -> None:
         ).fetchone()
 
         assert version is not None
-        assert int(version[0]) == 4
+        assert int(version[0]) == 5
         assert table is not None
     finally:
         connection.close()

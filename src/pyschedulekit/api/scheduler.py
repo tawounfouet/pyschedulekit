@@ -16,6 +16,12 @@ from pyschedulekit.application.recovery import (
     CrashRecoveryResult,
     CrashRecoveryService,
 )
+from pyschedulekit.application.reconciliation import (
+    ReconciliationActiveRuntimeError,
+    ReconciliationIncompleteError,
+    ReconciliationResult,
+    ReconciliationService,
+)
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
@@ -74,6 +80,13 @@ class Scheduler:
         self._recovery_lock = Lock()
         self._recovery_done = False
         self._last_recovery_result: CrashRecoveryResult | None = None
+        self._reconciliation_service = ReconciliationService(
+            clock=self._clock,
+            uow_factory=self._uow_factory,
+        )
+        self._reconciliation_lock = Lock()
+        self._reconciliation_done = False
+        self._last_reconciliation_result: ReconciliationResult | None = None
         self._cancellation_controller = InMemoryCancellationController()
         self._shutdown_coordinator = ShutdownCoordinator()
         execution_runner = ExecutionRunner(
@@ -186,6 +199,10 @@ class Scheduler:
         return self._last_recovery_result
 
     @property
+    def last_reconciliation_result(self) -> ReconciliationResult | None:
+        return self._last_reconciliation_result
+
+    @property
     def is_running(self) -> bool:
         return self._runtime.is_running
 
@@ -209,14 +226,33 @@ class Scheduler:
             result = self._recovery_service.recover(limit=limit)
             self._last_recovery_result = result
             self._recovery_done = result.complete
+            self._reconciliation_done = False
             if not result.complete:
                 raise CrashRecoveryIncompleteError(result)
+            return result
+
+    def reconcile(self, *, limit: int = 1000) -> ReconciliationResult:
+        """Detect and repair deterministic durable graph drift."""
+
+        if self._runtime.is_running or self._shutdown_coordinator.snapshot():
+            raise ReconciliationActiveRuntimeError(
+                "Reconciliation cannot run while local Executions are active."
+            )
+
+        self._ensure_recovered()
+        with self._reconciliation_lock:
+            result = self._reconciliation_service.reconcile(limit=limit)
+            self._last_reconciliation_result = result
+            self._reconciliation_done = result.complete
+            if not result.complete:
+                raise ReconciliationIncompleteError(result)
             return result
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking end-to-end scheduling cycle."""
 
         self._ensure_recovered()
+        self._ensure_reconciled()
         return self._run_pending_service.run_pending(limit=limit)
 
     def run_forever(
@@ -233,6 +269,7 @@ class Scheduler:
 
         effective_max_sleep = max_sleep or poll_interval or Duration.seconds(1)
         self._ensure_recovered()
+        self._ensure_reconciled()
         self._shutdown_coordinator.reset()
         self._runtime.run_forever(
             max_sleep=effective_max_sleep,
@@ -310,6 +347,20 @@ class Scheduler:
             if not result.complete:
                 raise CrashRecoveryIncompleteError(result)
             self._recovery_done = True
+
+    def _ensure_reconciled(self) -> None:
+        if self._reconciliation_done:
+            return
+
+        with self._reconciliation_lock:
+            if self._reconciliation_done:
+                return
+
+            result = self._reconciliation_service.reconcile()
+            self._last_reconciliation_result = result
+            if not result.complete:
+                raise ReconciliationIncompleteError(result)
+            self._reconciliation_done = True
 
     @staticmethod
     def _remaining_timeout(

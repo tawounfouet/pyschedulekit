@@ -248,3 +248,28 @@ def test_t_recovery_006_first_scheduler_cycle_recovers_before_scheduling(tmp_pat
         recovered = uow.executions.get(execution.id)
         assert recovered is not None
         assert recovered.state is ExecutionState.FAILED
+
+
+def test_t_recovery_007_custom_retry_policy_may_reject_unknown_crash_failure(
+    tmp_path,
+) -> None:
+    factory = SqliteUnitOfWorkFactory(tmp_path / "scheduler.db")
+    retry = RetryPolicy(
+        max_attempts=3,
+        retryable_categories=frozenset(("transient",)),
+    )
+    _, execution, _ = _seed_running_execution(factory, retry=retry)
+
+    result = CrashRecoveryService(
+        clock=MutableClock(_instant(minute=1)),
+        uow_factory=factory,
+    ).recover()
+
+    assert result.complete is True
+    assert result.retried_execution_ids == ()
+    assert result.failed_execution_ids == (execution.id,)
+
+    with factory() as uow:
+        recovered = uow.executions.get(execution.id)
+        assert recovered is not None
+        assert recovered.state is ExecutionState.FAILED

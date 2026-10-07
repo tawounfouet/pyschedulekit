@@ -209,7 +209,7 @@ class CrashRecoveryService:
                 code="execution.crash_recovered",
                 message="Execution attempt was orphaned by a process crash.",
                 occurred_at=recovered_at,
-                retryable_hint=True,
+                retryable_hint=None,
                 details=(("recovery", "crash"),),
             )
             attempt.fail(

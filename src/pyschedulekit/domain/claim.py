@@ -216,11 +216,7 @@ class ExecutionClaim:
         token: ClaimToken,
         generation: int,
     ) -> None:
-        if (
-            self._worker_id != worker_id
-            or self._token != token
-            or self._generation != generation
-        ):
+        if self._worker_id != worker_id or self._token != token or self._generation != generation:
             raise ClaimOwnershipError("Execution lease fencing identity does not match.")
 
 

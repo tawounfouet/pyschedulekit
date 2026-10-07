@@ -205,5 +205,5 @@ class ExecutionClaimCoordinator:
                 uow.claims.save(claim)
                 uow.commit()
                 return True
-        except PersistenceConflictError:
+        except (PersistenceConflictError, ClaimOwnershipError):
             return False

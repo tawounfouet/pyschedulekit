@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from types import TracebackType
 from typing import Protocol
 
@@ -180,6 +181,35 @@ class OutboxRepository(Protocol):
     def list_pending(self, *, limit: int) -> list[OutboxMessage]: ...
 
 
+@dataclass(frozen=True, slots=True)
+class RetentionCleanupStats:
+    """Actual row/object counts removed by one committed cleanup."""
+
+    execution_graphs: int = 0
+    orphan_requests: int = 0
+    published_outbox_messages: int = 0
+
+    @property
+    def total(self) -> int:
+        return self.execution_graphs + self.orphan_requests + self.published_outbox_messages
+
+
+class RetentionRepository(Protocol):
+    """Stage bounded deletion of immutable historical scheduler state."""
+
+    def stage_cleanup(
+        self,
+        *,
+        executions_completed_before: Instant,
+        orphan_requests_created_before: Instant,
+        outbox_published_before: Instant,
+        limit: int,
+    ) -> None: ...
+
+    @property
+    def result(self) -> RetentionCleanupStats: ...
+
+
 class UnitOfWork(Protocol):
     """Transactional boundary owning scheduling and execution changes."""
 
@@ -191,6 +221,7 @@ class UnitOfWork(Protocol):
     materialization_leases: ScheduleMaterializationLeaseRepository
     claims: ExecutionClaimRepository
     outbox: OutboxRepository
+    retention: RetentionRepository
 
     def __enter__(self) -> UnitOfWork: ...
 

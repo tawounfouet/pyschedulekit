@@ -68,6 +68,10 @@ class CrashRecoveryConsistencyError(RuntimeError):
         self.code = code
 
 
+class CrashRecoveryActiveRuntimeError(RuntimeError):
+    """Raised when manual crash recovery is requested while local work is active."""
+
+
 class CrashRecoveryIncompleteError(RuntimeError):
     """Raised when persisted RUNNING state remains after a recovery pass."""
 

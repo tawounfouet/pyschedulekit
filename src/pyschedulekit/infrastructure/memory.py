@@ -30,8 +30,8 @@ from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import (
     AttemptRepository,
     DuplicateAttemptError,
-    DuplicateExecutionError,
     DuplicateExecutionClaimError,
+    DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateOutboxMessageError,
     DuplicateScheduleError,

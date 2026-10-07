@@ -39,9 +39,7 @@ def test_materialized_request_keeps_original_concurrency_policy_after_reschedule
         uow.schedules.add(schedule)
         uow.commit()
 
-    evaluation = SchedulerEngine(uow_factory=factory).evaluate(
-        evaluation_now=_instant()
-    )
+    evaluation = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant())
     request = evaluation.requests[0]
 
     with factory() as uow:

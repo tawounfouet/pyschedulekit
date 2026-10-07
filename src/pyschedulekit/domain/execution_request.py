@@ -9,7 +9,7 @@ from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.occurrence import Occurrence, OccurrenceKey
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import TargetRef
-from pyschedulekit.domain.time import Instant
+from pyschedulekit.domain.time import Duration, Instant
 
 
 class InvalidExecutionRequestTransitionError(ValueError):
@@ -72,6 +72,7 @@ class ExecutionRequest:
         "_retry_policy",
         "_state",
         "_target",
+        "_timeout",
         "_version",
     )
 
@@ -84,6 +85,7 @@ class ExecutionRequest:
         created_at: Instant,
         concurrency_policy: ConcurrencyPolicy | None = None,
         retry_policy: RetryPolicy | None = None,
+        timeout: Duration | None = None,
         state: ExecutionRequestState = ExecutionRequestState.PENDING,
         version: int = 0,
     ) -> None:
@@ -96,6 +98,9 @@ class ExecutionRequest:
         self._created_at = created_at
         self._concurrency_policy = concurrency_policy or ConcurrencyPolicy.allow()
         self._retry_policy = retry_policy or RetryPolicy.none()
+        if timeout is not None and timeout.total_seconds <= 0:
+            raise ValueError("ExecutionRequest timeout must be greater than zero.")
+        self._timeout = timeout
         self._state = state
         self._version = version
 
@@ -108,6 +113,7 @@ class ExecutionRequest:
         created_at: Instant,
         concurrency_policy: ConcurrencyPolicy | None = None,
         retry_policy: RetryPolicy | None = None,
+        timeout: Duration | None = None,
     ) -> ExecutionRequest:
         return cls(
             id=RequestId.for_occurrence(occurrence.key),
@@ -116,6 +122,7 @@ class ExecutionRequest:
             created_at=created_at,
             concurrency_policy=concurrency_policy,
             retry_policy=retry_policy,
+            timeout=timeout,
         )
 
     @property
@@ -141,6 +148,10 @@ class ExecutionRequest:
     @property
     def retry_policy(self) -> RetryPolicy:
         return self._retry_policy
+
+    @property
+    def timeout(self) -> Duration | None:
+        return self._timeout
 
     @property
     def state(self) -> ExecutionRequestState:
@@ -209,6 +220,7 @@ class ExecutionRequest:
             and self.created_at == other.created_at
             and self.concurrency_policy == other.concurrency_policy
             and self.retry_policy == other.retry_policy
+            and self.timeout == other.timeout
             and self.state == other.state
             and self.version == other.version
         )

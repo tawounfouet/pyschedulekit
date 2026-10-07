@@ -8,7 +8,12 @@ from pyschedulekit.application.execution_service import (
     ExecutionNotFoundError,
     ExecutionService,
 )
-from pyschedulekit.domain.execution import AttemptId, Execution, ExecutionId
+from pyschedulekit.domain.execution import (
+    AttemptId,
+    Execution,
+    ExecutionId,
+    FailureCategory,
+)
 from pyschedulekit.domain.retry import RetryDecision, RetryEvaluator
 from pyschedulekit.ports.executor import Executor, ExecutorOutcome
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
@@ -54,7 +59,10 @@ class ExecutionRunner:
             started_at=self._clock.now(),
         )
 
-        outcome = self._executor.execute(prepared)
+        outcome = self._executor.execute(
+            prepared,
+            timeout=execution_snapshot.policy_snapshot.timeout,
+        )
         completed_at = self._clock.now()
 
         retry_decision: RetryDecision | None = None
@@ -74,12 +82,19 @@ class ExecutionRunner:
                 if retry_decision.should_retry and retry_decision.delay is not None
                 else None
             )
-            execution = self._execution_service.fail_attempt(
-                attempt_id=attempt.id,
-                failure=outcome.failure,
-                completed_at=completed_at,
-                retry_at=retry_at,
-            )
+            if outcome.failure.category is FailureCategory.TIMEOUT:
+                execution = self._execution_service.timeout_attempt(
+                    attempt_id=attempt.id,
+                    completed_at=completed_at,
+                    retry_at=retry_at,
+                )
+            else:
+                execution = self._execution_service.fail_attempt(
+                    attempt_id=attempt.id,
+                    failure=outcome.failure,
+                    completed_at=completed_at,
+                    retry_at=retry_at,
+                )
 
         return ExecutionRunResult(
             execution=execution,

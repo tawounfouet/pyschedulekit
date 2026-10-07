@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-15 complete — next: LOT-16 Execution Timeout**
+**LOT-16 complete — next: LOT-17 Cancellation Refinements**
 
 Completed:
 
@@ -26,6 +26,7 @@ Completed:
 - LOT-13 — Catch-Up & Coalescing
 - LOT-14 — Concurrency Policy Foundations
 - LOT-15 — Retry Policy Foundations
+- LOT-16 — Execution Timeout
 
 The implementation follows a domain-first roadmap:
 
@@ -344,6 +345,20 @@ RetryPolicy(
 ```
 
 `max_attempts` includes the initial Attempt. The neutral default is one total attempt.
+
+## Execution timeout
+
+LOT-16 makes timeout operational at Attempt level. A configured deadline produces `TIMED_OUT`; RetryPolicy may then move the Execution to `RETRY_WAIT` or let it terminate as `TIMED_OUT`.
+
+```python
+scheduler.add_schedule(
+    target=my_job,
+    trigger=my_trigger,
+    timeout=Duration.seconds(30),
+)
+```
+
+The local runtime regains control when the deadline expires. Because Python cannot safely kill an arbitrary thread, an expired callable may still finish in its daemon worker; LOT-17 will refine cancellation/cooperative termination semantics.
 
 ## Package shape
 

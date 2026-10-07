@@ -19,7 +19,7 @@ from pyschedulekit.domain.schedule import (
     ScheduleId,
     TargetRef,
 )
-from pyschedulekit.domain.time import Timezone
+from pyschedulekit.domain.time import Duration, Timezone
 from pyschedulekit.domain.trigger import Trigger
 from pyschedulekit.domain.triggers import CronTrigger
 from pyschedulekit.infrastructure.local_executor import (
@@ -87,6 +87,7 @@ class Scheduler:
         misfire: MisfirePolicy | None = None,
         concurrency: ConcurrencyPolicy | None = None,
         retry: RetryPolicy | None = None,
+        timeout: Duration | None = None,
     ) -> ScheduleId:
         """Create and persist one Schedule using the current Clock reference."""
 
@@ -115,6 +116,7 @@ class Scheduler:
                 misfire=effective_misfire,
                 concurrency=effective_concurrency,
                 retry=effective_retry,
+                timeout=timeout,
             ),
             reference=self._clock.now(),
         )

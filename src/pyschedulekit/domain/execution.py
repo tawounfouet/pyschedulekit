@@ -77,6 +77,10 @@ class ExecutionPolicySnapshot:
     timeout: Duration | None = None
     retry: RetryPolicy = field(default_factory=RetryPolicy.none)
 
+    def __post_init__(self) -> None:
+        if self.timeout is not None and self.timeout.total_seconds <= 0:
+            raise ValueError("Execution timeout must be greater than zero.")
+
 
 class FailureCategory(StrEnum):
     """Normalized high-level failure category."""
@@ -391,6 +395,7 @@ class Execution:
             created_at=created_at,
             policy_snapshot=policy_snapshot
             or ExecutionPolicySnapshot(
+                timeout=request.timeout,
                 retry=request.retry_policy,
             ),
             idempotency_key=IdempotencyKey.for_request(request.id),

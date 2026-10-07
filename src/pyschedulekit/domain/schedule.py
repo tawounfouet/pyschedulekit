@@ -8,7 +8,7 @@ from enum import StrEnum
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
-from pyschedulekit.domain.time import Instant, Timezone
+from pyschedulekit.domain.time import Duration, Instant, Timezone
 from pyschedulekit.domain.trigger import Trigger
 
 
@@ -108,6 +108,11 @@ class ScheduleDefinition:
     misfire: MisfirePolicy = field(default_factory=MisfirePolicy.run_now)
     concurrency: ConcurrencyPolicy = field(default_factory=ConcurrencyPolicy.allow)
     retry: RetryPolicy = field(default_factory=RetryPolicy.none)
+    timeout: Duration | None = None
+
+    def __post_init__(self) -> None:
+        if self.timeout is not None and self.timeout.total_seconds <= 0:
+            raise ValueError("Schedule timeout must be greater than zero.")
 
 
 class Schedule:

@@ -5,9 +5,11 @@ from __future__ import annotations
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
+from threading import Event, Thread
 
 from pyschedulekit.domain.execution import Failure, FailureCategory
 from pyschedulekit.domain.schedule import TargetRef
+from pyschedulekit.domain.time import Duration
 from pyschedulekit.ports.executor import (
     ExecutorOutcome,
     PreparedTarget,
@@ -99,12 +101,56 @@ class LocalExecutor:
             callable=callable_target,
         )
 
-    def execute(self, prepared: PreparedTarget) -> ExecutorOutcome:
+    def execute(
+        self,
+        prepared: PreparedTarget,
+        *,
+        timeout: Duration | None = None,
+    ) -> ExecutorOutcome:
         if not isinstance(prepared, PreparedPythonTarget):
             raise TargetResolutionError(
                 "LocalExecutor can only execute PreparedPythonTarget values."
             )
 
+        if timeout is None:
+            return self._invoke(prepared)
+
+        if timeout.total_seconds <= 0:
+            raise ValueError("Executor timeout must be greater than zero.")
+
+        started_at = self._clock.now()
+        completed = Event()
+        outcomes: list[ExecutorOutcome] = []
+        crashes: list[BaseException] = []
+
+        def invoke() -> None:
+            try:
+                outcomes.append(self._invoke(prepared))
+            except BaseException as exc:
+                crashes.append(exc)
+            finally:
+                completed.set()
+
+        worker = Thread(
+            target=invoke,
+            name=f"pyschedulekit:{prepared.target.reference}",
+            daemon=True,
+        )
+        worker.start()
+
+        if not completed.wait(timeout.total_seconds):
+            return self._timeout_outcome()
+
+        if crashes:
+            raise crashes[0]
+
+        outcome = outcomes[0]
+        elapsed = self._clock.now().elapsed_since(started_at)
+        if elapsed >= timeout:
+            return self._timeout_outcome()
+        return outcome
+
+    def _invoke(self, prepared: PreparedPythonTarget) -> ExecutorOutcome:
         try:
             value = prepared.callable()
         except Exception as exc:
@@ -133,3 +179,15 @@ class LocalExecutor:
             )
 
         return ExecutorOutcome()
+
+    def _timeout_outcome(self) -> ExecutorOutcome:
+        occurred_at = self._clock.now()
+        return ExecutorOutcome(
+            failure=Failure(
+                category=FailureCategory.TIMEOUT,
+                code="execution.timeout",
+                message="Execution attempt timed out.",
+                occurred_at=occurred_at,
+                retryable_hint=True,
+            )
+        )

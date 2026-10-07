@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Durable per-Attempt execution timeout snapshots from ScheduleDefinition to Execution.
+- Optional timeout-aware Executor port and LocalExecutor watchdog enforcement.
+- Explicit TIMEOUT failure normalization routed through AttemptState.TIMED_OUT.
+- Retry-policy integration for timed-out Attempts without implicit executor retries.
+- Public `Scheduler.add_schedule(timeout=...)` support.
+- LOT-16 unit, integration, watchdog, and end-to-end timeout qualification.
+
 - Declarative `RetryPolicy` with total-attempt semantics and neutral max_attempts=1 default.
 - Built-in `NoBackoff`, `FixedBackoff`, and capped `ExponentialBackoff` strategies.
 - Pure `RetryEvaluator` and explicit retry decision reasons.

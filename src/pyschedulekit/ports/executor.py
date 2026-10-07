@@ -8,6 +8,7 @@ from typing import Protocol
 from pyschedulekit.domain.execution import Failure
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Duration
+from pyschedulekit.ports.cancellation import CancellationToken
 
 
 class ExecutorError(RuntimeError):
@@ -52,6 +53,7 @@ class Executor(Protocol):
         prepared: PreparedTarget,
         *,
         timeout: Duration | None = None,
+        cancellation_token: CancellationToken | None = None,
     ) -> ExecutorOutcome:
-        """Invoke prepared workload code under an optional execution timeout."""
+        """Invoke prepared workload code under optional timeout and cancellation."""
         ...

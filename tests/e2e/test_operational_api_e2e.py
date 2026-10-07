@@ -2,9 +2,11 @@
 
 from datetime import UTC, datetime
 
+import pytest
+
 from pyschedulekit import (
     Duration,
-    ExecutionId,
+    ExecutionNotFoundError,
     Instant,
     IntervalTrigger,
     ScheduleState,
@@ -73,7 +75,7 @@ def test_t_operational_e2e_002_execution_inspection_returns_snapshot() -> None:
     assert snapshot.attempt_count == 1
     assert snapshot.is_terminal is True
     assert snapshot.completed_at is not None
-    assert schedule_id.value in scheduler.inspect_schedule(schedule_id).schedule_id.value
+    assert scheduler.inspect_schedule(schedule_id).schedule_id == schedule_id
 
 
 def test_t_operational_e2e_003_health_and_readiness_are_separate() -> None:
@@ -99,7 +101,18 @@ def test_t_operational_e2e_003_health_and_readiness_are_separate() -> None:
 def test_t_operational_e2e_004_execution_id_accepts_public_string_form() -> None:
     scheduler = Scheduler(clock=MutableClock(_instant()))
 
-    try:
-        scheduler.inspect_execution(ExecutionId("missing"))
-    except LookupError as exc:
-        assert str(exc) == "missing"
+    with pytest.raises(ExecutionNotFoundError, match="missing"):
+        scheduler.inspect_execution("missing")
+
+
+def test_t_operational_e2e_005_shutdown_makes_scheduler_not_ready() -> None:
+    scheduler = Scheduler(clock=MutableClock(_instant()))
+    scheduler.run_pending()
+    assert scheduler.readiness().ready is True
+
+    shutdown = scheduler.shutdown()
+
+    assert shutdown.completed is True
+    assert scheduler.health().healthy is True
+    assert scheduler.readiness().ready is False
+    assert scheduler.readiness().shutdown_requested is True

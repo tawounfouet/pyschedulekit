@@ -73,9 +73,7 @@ def test_t_cron_005_wildcard_day_of_month_makes_weekday_authoritative() -> None:
         timezone=Timezone("UTC"),
     )
 
-    assert trigger.next_after(_instant(2026, 1, 6)) == _instant(
-        2026, 1, 12, 9, 0
-    )
+    assert trigger.next_after(_instant(2026, 1, 6)) == _instant(2026, 1, 12, 9, 0)
 
 
 def test_t_cron_006_wildcard_weekday_makes_day_of_month_authoritative() -> None:

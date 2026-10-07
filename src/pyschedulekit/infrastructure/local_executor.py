@@ -34,6 +34,7 @@ class PythonTargetRegistry:
     def __init__(self) -> None:
         self._targets: dict[str, Callable[..., object]] = {}
         self._cancellable_targets: set[str] = set()
+        self._fenced_targets: set[str] = set()
 
     def register(self, reference: str, target: Callable[..., object]) -> None:
         if not reference.strip():
@@ -64,7 +65,6 @@ class PythonTargetRegistry:
                 inspect.Parameter.VAR_KEYWORD,
             )
         ]
-
         supported = {"cancellation_token", "fencing_token"}
         unsupported_required = [
             parameter for parameter in required if parameter.name not in supported
@@ -78,6 +78,8 @@ class PythonTargetRegistry:
         self._targets[reference] = target
         if "cancellation_token" in signature.parameters:
             self._cancellable_targets.add(reference)
+        if "fencing_token" in signature.parameters:
+            self._fenced_targets.add(reference)
 
     def resolve(self, reference: str) -> Callable[..., object]:
         try:
@@ -89,8 +91,7 @@ class PythonTargetRegistry:
         return reference in self._cancellable_targets
 
     def accepts_fencing_token(self, reference: str) -> bool:
-        target = self.resolve(reference)
-        return "fencing_token" in inspect.signature(target).parameters
+        return reference in self._fenced_targets
 
 
 @dataclass(frozen=True, slots=True)
@@ -164,7 +165,7 @@ class LocalExecutor:
                     self._invoke(
                         prepared,
                         cancellation_token=cancellation_token,
-                fencing_token=fencing_token,
+                        fencing_token=fencing_token,
                     )
                 )
             except BaseException as exc:
@@ -201,15 +202,16 @@ class LocalExecutor:
         fencing_token: int | None,
     ) -> ExecutorOutcome:
         try:
+            kwargs: dict[str, object] = {}
             if prepared.accepts_cancellation_token:
                 if cancellation_token is None:
                     raise RuntimeError("Cancellable target requires a cancellation token.")
-                value = prepared.callable(
-                    cancellation_token=cancellation_token,
-                fencing_token=fencing_token,
-                )
-            else:
-                value = prepared.callable()
+                kwargs["cancellation_token"] = cancellation_token
+            if prepared.accepts_fencing_token:
+                if fencing_token is None:
+                    raise RuntimeError("Fenced target requires a fencing token.")
+                kwargs["fencing_token"] = fencing_token
+            value = prepared.callable(**kwargs)
         except ExecutionCancelledError:
             return self._cancelled_outcome()
         except Exception as exc:

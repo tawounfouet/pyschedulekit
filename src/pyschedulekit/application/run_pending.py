@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pyschedulekit.application.execution_runner import ExecutionRunResult, ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
-from pyschedulekit.domain.execution import Execution, ExecutionId
+from pyschedulekit.domain.execution import Execution
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.domain.time import Instant
@@ -32,7 +32,6 @@ class RunPendingResult:
     evaluation_now: Instant
     materialized_request_ids: tuple[RequestId, ...]
     executions: tuple[ExecutionRunResult, ...]
-    skipped_execution_ids: tuple[ExecutionId, ...]
     schedule_conflicts: tuple[ScheduleId, ...]
     errors: tuple[RunPendingError, ...]
 
@@ -76,8 +75,6 @@ class RunPendingService:
         )
 
         errors: list[RunPendingError] = []
-        skipped: list[ExecutionId] = []
-
         for request in self._list_pending_requests(limit=limit):
             try:
                 self._execution_service.dispatch(
@@ -128,7 +125,6 @@ class RunPendingService:
             evaluation_now=evaluation_now,
             materialized_request_ids=tuple(request.id for request in evaluation.requests),
             executions=tuple(executions),
-            skipped_execution_ids=tuple(skipped),
             schedule_conflicts=evaluation.conflicts,
             errors=tuple(errors),
         )

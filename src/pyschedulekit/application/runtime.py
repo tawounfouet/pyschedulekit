@@ -29,6 +29,8 @@ class ContinuousSchedulerLoop:
         self._wakeup_planner = wakeup_planner
         self._stop_event = Event()
         self._wake_event = Event()
+        self._stopped_event = Event()
+        self._stopped_event.set()
         self._state_lock = Lock()
         self._running = False
         self._cycles_completed = 0
@@ -59,6 +61,14 @@ class ContinuousSchedulerLoop:
         self._stop_event.set()
         self._wake_event.set()
 
+    def wait_until_stopped(self, *, timeout: Duration | None) -> bool:
+        """Wait until run_forever() has fully returned."""
+
+        if timeout is None:
+            self._stopped_event.wait()
+            return True
+        return self._stopped_event.wait(timeout.total_seconds)
+
     def wake(self) -> None:
         """Interrupt the current wait so durable state is re-evaluated."""
 
@@ -83,6 +93,7 @@ class ContinuousSchedulerLoop:
             self._running = True
             self._stop_event.clear()
             self._wake_event.clear()
+            self._stopped_event.clear()
 
         try:
             while not self._stop_event.is_set():
@@ -108,3 +119,4 @@ class ContinuousSchedulerLoop:
         finally:
             with self._state_lock:
                 self._running = False
+            self._stopped_event.set()

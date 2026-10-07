@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.time import Instant, Timezone
 from pyschedulekit.domain.trigger import Trigger
@@ -104,6 +105,7 @@ class ScheduleDefinition:
     trigger: Trigger
     timezone: Timezone = field(default_factory=lambda: Timezone("UTC"))
     misfire: MisfirePolicy = field(default_factory=MisfirePolicy.run_now)
+    concurrency: ConcurrencyPolicy = field(default_factory=ConcurrencyPolicy.allow)
 
 
 class Schedule:

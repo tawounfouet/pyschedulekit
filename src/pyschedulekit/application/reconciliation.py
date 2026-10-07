@@ -246,9 +246,7 @@ class ReconciliationService:
             issues.append(
                 ReconciliationIssue(
                     code="reconciliation.attempt_history_mismatch",
-                    message=(
-                        "Persisted Attempt numbers do not match Execution.attempt_count."
-                    ),
+                    message=("Persisted Attempt numbers do not match Execution.attempt_count."),
                     request_id=request.id,
                     execution_id=execution.id,
                 )
@@ -286,7 +284,8 @@ class ReconciliationService:
         latest = attempts[-1] if attempts else None
         if execution.state is ExecutionState.RETRY_WAIT and (
             latest is None
-            or latest.state not in (
+            or latest.state
+            not in (
                 AttemptState.FAILED,
                 AttemptState.TIMED_OUT,
             )
@@ -294,9 +293,7 @@ class ReconciliationService:
             issues.append(
                 ReconciliationIssue(
                     code="reconciliation.retry_wait_history_mismatch",
-                    message=(
-                        "RETRY_WAIT Execution requires a latest FAILED or TIMED_OUT Attempt."
-                    ),
+                    message=("RETRY_WAIT Execution requires a latest FAILED or TIMED_OUT Attempt."),
                     request_id=request.id,
                     execution_id=execution.id,
                 )

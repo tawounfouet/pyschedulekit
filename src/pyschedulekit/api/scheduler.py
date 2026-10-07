@@ -19,7 +19,7 @@ from pyschedulekit.application.shutdown import (
 )
 from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
-from pyschedulekit.domain.execution import Execution, ExecutionId
+from pyschedulekit.domain.execution import Execution, ExecutionId, ExecutionState
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import (
@@ -253,7 +253,7 @@ class Scheduler:
             execution = uow.executions.get(execution_id)
         if execution is None or execution.is_terminal:
             return
-        if execution.state.value != "running":
+        if execution.state is not ExecutionState.RUNNING:
             return
 
         self._execution_service.request_cancellation(

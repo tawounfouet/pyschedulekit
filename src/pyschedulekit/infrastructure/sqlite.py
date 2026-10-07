@@ -750,7 +750,7 @@ class SqliteExecutionRepository:
             SELECT id
             FROM executions
             WHERE state = ?
-            ORDER BY created_at, id
+            ORDER BY created_at, aggregate_type, aggregate_id, sequence, id
             LIMIT ?
             """,
             (ExecutionState.RUNNING.value, limit),

@@ -302,7 +302,13 @@ class InMemoryExecutionRequestRepository:
                 continue
             pending.append(request)
 
-        pending.sort(key=lambda request: (request.created_at.value, request.id.value))
+        pending.sort(
+            key=lambda request: (
+                request.occurrence_key.scheduled_at.value,
+                request.created_at.value,
+                request.id.value,
+            )
+        )
         return pending[:limit]
 
     def _validate_commit_locked(self) -> None:
@@ -426,7 +432,22 @@ class InMemoryExecutionRepository:
                 continue
             queued.append(execution)
 
-        queued.sort(key=lambda execution: (execution.created_at.value, execution.id.value))
+        with self._store._lock:
+            request_scheduled_at = {
+                request_id: request.occurrence_key.scheduled_at.value
+                for request_id, request in self._store._execution_requests.items()
+            }
+
+        queued.sort(
+            key=lambda execution: (
+                request_scheduled_at.get(
+                    execution.request_id,
+                    execution.created_at.value,
+                ),
+                execution.created_at.value,
+                execution.id.value,
+            )
+        )
         return queued[:limit]
 
     def _validate_commit_locked(self) -> None:

@@ -11,6 +11,7 @@ from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.recovery import (
+    CrashRecoveryActiveRuntimeError,
     CrashRecoveryIncompleteError,
     CrashRecoveryResult,
     CrashRecoveryService,
@@ -198,6 +199,11 @@ class Scheduler:
 
     def recover(self, *, limit: int = 1000) -> CrashRecoveryResult:
         """Reconcile persisted orphaned RUNNING Executions before scheduling."""
+
+        if self._runtime.is_running or self._shutdown_coordinator.snapshot():
+            raise CrashRecoveryActiveRuntimeError(
+                "Crash recovery cannot run while local Executions are active."
+            )
 
         with self._recovery_lock:
             result = self._recovery_service.recover(limit=limit)

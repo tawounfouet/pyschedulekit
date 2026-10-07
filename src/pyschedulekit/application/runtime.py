@@ -5,6 +5,7 @@ from __future__ import annotations
 from threading import Event, Lock
 
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
+from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.time import Duration
 from pyschedulekit.ports.runtime import LoopWaiter
 
@@ -21,10 +22,13 @@ class ContinuousSchedulerLoop:
         *,
         run_pending_service: RunPendingService,
         waiter: LoopWaiter,
+        wakeup_planner: WakeUpPlanner,
     ) -> None:
         self._run_pending_service = run_pending_service
         self._waiter = waiter
+        self._wakeup_planner = wakeup_planner
         self._stop_event = Event()
+        self._wake_event = Event()
         self._state_lock = Lock()
         self._running = False
         self._cycles_completed = 0
@@ -53,17 +57,23 @@ class ContinuousSchedulerLoop:
         """Request termination of the loop and interrupt the current wait."""
 
         self._stop_event.set()
+        self._wake_event.set()
+
+    def wake(self) -> None:
+        """Interrupt the current wait so durable state is re-evaluated."""
+
+        self._wake_event.set()
 
     def run_forever(
         self,
         *,
-        poll_interval: Duration,
+        max_sleep: Duration,
         limit: int = 100,
     ) -> None:
-        """Run fixed-cadence cycles until request_stop() is called."""
+        """Run adaptive cycles until request_stop() is called."""
 
-        if poll_interval.total_seconds <= 0:
-            raise ValueError("poll_interval must be greater than zero.")
+        if max_sleep.total_seconds <= 0:
+            raise ValueError("max_sleep must be greater than zero.")
         if limit < 1:
             raise ValueError("limit must be greater than or equal to 1.")
 
@@ -72,6 +82,7 @@ class ContinuousSchedulerLoop:
                 raise RuntimeAlreadyRunningError("Continuous scheduler runtime is already running.")
             self._running = True
             self._stop_event.clear()
+            self._wake_event.clear()
 
         try:
             while not self._stop_event.is_set():
@@ -83,11 +94,16 @@ class ContinuousSchedulerLoop:
                 if self._stop_event.is_set():
                     break
 
-                interrupted = self._waiter.wait(
-                    duration=poll_interval,
-                    stop_event=self._stop_event,
+                self._wake_event.clear()
+                delay = self._wakeup_planner.next_delay(max_sleep=max_sleep)
+                if delay.total_seconds <= 0:
+                    continue
+
+                self._waiter.wait(
+                    duration=delay,
+                    wake_event=self._wake_event,
                 )
-                if interrupted:
+                if self._stop_event.is_set():
                     break
         finally:
             with self._state_lock:

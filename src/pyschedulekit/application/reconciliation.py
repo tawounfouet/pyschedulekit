@@ -292,15 +292,15 @@ class ReconciliationService:
             )
         ):
             issues.append(
-                    ReconciliationIssue(
-                        code="reconciliation.retry_wait_history_mismatch",
-                        message=(
-                            "RETRY_WAIT Execution requires a latest FAILED or TIMED_OUT Attempt."
-                        ),
-                        request_id=request.id,
-                        execution_id=execution.id,
-                    )
+                ReconciliationIssue(
+                    code="reconciliation.retry_wait_history_mismatch",
+                    message=(
+                        "RETRY_WAIT Execution requires a latest FAILED or TIMED_OUT Attempt."
+                    ),
+                    request_id=request.id,
+                    execution_id=execution.id,
                 )
+            )
 
         terminal_mapping = {
             ExecutionState.SUCCESS: AttemptState.SUCCESS,

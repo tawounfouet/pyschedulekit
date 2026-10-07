@@ -11,6 +11,7 @@ from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
+from pyschedulekit.domain.execution import Execution, ExecutionId
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import (
@@ -22,6 +23,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, Timezone
 from pyschedulekit.domain.trigger import Trigger
 from pyschedulekit.domain.triggers import CronTrigger
+from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.local_executor import (
     LocalExecutor,
     PythonTargetRegistry,
@@ -48,15 +50,17 @@ class Scheduler:
         )
         self._registry = registry if registry is not None else PythonTargetRegistry()
 
-        execution_service = ExecutionService(uow_factory=self._uow_factory)
+        self._execution_service = ExecutionService(uow_factory=self._uow_factory)
+        self._cancellation_controller = InMemoryCancellationController()
         execution_runner = ExecutionRunner(
             uow_factory=self._uow_factory,
-            execution_service=execution_service,
+            execution_service=self._execution_service,
             executor=LocalExecutor(
                 registry=self._registry,
                 clock=self._clock,
             ),
             clock=self._clock,
+            cancellation_controller=self._cancellation_controller,
         )
 
         self._run_pending_service = RunPendingService(
@@ -126,6 +130,22 @@ class Scheduler:
             uow.commit()
 
         return schedule.id
+
+    def cancel_execution(self, execution_id: ExecutionId | str) -> Execution:
+        """Request cancellation of one logical Execution."""
+
+        normalized = (
+            execution_id
+            if isinstance(execution_id, ExecutionId)
+            else ExecutionId(execution_id)
+        )
+        execution = self._execution_service.request_cancellation(
+            execution_id=normalized,
+            requested_at=self._clock.now(),
+        )
+        if not execution.is_terminal:
+            self._cancellation_controller.cancel(normalized.value)
+        return execution
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking end-to-end scheduling cycle."""

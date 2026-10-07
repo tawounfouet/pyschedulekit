@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Explicit `RetentionPolicy` and `Scheduler.cleanup()` operational API.
+- Transactional bounded cleanup for terminal Execution graphs and terminal orphan requests.
+- Published-only outbox retention; pending outbox messages are never cleanup candidates.
+- Global logical cleanup budget with structured `CleanupResult` counts.
+- `retention.cleanup.completed` structured observation.
+- SQLite schema v8 with indexed `executions.completed_at` and retention indexes.
+- Automatic v7 to v8 completion-time backfill from durable execution result JSON.
+- In-memory, SQLite, migration, budget, active-state safety, and end-to-end LOT-32 qualification.
 - Immutable ScheduleSnapshot and ExecutionSnapshot operational views.
 - Public Scheduler inspection for Schedule and Execution state without leaking aggregates.
 - Transactional pause_schedule(), resume_schedule(), and cancel_schedule() controls.

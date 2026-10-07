@@ -114,9 +114,7 @@ class LocalExecutor:
         return PreparedPythonTarget(
             target=target,
             callable=callable_target,
-            accepts_cancellation_token=self._registry.accepts_cancellation_token(
-                target.reference
-            ),
+            accepts_cancellation_token=self._registry.accepts_cancellation_token(target.reference),
         )
 
     def execute(

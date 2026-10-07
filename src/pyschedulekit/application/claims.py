@@ -211,7 +211,6 @@ class ExecutionClaimCoordinator:
             return False
 
 
-
 class ExecutionLeaseHeartbeat:
     """Renew one Execution lease periodically while workload code is running."""
 

@@ -8,6 +8,15 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Immutable ScheduleSnapshot and ExecutionSnapshot operational views.
+- Public Scheduler inspection for Schedule and Execution state without leaking aggregates.
+- Transactional pause_schedule(), resume_schedule(), and cancel_schedule() controls.
+- Explicit SchedulerHealth liveness report and SchedulerReadiness startup-barrier report.
+- Non-mutating persistence health probing.
+- Durable SQLite operational-control qualification across Scheduler restarts.
+- Public ScheduleState, ScheduleNotFoundError, ExecutionNotFoundError, and operational report exports.
+- LOT-31 unit, SQLite integration, and end-to-end operational API qualification.
+
 - Dependency-neutral Observation and ObservationSink public contracts.
 - Best-effort Observer isolation so telemetry failures never break scheduling.
 - Thread-safe InMemoryObservationSink reference adapter.

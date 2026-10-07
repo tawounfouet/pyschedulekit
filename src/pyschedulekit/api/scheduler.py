@@ -14,6 +14,13 @@ from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.materialization import ScheduleMaterializationCoordinator
 from pyschedulekit.application.observability import Observer
+from pyschedulekit.application.operations import (
+    ExecutionSnapshot,
+    SchedulerHealth,
+    SchedulerOperations,
+    SchedulerReadiness,
+    ScheduleSnapshot,
+)
 from pyschedulekit.application.outbox import OutboxDispatcher, OutboxDispatchResult
 from pyschedulekit.application.reconciliation import (
     ReconciliationActiveRuntimeError,
@@ -107,6 +114,10 @@ class Scheduler:
             else Duration.seconds(5)
         )
         self._observer = Observer(observation_sink)
+        self._operations = SchedulerOperations(
+            clock=self._clock,
+            uow_factory=self._uow_factory,
+        )
         self._claim_coordinator = ExecutionClaimCoordinator(
             uow_factory=self._uow_factory,
             worker_id=self._worker_id,
@@ -250,6 +261,78 @@ class Scheduler:
 
         self._runtime.wake()
         return schedule.id
+
+    def inspect_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
+        """Return an immutable operational snapshot of one Schedule."""
+
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
+        return self._operations.inspect_schedule(normalized)
+
+    def inspect_execution(self, execution_id: ExecutionId | str) -> ExecutionSnapshot:
+        """Return an immutable operational snapshot of one Execution."""
+
+        normalized = (
+            execution_id if isinstance(execution_id, ExecutionId) else ExecutionId(execution_id)
+        )
+        return self._operations.inspect_execution(normalized)
+
+    def pause_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
+        """Pause future materialization for one Schedule."""
+
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
+        snapshot = self._operations.pause_schedule(normalized)
+        self._runtime.wake()
+        return snapshot
+
+    def resume_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
+        """Resume one paused Schedule from the current Scheduler clock."""
+
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
+        snapshot = self._operations.resume_schedule(normalized)
+        self._runtime.wake()
+        return snapshot
+
+    def cancel_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
+        """Cancel future materialization for one Schedule."""
+
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
+        snapshot = self._operations.cancel_schedule(normalized)
+        self._runtime.wake()
+        return snapshot
+
+    def health(self) -> SchedulerHealth:
+        """Return a non-mutating liveness-oriented health report."""
+
+        persistence_available = self._operations.persistence_available()
+        shutdown_requested = self._shutdown_coordinator.is_requested
+        return SchedulerHealth(
+            healthy=persistence_available,
+            worker_id=self._worker_id.value,
+            persistence_available=persistence_available,
+            runtime_running=self._runtime.is_running,
+            shutdown_requested=shutdown_requested,
+            active_execution_count=len(self._shutdown_coordinator.snapshot()),
+            cycles_completed=self._runtime.cycles_completed,
+        )
+
+    def readiness(self) -> SchedulerReadiness:
+        """Return whether this Scheduler has crossed its startup safety barriers."""
+
+        persistence_available = self._operations.persistence_available()
+        shutdown_requested = self._shutdown_coordinator.is_requested
+        ready = (
+            persistence_available
+            and self._recovery_done
+            and self._reconciliation_done
+            and not shutdown_requested
+        )
+        return SchedulerReadiness(
+            ready=ready,
+            persistence_available=persistence_available,
+            recovered=self._recovery_done,
+            reconciled=self._reconciliation_done,
+            shutdown_requested=shutdown_requested,
+        )
 
     def cancel_execution(self, execution_id: ExecutionId | str) -> Execution:
         """Request cancellation of one logical Execution."""

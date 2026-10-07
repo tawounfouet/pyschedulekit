@@ -2,6 +2,14 @@
 
 from pyschedulekit._version import __version__
 from pyschedulekit.api import Scheduler
+from pyschedulekit.application.execution_service import ExecutionNotFoundError
+from pyschedulekit.application.operations import (
+    ExecutionSnapshot,
+    ScheduleNotFoundError,
+    SchedulerHealth,
+    SchedulerReadiness,
+    ScheduleSnapshot,
+)
 from pyschedulekit.application.outbox import (
     OutboxDispatchResult,
     OutboxPublishError,
@@ -64,7 +72,7 @@ from pyschedulekit.domain.retry import (
     RetryDecisionReason,
     RetryPolicy,
 )
-from pyschedulekit.domain.schedule import ScheduleId, TargetRef
+from pyschedulekit.domain.schedule import ScheduleId, ScheduleState, TargetRef
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
 from pyschedulekit.domain.triggers import (
     CronAmbiguousTimePolicy,
@@ -108,6 +116,8 @@ __all__ = [
     "ExecutionClaimHandle",
     "ExecutionClaimState",
     "ExecutionId",
+    "ExecutionNotFoundError",
+    "ExecutionSnapshot",
     "ExponentialBackoff",
     "FixedBackoff",
     "GracePeriod",
@@ -140,7 +150,12 @@ __all__ = [
     "ScheduleAdmissionLockHandle",
     "ScheduleAdmissionLockState",
     "ScheduleId",
+    "ScheduleNotFoundError",
+    "ScheduleSnapshot",
+    "ScheduleState",
     "Scheduler",
+    "SchedulerHealth",
+    "SchedulerReadiness",
     "ShutdownMode",
     "ShutdownResult",
     "SqliteUnitOfWorkFactory",

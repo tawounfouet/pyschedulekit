@@ -685,6 +685,28 @@ class SqliteExecutionRepository:
         runnable.sort(key=sort_key)
         return runnable[:limit]
 
+    def list_running(self, *, limit: int) -> list[Execution]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        rows = self._connection.execute(
+            """
+            SELECT id
+            FROM executions
+            WHERE state = ?
+            ORDER BY created_at, id
+            LIMIT ?
+            """,
+            (ExecutionState.RUNNING.value, limit),
+        ).fetchall()
+
+        result: list[Execution] = []
+        for row in rows:
+            execution = self.get(ExecutionId(str(row["id"])))
+            if execution is not None:
+                result.append(execution)
+        return result
+
     def next_runnable_at(self, *, now: Instant) -> Instant | None:
         ids = {
             ExecutionId(str(row["id"]))

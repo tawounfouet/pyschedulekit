@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 
 _TABLES_V2_SQL = """
 CREATE TABLE schedules (
@@ -253,13 +254,25 @@ CREATE INDEX ix_schedule_materialization_leases_active
 """
 
 
+_INDEXES_V8_SQL = """
+CREATE INDEX ix_executions_retention
+    ON executions(state, completed_at, id);
+
+CREATE INDEX ix_execution_requests_retention
+    ON execution_requests(state, created_at, id);
+
+CREATE INDEX ix_outbox_published
+    ON outbox_messages(state, published_at, id);
+"""
+
+
 def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
     """Create or migrate the durable SQLite schema to the current version."""
 
     connection.execute("PRAGMA foreign_keys = ON")
 
     if not _schema_metadata_exists(connection):
-        _create_v7_schema(connection)
+        _create_v8_schema(connection)
         return
 
     row = connection.execute("SELECT version FROM pyschedulekit_schema LIMIT 1").fetchone()
@@ -268,7 +281,7 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
 
     version = int(row[0])
     if version == SCHEMA_VERSION:
-        _verify_v7_schema(connection)
+        _verify_v8_schema(connection)
         return
     if version == 1:
         _migrate_v1_to_v2(connection)
@@ -287,6 +300,9 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
         version = 6
     if version == 6:
         _migrate_v6_to_v7(connection)
+        version = 7
+    if version == 7:
+        _migrate_v7_to_v8(connection)
         return
 
     raise RuntimeError(f"Unsupported PyScheduleKit SQLite schema version: {version!r}.")
@@ -305,7 +321,7 @@ def _schema_metadata_exists(connection: sqlite3.Connection) -> bool:
     )
 
 
-def _create_v7_schema(connection: sqlite3.Connection) -> None:
+def _create_v8_schema(connection: sqlite3.Connection) -> None:
     connection.execute("BEGIN IMMEDIATE")
     try:
         connection.execute(
@@ -322,6 +338,8 @@ def _create_v7_schema(connection: sqlite3.Connection) -> None:
         _add_fencing_generation_columns(connection)
         _execute_sql_batch(connection, _MATERIALIZATION_LEASES_V7_SQL)
         _execute_sql_batch(connection, _INDEXES_V7_SQL)
+        _add_retention_v8_columns(connection)
+        _execute_sql_batch(connection, _INDEXES_V8_SQL)
         connection.execute(
             "INSERT INTO pyschedulekit_schema(version) VALUES (?)",
             (SCHEMA_VERSION,),
@@ -330,7 +348,7 @@ def _create_v7_schema(connection: sqlite3.Connection) -> None:
     except Exception:
         connection.rollback()
         raise
-    _verify_v7_schema(connection)
+    _verify_v8_schema(connection)
 
 
 def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:
@@ -493,7 +511,7 @@ def _migrate_v6_to_v7(connection: sqlite3.Connection) -> None:
         _execute_sql_batch(connection, _INDEXES_V7_SQL)
         connection.execute(
             "UPDATE pyschedulekit_schema SET version = ?",
-            (SCHEMA_VERSION,),
+            (7,),
         )
         connection.commit()
     except Exception:
@@ -501,6 +519,42 @@ def _migrate_v6_to_v7(connection: sqlite3.Connection) -> None:
         raise
 
     _verify_v7_schema(connection)
+
+
+def _migrate_v7_to_v8(connection: sqlite3.Connection) -> None:
+    connection.execute("BEGIN IMMEDIATE")
+    try:
+        _add_retention_v8_columns(connection)
+        rows = connection.execute(
+            """
+            SELECT id, result_json
+            FROM executions
+            WHERE result_json IS NOT NULL
+            """
+        ).fetchall()
+        for row in rows:
+            decoded = json.loads(str(row[1]))
+            completed_at = decoded["payload"]["completed_at"]
+            connection.execute(
+                "UPDATE executions SET completed_at = ? WHERE id = ?",
+                (completed_at, str(row[0])),
+            )
+
+        _execute_sql_batch(connection, _INDEXES_V8_SQL)
+        connection.execute(
+            "UPDATE pyschedulekit_schema SET version = ?",
+            (SCHEMA_VERSION,),
+        )
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+
+    _verify_v8_schema(connection)
+
+
+def _add_retention_v8_columns(connection: sqlite3.Connection) -> None:
+    connection.execute("ALTER TABLE executions ADD COLUMN completed_at TEXT")
 
 
 def _add_fencing_generation_columns(connection: sqlite3.Connection) -> None:
@@ -597,6 +651,35 @@ def _verify_v7_schema(connection: sqlite3.Connection) -> None:
         raise RuntimeError(
             "PyScheduleKit schedule_materialization_leases table is missing from schema v7."
         )
+
+
+def _verify_v8_schema(connection: sqlite3.Connection) -> None:
+    _verify_v7_schema(connection)
+    execution_columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(executions)")}
+    if "completed_at" not in execution_columns:
+        raise RuntimeError("PyScheduleKit executions completed_at column is missing in v8.")
+
+    invalid_terminal = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM executions
+        WHERE state IN ('success', 'failed', 'cancelled', 'timed_out')
+          AND completed_at IS NULL
+        """
+    ).fetchone()
+    if invalid_terminal is not None and int(invalid_terminal[0]) != 0:
+        raise RuntimeError("PyScheduleKit terminal Executions require completed_at in v8.")
+
+    invalid_active = connection.execute(
+        """
+        SELECT COUNT(*)
+        FROM executions
+        WHERE state IN ('queued', 'running', 'retry_wait')
+          AND completed_at IS NOT NULL
+        """
+    ).fetchone()
+    if invalid_active is not None and int(invalid_active[0]) != 0:
+        raise RuntimeError("PyScheduleKit active Executions cannot have completed_at in v8.")
 
 
 def _execute_sql_batch(connection: sqlite3.Connection, sql: str) -> None:

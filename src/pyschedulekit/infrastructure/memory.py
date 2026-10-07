@@ -45,6 +45,8 @@ from pyschedulekit.ports.persistence import (
     OptimisticConcurrencyError,
     OutboxRepository,
     ReferentialIntegrityError,
+    RetentionCleanupStats,
+    RetentionRepository,
     ScheduleAdmissionLockRepository,
     ScheduleMaterializationLeaseRepository,
     ScheduleRepository,
@@ -1212,6 +1214,140 @@ class InMemoryOutboxRepository:
         self._dirty.clear()
 
 
+class InMemoryRetentionRepository:
+    """Stage bounded cleanup against the shared committed in-memory store."""
+
+    def __init__(self, store: InMemoryStore) -> None:
+        self._store = store
+        self._criteria: tuple[Instant, Instant, Instant, int] | None = None
+        self._result = RetentionCleanupStats()
+
+    def stage_cleanup(
+        self,
+        *,
+        executions_completed_before: Instant,
+        orphan_requests_created_before: Instant,
+        outbox_published_before: Instant,
+        limit: int,
+    ) -> None:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+        self._criteria = (
+            executions_completed_before,
+            orphan_requests_created_before,
+            outbox_published_before,
+            limit,
+        )
+        self._result = RetentionCleanupStats()
+
+    @property
+    def result(self) -> RetentionCleanupStats:
+        return self._result
+
+    def _validate_commit_locked(self) -> None:
+        return
+
+    def _apply_commit_locked(self) -> None:
+        if self._criteria is None:
+            self._result = RetentionCleanupStats()
+            return
+
+        execution_cutoff, request_cutoff, outbox_cutoff, limit = self._criteria
+        budget = limit
+
+        execution_candidates = sorted(
+            (
+                execution
+                for execution in self._store._executions.values()
+                if execution.is_terminal
+                and execution.result is not None
+                and execution.result.completed_at < execution_cutoff
+            ),
+            key=lambda item: (
+                (item.result.completed_at.value, item.id.value)
+                if item.result is not None
+                else (execution_cutoff.value, item.id.value)
+            ),
+        )[:budget]
+
+        for execution in execution_candidates:
+            execution_id = execution.id
+            request_id = execution.request_id
+
+            attempt_keys = [key for key in self._store._attempt_by_number if key[0] == execution_id]
+            for key in attempt_keys:
+                attempt_id = self._store._attempt_by_number.pop(key)
+                self._store._attempts.pop(attempt_id, None)
+
+            self._store._claims.pop(execution_id, None)
+            self._store._executions.pop(execution_id, None)
+            self._store._execution_by_request.pop(request_id, None)
+
+            request = self._store._execution_requests.pop(request_id, None)
+            if request is not None:
+                self._store._request_by_occurrence.pop(request.occurrence_key, None)
+
+        execution_count = len(execution_candidates)
+        budget -= execution_count
+
+        orphan_candidates: list[ExecutionRequest] = []
+        if budget > 0:
+            orphan_candidates = sorted(
+                (
+                    request
+                    for request in self._store._execution_requests.values()
+                    if request.state
+                    in (
+                        ExecutionRequestState.DROPPED,
+                        ExecutionRequestState.CANCELLED,
+                    )
+                    and request.created_at < request_cutoff
+                    and request.id not in self._store._execution_by_request
+                ),
+                key=lambda item: (item.created_at.value, item.id.value),
+            )[:budget]
+
+            for request in orphan_candidates:
+                self._store._execution_requests.pop(request.id, None)
+                self._store._request_by_occurrence.pop(request.occurrence_key, None)
+
+            budget -= len(orphan_candidates)
+
+        outbox_candidates: list[OutboxMessage] = []
+        if budget > 0:
+            outbox_candidates = sorted(
+                (
+                    message
+                    for message in self._store._outbox_messages.values()
+                    if message.state is OutboxState.PUBLISHED
+                    and message.published_at is not None
+                    and message.published_at < outbox_cutoff
+                ),
+                key=lambda item: (
+                    item.published_at.value
+                    if item.published_at is not None
+                    else outbox_cutoff.value,
+                    item.id.value,
+                ),
+            )[:budget]
+
+            for message in outbox_candidates:
+                self._store._outbox_messages.pop(message.id, None)
+
+        self._result = RetentionCleanupStats(
+            execution_graphs=execution_count,
+            orphan_requests=len(orphan_candidates),
+            published_outbox_messages=len(outbox_candidates),
+        )
+
+    def _after_commit(self) -> None:
+        self._criteria = None
+
+    def _rollback(self) -> None:
+        self._criteria = None
+        self._result = RetentionCleanupStats()
+
+
 class InMemoryUnitOfWork:
     """Explicit transaction across scheduling and execution repositories."""
 
@@ -1227,6 +1363,7 @@ class InMemoryUnitOfWork:
         self._materialization_leases = InMemoryScheduleMaterializationLeaseRepository(store)
         self._claims = InMemoryExecutionClaimRepository(store)
         self._outbox = InMemoryOutboxRepository(store)
+        self._retention = InMemoryRetentionRepository(store)
 
         self.schedules: ScheduleRepository = self._schedules
         self.requests: ExecutionRequestRepository = self._requests
@@ -1238,6 +1375,7 @@ class InMemoryUnitOfWork:
         )
         self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
+        self.retention: RetentionRepository = self._retention
 
     def __enter__(self) -> UnitOfWork:
         if self._active:
@@ -1266,6 +1404,7 @@ class InMemoryUnitOfWork:
             self._materialization_leases,
             self._claims,
             self._outbox,
+            self._retention,
         )
 
         with self._store._lock:
@@ -1285,6 +1424,7 @@ class InMemoryUnitOfWork:
         self._materialization_leases._rollback()
         self._claims._rollback()
         self._outbox._rollback()
+        self._retention._rollback()
 
     def _require_active(self) -> None:
         if not self._active:

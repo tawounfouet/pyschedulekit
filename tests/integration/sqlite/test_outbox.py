@@ -226,6 +226,10 @@ def test_t_outbox_sql_006_v2_database_migrates_through_current_schema(tmp_path) 
         connection.execute("DROP TABLE execution_claims")
         connection.execute("DROP INDEX ix_outbox_pending")
         connection.execute("DROP TABLE outbox_messages")
+        connection.execute("DROP INDEX IF EXISTS ix_executions_retention")
+        connection.execute("DROP INDEX IF EXISTS ix_execution_requests_retention")
+        connection.execute("DROP INDEX IF EXISTS ix_outbox_published")
+        connection.execute("ALTER TABLE executions DROP COLUMN completed_at")
         connection.execute("UPDATE pyschedulekit_schema SET version = 2")
         connection.commit()
     finally:
@@ -244,7 +248,7 @@ def test_t_outbox_sql_006_v2_database_migrates_through_current_schema(tmp_path) 
         ).fetchone()
 
         assert version is not None
-        assert int(version[0]) == 7
+        assert int(version[0]) == 8
         assert table is not None
     finally:
         connection.close()

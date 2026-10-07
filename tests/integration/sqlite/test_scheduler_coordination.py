@@ -195,6 +195,10 @@ def test_t_coord_sql_004_v6_database_migrates_to_v7(tmp_path) -> None:
     try:
         connection.execute("DROP INDEX ix_schedule_materialization_leases_active")
         connection.execute("DROP TABLE schedule_materialization_leases")
+        connection.execute("DROP INDEX IF EXISTS ix_executions_retention")
+        connection.execute("DROP INDEX IF EXISTS ix_execution_requests_retention")
+        connection.execute("DROP INDEX IF EXISTS ix_outbox_published")
+        connection.execute("ALTER TABLE executions DROP COLUMN completed_at")
         connection.execute("UPDATE pyschedulekit_schema SET version = 6")
         connection.commit()
     finally:
@@ -212,7 +216,7 @@ def test_t_coord_sql_004_v6_database_migrates_to_v7(tmp_path) -> None:
             """
         ).fetchone()
         assert version is not None
-        assert int(version[0]) == 7
+        assert int(version[0]) == 8
         assert table is not None
     finally:
         connection.close()

@@ -83,6 +83,8 @@ from pyschedulekit.ports.persistence import (
     OutboxRepository,
     PersistenceConflictError,
     ReferentialIntegrityError,
+    RetentionCleanupStats,
+    RetentionRepository,
     ScheduleAdmissionLockRepository,
     ScheduleMaterializationLeaseRepository,
     ScheduleRepository,
@@ -965,8 +967,8 @@ class SqliteExecutionRepository:
                 id, request_id, target_kind, target_reference, created_at,
                 policy_json, idempotency_key, state, version, attempt_count,
                 active_attempt_number, next_attempt_at,
-                cancellation_requested_at, result_json
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                cancellation_requested_at, result_json, completed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             self._values(execution),
         )
@@ -981,7 +983,7 @@ class SqliteExecutionRepository:
                 created_at = ?, policy_json = ?, idempotency_key = ?,
                 state = ?, version = ?, attempt_count = ?,
                 active_attempt_number = ?, next_attempt_at = ?,
-                cancellation_requested_at = ?, result_json = ?
+                cancellation_requested_at = ?, result_json = ?, completed_at = ?
             WHERE id = ? AND version = ?
             """,
             (*values[1:], values[0], expected),
@@ -1005,6 +1007,7 @@ class SqliteExecutionRepository:
             _instant_text(execution.next_attempt_at),
             _instant_text(execution.cancellation_requested_at),
             encode_execution_result(execution.result),
+            _instant_text(execution.result.completed_at if execution.result is not None else None),
         )
 
     def _after_commit(self) -> None:
@@ -1713,6 +1716,178 @@ class SqliteOutboxRepository:
         self._dirty.clear()
 
 
+class SqliteRetentionRepository:
+    """Stage bounded historical cleanup executed inside the UnitOfWork transaction."""
+
+    def __init__(self, connection: sqlite3.Connection) -> None:
+        self._connection = connection
+        self._criteria: tuple[Instant, Instant, Instant, int] | None = None
+        self._result = RetentionCleanupStats()
+
+    def stage_cleanup(
+        self,
+        *,
+        executions_completed_before: Instant,
+        orphan_requests_created_before: Instant,
+        outbox_published_before: Instant,
+        limit: int,
+    ) -> None:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+        self._criteria = (
+            executions_completed_before,
+            orphan_requests_created_before,
+            outbox_published_before,
+            limit,
+        )
+        self._result = RetentionCleanupStats()
+
+    @property
+    def result(self) -> RetentionCleanupStats:
+        return self._result
+
+    def _validate(self) -> None:
+        return
+
+    def _apply(self) -> None:
+        if self._criteria is None:
+            self._result = RetentionCleanupStats()
+            return
+
+        execution_cutoff, request_cutoff, outbox_cutoff, limit = self._criteria
+        budget = limit
+
+        execution_rows = self._connection.execute(
+            """
+            SELECT id, request_id
+            FROM executions
+            WHERE state IN ('success', 'failed', 'cancelled', 'timed_out')
+              AND completed_at IS NOT NULL
+              AND completed_at < ?
+            ORDER BY completed_at, id
+            LIMIT ?
+            """,
+            (execution_cutoff.value.isoformat(), budget),
+        ).fetchall()
+
+        execution_count = 0
+        for row in execution_rows:
+            execution_id = str(row["id"])
+            request_id = str(row["request_id"])
+
+            self._connection.execute(
+                "DELETE FROM attempts WHERE execution_id = ?",
+                (execution_id,),
+            )
+            self._connection.execute(
+                "DELETE FROM execution_claims WHERE execution_id = ?",
+                (execution_id,),
+            )
+            deleted = self._connection.execute(
+                """
+                DELETE FROM executions
+                WHERE id = ?
+                  AND state IN ('success', 'failed', 'cancelled', 'timed_out')
+                  AND completed_at IS NOT NULL
+                  AND completed_at < ?
+                """,
+                (execution_id, execution_cutoff.value.isoformat()),
+            )
+            if deleted.rowcount != 1:
+                continue
+
+            self._connection.execute(
+                """
+                DELETE FROM execution_requests
+                WHERE id = ?
+                  AND state = 'dispatched'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM executions WHERE request_id = ?
+                  )
+                """,
+                (request_id, request_id),
+            )
+            execution_count += 1
+
+        budget -= execution_count
+
+        orphan_count = 0
+        if budget > 0:
+            request_rows = self._connection.execute(
+                """
+                SELECT id
+                FROM execution_requests
+                WHERE state IN ('dropped', 'cancelled')
+                  AND created_at < ?
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM executions
+                      WHERE executions.request_id = execution_requests.id
+                  )
+                ORDER BY created_at, id
+                LIMIT ?
+                """,
+                (request_cutoff.value.isoformat(), budget),
+            ).fetchall()
+            for row in request_rows:
+                deleted = self._connection.execute(
+                    """
+                    DELETE FROM execution_requests
+                    WHERE id = ?
+                      AND state IN ('dropped', 'cancelled')
+                      AND created_at < ?
+                      AND NOT EXISTS (
+                          SELECT 1 FROM executions
+                          WHERE executions.request_id = execution_requests.id
+                      )
+                    """,
+                    (str(row["id"]), request_cutoff.value.isoformat()),
+                )
+                orphan_count += deleted.rowcount
+
+            budget -= orphan_count
+
+        outbox_count = 0
+        if budget > 0:
+            outbox_rows = self._connection.execute(
+                """
+                SELECT id
+                FROM outbox_messages
+                WHERE state = 'published'
+                  AND published_at IS NOT NULL
+                  AND published_at < ?
+                ORDER BY published_at, id
+                LIMIT ?
+                """,
+                (outbox_cutoff.value.isoformat(), budget),
+            ).fetchall()
+            for row in outbox_rows:
+                deleted = self._connection.execute(
+                    """
+                    DELETE FROM outbox_messages
+                    WHERE id = ?
+                      AND state = 'published'
+                      AND published_at IS NOT NULL
+                      AND published_at < ?
+                    """,
+                    (str(row["id"]), outbox_cutoff.value.isoformat()),
+                )
+                outbox_count += deleted.rowcount
+
+        self._result = RetentionCleanupStats(
+            execution_graphs=execution_count,
+            orphan_requests=orphan_count,
+            published_outbox_messages=outbox_count,
+        )
+
+    def _after_commit(self) -> None:
+        self._criteria = None
+
+    def _rollback(self) -> None:
+        self._criteria = None
+        self._result = RetentionCleanupStats()
+
+
 class SqliteUnitOfWork:
     """Explicit write-set UnitOfWork backed by one SQLite connection."""
 
@@ -1728,6 +1903,7 @@ class SqliteUnitOfWork:
         self._materialization_leases = SqliteScheduleMaterializationLeaseRepository(connection)
         self._claims = SqliteExecutionClaimRepository(connection)
         self._outbox = SqliteOutboxRepository(connection)
+        self._retention = SqliteRetentionRepository(connection)
 
         self.schedules: ScheduleRepository = self._schedules
         self.requests: ExecutionRequestRepository = self._requests
@@ -1739,6 +1915,7 @@ class SqliteUnitOfWork:
         )
         self.claims: ExecutionClaimRepository = self._claims
         self.outbox: OutboxRepository = self._outbox
+        self.retention: RetentionRepository = self._retention
 
     def __enter__(self) -> UnitOfWork:
         if self._active:
@@ -1768,6 +1945,7 @@ class SqliteUnitOfWork:
             self._materialization_leases,
             self._claims,
             self._outbox,
+            self._retention,
         )
         try:
             self._connection.execute("BEGIN IMMEDIATE")
@@ -1797,6 +1975,7 @@ class SqliteUnitOfWork:
         self._materialization_leases._rollback()
         self._claims._rollback()
         self._outbox._rollback()
+        self._retention._rollback()
 
     def _require_active(self) -> None:
         if not self._active:

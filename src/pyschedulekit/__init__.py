@@ -26,6 +26,7 @@ from pyschedulekit.application.recovery import (
     CrashRecoveryIncompleteError,
     CrashRecoveryResult,
 )
+from pyschedulekit.application.retention import CleanupResult, RetentionPolicy
 from pyschedulekit.application.run_pending import (
     RunPendingError,
     RunPendingResult,
@@ -97,6 +98,7 @@ __all__ = [
     "CancellationToken",
     "ClaimOwnershipError",
     "ClaimToken",
+    "CleanupResult",
     "ConcurrencyDecisionAction",
     "ConcurrencyMode",
     "ConcurrencyOverflowPolicy",
@@ -140,6 +142,7 @@ __all__ = [
     "ReconciliationIncompleteError",
     "ReconciliationIssue",
     "ReconciliationResult",
+    "RetentionPolicy",
     "RetryDecision",
     "RetryDecisionReason",
     "RetryPolicy",

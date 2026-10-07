@@ -34,6 +34,7 @@ from pyschedulekit.application.recovery import (
     CrashRecoveryResult,
     CrashRecoveryService,
 )
+from pyschedulekit.application.retention import CleanupResult, RetentionPolicy, RetentionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
@@ -117,6 +118,11 @@ class Scheduler:
         self._operations = SchedulerOperations(
             clock=self._clock,
             uow_factory=self._uow_factory,
+        )
+        self._retention_service = RetentionService(
+            clock=self._clock,
+            uow_factory=self._uow_factory,
+            observer=self._observer,
         )
         self._claim_coordinator = ExecutionClaimCoordinator(
             uow_factory=self._uow_factory,
@@ -417,6 +423,19 @@ class Scheduler:
             publisher=publisher,
         )
         return dispatcher.dispatch_pending(limit=limit)
+
+    def cleanup(
+        self,
+        policy: RetentionPolicy,
+        *,
+        limit: int = 1000,
+    ) -> CleanupResult:
+        """Delete bounded immutable history according to an explicit retention policy."""
+
+        return self._retention_service.cleanup(
+            policy=policy,
+            limit=limit,
+        )
 
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking end-to-end scheduling cycle."""

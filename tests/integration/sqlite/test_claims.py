@@ -178,6 +178,10 @@ def test_t_claim_sql_004_v3_database_migrates_through_current_schema(tmp_path) -
         connection.execute("DROP TABLE schedule_admission_locks")
         connection.execute("DROP INDEX ix_execution_claims_active")
         connection.execute("DROP TABLE execution_claims")
+        connection.execute("DROP INDEX IF EXISTS ix_executions_retention")
+        connection.execute("DROP INDEX IF EXISTS ix_execution_requests_retention")
+        connection.execute("DROP INDEX IF EXISTS ix_outbox_published")
+        connection.execute("ALTER TABLE executions DROP COLUMN completed_at")
         connection.execute("UPDATE pyschedulekit_schema SET version = 3")
         connection.commit()
     finally:
@@ -196,7 +200,7 @@ def test_t_claim_sql_004_v3_database_migrates_through_current_schema(tmp_path) -
         ).fetchone()
 
         assert version is not None
-        assert int(version[0]) == 7
+        assert int(version[0]) == 8
         assert table is not None
     finally:
         connection.close()

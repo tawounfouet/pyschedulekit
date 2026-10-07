@@ -343,11 +343,11 @@ LOT-31 qualifies:
 ```text
 LOT-30  Observability            ✅
 LOT-31  Operational API          ✅
-LOT-32  Retention / Cleanup     ⏭ NEXT
-LOT-33  Additional Executors     ⬜
+LOT-32  Retention / Cleanup      ✅
+LOT-33  Additional Executors    ⏭ NEXT
 LOT-34  Public API Hardening     ⬜
 ```
 
 ## Next
 
-`LOT-32 — Retention / Cleanup`
+`LOT-33 — Additional Executors`

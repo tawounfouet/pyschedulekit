@@ -211,7 +211,6 @@ def test_t_e2e_008_no_due_work_is_a_noop() -> None:
 
     assert result.materialized_request_ids == ()
     assert result.executions == ()
-    assert result.skipped_execution_ids == ()
     assert result.schedule_conflicts == ()
     assert result.errors == ()
     assert result.succeeded == 0

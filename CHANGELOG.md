@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Durable cancellation-request metadata on running Executions.
+- Thread-safe process-local CancellationToken and controller contracts.
+- Cooperative cancellation injection for token-aware Python targets.
+- Public `Scheduler.cancel_execution(...)` control-plane API.
+- Immediate cancellation for QUEUED and RETRY_WAIT Executions.
+- Explicit CANCELLED normalization with retry suppression.
+- LOT-17 unit, integration, concurrent and end-to-end qualification.
+
 - Durable per-Attempt execution timeout snapshots from ScheduleDefinition to Execution.
 - Optional timeout-aware Executor port and LocalExecutor watchdog enforcement.
 - Explicit TIMEOUT failure normalization routed through AttemptState.TIMED_OUT.

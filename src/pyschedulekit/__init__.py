@@ -74,11 +74,13 @@ from pyschedulekit.domain.triggers import (
     DateTrigger,
     IntervalTrigger,
 )
+from pyschedulekit.infrastructure.observability import InMemoryObservationSink
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.ports.cancellation import (
     CancellationToken,
     ExecutionCancelledError,
 )
+from pyschedulekit.ports.observability import Observation, ObservationSink
 from pyschedulekit.ports.outbox import OutboxPublisher
 
 __all__ = [
@@ -110,11 +112,14 @@ __all__ = [
     "FixedBackoff",
     "GracePeriod",
     "Instant",
+    "InMemoryObservationSink",
     "IntervalTrigger",
     "LatenessStatus",
     "MisfirePolicy",
     "MisfirePolicyAction",
     "NoBackoff",
+    "Observation",
+    "ObservationSink",
     "OutboxDispatchResult",
     "OutboxMessage",
     "OutboxMessageId",

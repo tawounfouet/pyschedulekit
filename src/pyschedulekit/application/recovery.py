@@ -139,9 +139,17 @@ class CrashRecoveryService:
                     lease_handle=lease_handle,
                 )
             except (PersistenceConflictError, ClaimOwnershipError):
+                self._release_acquired_handle_best_effort(
+                    handle=lease_handle,
+                    released_at=recovered_at,
+                )
                 skipped.append(candidate.id)
                 continue
             except CrashRecoveryConsistencyError as exc:
+                self._release_acquired_handle_best_effort(
+                    handle=lease_handle,
+                    released_at=recovered_at,
+                )
                 errors.append(
                     CrashRecoveryError(
                         execution_id=candidate.id,
@@ -310,6 +318,19 @@ class CrashRecoveryService:
                 else:
                     remaining.append(execution.id)
             return remaining, protected
+
+    def _release_acquired_handle_best_effort(
+        self,
+        *,
+        handle: ExecutionClaimHandle | None,
+        released_at: Instant,
+    ) -> None:
+        if handle is None or self._claim_coordinator is None:
+            return
+        self._claim_coordinator.release(
+            handle=handle,
+            released_at=released_at,
+        )
 
     @staticmethod
     def _release_lease_if_present(

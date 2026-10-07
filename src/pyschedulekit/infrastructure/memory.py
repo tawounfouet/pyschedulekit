@@ -26,11 +26,15 @@ from pyschedulekit.domain.schedule import (
 )
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.persistence import (
+    AttemptRepository,
     DuplicateAttemptError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateScheduleError,
+    ExecutionRepository,
+    ExecutionRequestRepository,
     OptimisticConcurrencyError,
+    ScheduleRepository,
     UnitOfWork,
     UntrackedEntityError,
     UntrackedScheduleError,
@@ -581,12 +585,18 @@ class InMemoryUnitOfWork:
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
         self._active = False
-        self.schedules = InMemoryScheduleRepository(store)
-        self.requests = InMemoryExecutionRequestRepository(store)
-        self.executions = InMemoryExecutionRepository(store)
-        self.attempts = InMemoryAttemptRepository(store)
 
-    def __enter__(self) -> InMemoryUnitOfWork:
+        self._schedules = InMemoryScheduleRepository(store)
+        self._requests = InMemoryExecutionRequestRepository(store)
+        self._executions = InMemoryExecutionRepository(store)
+        self._attempts = InMemoryAttemptRepository(store)
+
+        self.schedules: ScheduleRepository = self._schedules
+        self.requests: ExecutionRequestRepository = self._requests
+        self.executions: ExecutionRepository = self._executions
+        self.attempts: AttemptRepository = self._attempts
+
+    def __enter__(self) -> UnitOfWork:
         if self._active:
             raise RuntimeError("UnitOfWork is already active.")
         self._active = True
@@ -605,10 +615,10 @@ class InMemoryUnitOfWork:
     def commit(self) -> None:
         self._require_active()
         repositories = (
-            self.schedules,
-            self.requests,
-            self.executions,
-            self.attempts,
+            self._schedules,
+            self._requests,
+            self._executions,
+            self._attempts,
         )
 
         with self._store._lock:
@@ -620,10 +630,10 @@ class InMemoryUnitOfWork:
                 repository._after_commit()
 
     def rollback(self) -> None:
-        self.schedules._rollback()
-        self.requests._rollback()
-        self.executions._rollback()
-        self.attempts._rollback()
+        self._schedules._rollback()
+        self._requests._rollback()
+        self._executions._rollback()
+        self._attempts._rollback()
 
     def _require_active(self) -> None:
         if not self._active:

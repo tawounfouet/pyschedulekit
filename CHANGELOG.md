@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Continuous fixed-cadence scheduler runtime built on top of `run_pending()`.
+- Interruptible event-based waiting and explicit stop requests.
+- Public `Scheduler.run_forever(...)` and `Scheduler.stop()` runtime control.
+- Runtime observability through `is_running`, `cycles_completed`, and `last_result`.
+- Concurrent-start protection through `RuntimeAlreadyRunningError`.
+- LOT-18 unit and end-to-end continuous-runtime qualification.
+
 - Durable cancellation-request metadata on running Executions.
 - Thread-safe process-local CancellationToken and controller contracts.
 - Cooperative cancellation injection for token-aware Python targets.

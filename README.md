@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-17 complete — next: LOT-18 Continuous Scheduler Loop**
+**LOT-18 complete — next: LOT-19 Wake-up Strategy**
 
 Completed:
 
@@ -28,6 +28,7 @@ Completed:
 - LOT-15 — Retry Policy Foundations
 - LOT-16 — Execution Timeout
 - LOT-17 — Cancellation Refinements
+- LOT-18 — Continuous Scheduler Loop
 
 The implementation follows a domain-first roadmap:
 
@@ -379,6 +380,20 @@ def job(cancellation_token: CancellationToken) -> None:
 ```
 
 QUEUED and RETRY_WAIT work cancels immediately. RUNNING work records durable cancellation intent and receives a process-local signal. CANCELLED is terminal and never retried.
+
+## Continuous scheduler loop
+
+LOT-18 layers a blocking runtime over the existing one-shot primitive:
+
+```python
+scheduler.run_forever(
+    poll_interval=Duration.seconds(1),
+)
+```
+
+The runtime repeatedly calls `run_pending()` at a fixed cadence. `scheduler.stop()` interrupts the current wait immediately. Runtime state is observable through `is_running`, `cycles_completed`, and `last_result`.
+
+LOT-19 will replace fixed polling with a smarter wake-up strategy without changing the scheduling semantics inside `run_pending()`.
 
 ## Package shape
 

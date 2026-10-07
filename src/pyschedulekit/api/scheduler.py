@@ -9,6 +9,7 @@ from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
+from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.execution import Execution, ExecutionId
@@ -29,6 +30,7 @@ from pyschedulekit.infrastructure.local_executor import (
     PythonTargetRegistry,
 )
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.infrastructure.runtime import EventLoopWaiter
 from pyschedulekit.infrastructure.time import SystemClock
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
@@ -69,6 +71,10 @@ class Scheduler:
             scheduler_engine=SchedulerEngine(uow_factory=self._uow_factory),
             concurrency_coordinator=ConcurrencyCoordinator(uow_factory=self._uow_factory),
             execution_runner=execution_runner,
+        )
+        self._runtime = ContinuousSchedulerLoop(
+            run_pending_service=self._run_pending_service,
+            waiter=EventLoopWaiter(),
         )
 
     def register_target(
@@ -145,10 +151,40 @@ class Scheduler:
             self._cancellation_controller.cancel(normalized.value)
         return execution
 
+    @property
+    def is_running(self) -> bool:
+        return self._runtime.is_running
+
+    @property
+    def cycles_completed(self) -> int:
+        return self._runtime.cycles_completed
+
+    @property
+    def last_result(self) -> RunPendingResult | None:
+        return self._runtime.last_result
+
     def run_pending(self, *, limit: int = 100) -> RunPendingResult:
         """Run one non-blocking end-to-end scheduling cycle."""
 
         return self._run_pending_service.run_pending(limit=limit)
+
+    def run_forever(
+        self,
+        *,
+        poll_interval: Duration | None = None,
+        limit: int = 100,
+    ) -> None:
+        """Continuously call run_pending() at a fixed polling cadence."""
+
+        self._runtime.run_forever(
+            poll_interval=poll_interval or Duration.seconds(1),
+            limit=limit,
+        )
+
+    def stop(self) -> None:
+        """Request interruption of the continuous scheduler loop."""
+
+        self._runtime.request_stop()
 
     @staticmethod
     def _effective_timezone(

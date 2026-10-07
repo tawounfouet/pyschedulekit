@@ -1263,20 +1263,18 @@ class InMemoryRetentionRepository:
                 and execution.result is not None
                 and execution.result.completed_at < execution_cutoff
             ),
-            key=lambda item: (item.result.completed_at.value, item.id.value)
-            if item.result is not None
-            else (execution_cutoff.value, item.id.value),
+            key=lambda item: (
+                (item.result.completed_at.value, item.id.value)
+                if item.result is not None
+                else (execution_cutoff.value, item.id.value)
+            ),
         )[:budget]
 
         for execution in execution_candidates:
             execution_id = execution.id
             request_id = execution.request_id
 
-            attempt_keys = [
-                key
-                for key in self._store._attempt_by_number
-                if key[0] == execution_id
-            ]
+            attempt_keys = [key for key in self._store._attempt_by_number if key[0] == execution_id]
             for key in attempt_keys:
                 attempt_id = self._store._attempt_by_number.pop(key)
                 self._store._attempts.pop(attempt_id, None)

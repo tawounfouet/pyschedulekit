@@ -8,6 +8,12 @@ from pyschedulekit.application.recovery import (
     CrashRecoveryIncompleteError,
     CrashRecoveryResult,
 )
+from pyschedulekit.application.reconciliation import (
+    ReconciliationActiveRuntimeError,
+    ReconciliationIncompleteError,
+    ReconciliationIssue,
+    ReconciliationResult,
+)
 from pyschedulekit.application.run_pending import (
     RunPendingError,
     RunPendingResult,
@@ -79,6 +85,10 @@ __all__ = [
     "NoBackoff",
     "RetryDecision",
     "RetryDecisionReason",
+    "ReconciliationActiveRuntimeError",
+    "ReconciliationIncompleteError",
+    "ReconciliationIssue",
+    "ReconciliationResult",
     "RetryPolicy",
     "RunPendingError",
     "RunPendingResult",

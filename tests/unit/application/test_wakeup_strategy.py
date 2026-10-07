@@ -69,9 +69,7 @@ def test_t_wakeup_003_due_schedule_returns_zero_delay() -> None:
     )
     clock.advance(Duration.minutes(10))
 
-    delay = _planner(clock=clock, factory=factory).next_delay(
-        max_sleep=Duration.hours(1)
-    )
+    delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.hours(1))
 
     assert delay == Duration.seconds(0)
 
@@ -93,9 +91,7 @@ def test_t_wakeup_004_pending_request_returns_zero_delay() -> None:
         uow.requests.add(request)
         uow.commit()
 
-    delay = _planner(clock=clock, factory=factory).next_delay(
-        max_sleep=Duration.seconds(30)
-    )
+    delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.seconds(30))
 
     assert delay == Duration.seconds(0)
 

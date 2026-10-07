@@ -581,6 +581,19 @@ class InMemoryExecutionRepository:
         next_retry = min(retry_times)
         return now if next_retry <= now else next_retry
 
+    def list_for_reconciliation(self, *, limit: int) -> list[Execution]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            committed = [
+                _clone_execution(execution)
+                for execution in self._store._executions.values()
+            ]
+
+        committed.sort(key=lambda item: (item.created_at.value, item.id.value))
+        return committed[:limit]
+
     def count_non_terminal_for_schedule(self, schedule_id: ScheduleId) -> int:
         with self._store._lock:
             committed_executions = dict(self._store._executions)

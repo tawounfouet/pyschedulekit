@@ -26,9 +26,7 @@ class InMemoryObservationSink:
     def by_name(self, name: str) -> tuple[Observation, ...]:
         with self._lock:
             return tuple(
-                observation
-                for observation in self._observations
-                if observation.name == name
+                observation for observation in self._observations if observation.name == name
             )
 
     def count(self, name: str) -> int:

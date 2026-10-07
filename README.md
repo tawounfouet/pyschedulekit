@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-11 complete — next: LOT-04 CronTrigger**
+**Implementation — LOT-04: CronTrigger**
 
 Completed:
 
@@ -14,6 +14,7 @@ Completed:
 - LOT-01 — Time Model
 - LOT-02 — Trigger Foundations
 - LOT-03 — DateTrigger & IntervalTrigger
+- LOT-04 — CronTrigger (branch qualification in progress)
 - LOT-05 — Schedule Aggregate
 - LOT-06 — Occurrence Planning
 - LOT-07 — In-Memory Persistence
@@ -106,7 +107,20 @@ anchor + 2 × interval
 
 Late execution never shifts the recurrence, and far-future lookup uses direct arithmetic rather than replaying historical occurrences.
 
-Cron is deliberately deferred until after the first in-memory end-to-end scheduling slice.
+LOT-04 adds `CronTrigger` as an explicit calendar rule with five numeric fields, IANA timezone semantics, Vixie day matching, bounded lookup, and explicit DST gap/fold policies.
+
+## Cron trigger
+
+LOT-04 completes the V1 trigger family:
+
+```python
+CronTrigger(
+    "0 9 * * 1-5",
+    timezone=Timezone("Europe/Paris"),
+)
+```
+
+Cron evaluates civil calendar time rather than elapsed duration. DST gaps are skipped by default, ambiguous local times select the first fold by default, and both behaviors can be made strict/explicit.
 
 ## Schedule aggregate
 

@@ -265,9 +265,7 @@ class Scheduler:
     def inspect_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
         """Return an immutable operational snapshot of one Schedule."""
 
-        normalized = (
-            schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
-        )
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
         return self._operations.inspect_schedule(normalized)
 
     def inspect_execution(self, execution_id: ExecutionId | str) -> ExecutionSnapshot:
@@ -281,9 +279,7 @@ class Scheduler:
     def pause_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
         """Pause future materialization for one Schedule."""
 
-        normalized = (
-            schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
-        )
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
         snapshot = self._operations.pause_schedule(normalized)
         self._runtime.wake()
         return snapshot
@@ -291,9 +287,7 @@ class Scheduler:
     def resume_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
         """Resume one paused Schedule from the current Scheduler clock."""
 
-        normalized = (
-            schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
-        )
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
         snapshot = self._operations.resume_schedule(normalized)
         self._runtime.wake()
         return snapshot
@@ -301,9 +295,7 @@ class Scheduler:
     def cancel_schedule(self, schedule_id: ScheduleId | str) -> ScheduleSnapshot:
         """Cancel future materialization for one Schedule."""
 
-        normalized = (
-            schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
-        )
+        normalized = schedule_id if isinstance(schedule_id, ScheduleId) else ScheduleId(schedule_id)
         snapshot = self._operations.cancel_schedule(normalized)
         self._runtime.wake()
         return snapshot

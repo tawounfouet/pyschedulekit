@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from threading import Event, Lock, Thread
 from uuid import uuid4
 
 from pyschedulekit.domain.claim import (
+    ClaimOwnershipError,
     ClaimToken,
     ExecutionClaim,
     ExecutionClaimHandle,
     WorkerId,
 )
-from pyschedulekit.domain.claim import ClaimOwnershipError
 from pyschedulekit.domain.execution import ExecutionId, ExecutionState
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWorkFactory
+from pyschedulekit.ports.time import Clock
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,3 +209,69 @@ class ExecutionClaimCoordinator:
                 return True
         except (PersistenceConflictError, ClaimOwnershipError):
             return False
+
+
+
+class ExecutionLeaseHeartbeat:
+    """Renew one Execution lease periodically while workload code is running."""
+
+    def __init__(
+        self,
+        *,
+        coordinator: ExecutionClaimCoordinator,
+        clock: Clock,
+        handle: ExecutionClaimHandle,
+        interval: Duration,
+    ) -> None:
+        if interval.total_seconds <= 0:
+            raise ValueError("Lease heartbeat interval must be greater than zero.")
+        if interval >= coordinator.ttl:
+            raise ValueError("Lease heartbeat interval must be shorter than the lease TTL.")
+
+        self._coordinator = coordinator
+        self._clock = clock
+        self._interval = interval
+        self._handle = handle
+        self._handle_lock = Lock()
+        self._stop = Event()
+        self._lost = Event()
+        self._thread: Thread | None = None
+
+    @property
+    def lost(self) -> bool:
+        return self._lost.is_set()
+
+    @property
+    def current_handle(self) -> ExecutionClaimHandle:
+        with self._handle_lock:
+            return self._handle
+
+    def start(self) -> None:
+        if self._thread is not None:
+            raise RuntimeError("Execution lease heartbeat is already started.")
+
+        self._thread = Thread(
+            target=self._run,
+            name=f"pyschedulekit-lease:{self._handle.execution_id.value}",
+            daemon=True,
+        )
+        self._thread.start()
+
+    def stop(self) -> ExecutionClaimHandle:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join()
+        return self.current_handle
+
+    def _run(self) -> None:
+        while not self._stop.wait(self._interval.total_seconds):
+            handle = self.current_handle
+            renewed = self._coordinator.renew(
+                handle=handle,
+                renewed_at=self._clock.now(),
+            )
+            if renewed is None:
+                self._lost.set()
+                return
+            with self._handle_lock:
+                self._handle = renewed

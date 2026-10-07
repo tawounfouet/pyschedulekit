@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-30 complete — next: LOT-31 Operational API**
+**LOT-31 complete — next: LOT-32 Retention / Cleanup**
 
 Completed:
 
@@ -41,6 +41,7 @@ Completed:
 - LOT-28 — Lease / Fencing Refinements
 - LOT-29 — Distributed Scheduler Coordination
 - LOT-30 — Observability
+- LOT-31 — Operational API
 
 The implementation follows a domain-first roadmap:
 
@@ -668,6 +669,38 @@ scheduler correctness
 ```
 
 PyScheduleKit intentionally does not require Prometheus, OpenTelemetry, or a logging backend. Vendor-specific metrics, logs, and traces can be implemented as adapters over the stable structured observation port.
+
+## Operational API
+
+LOT-31 adds an explicit operational boundary for inspection, lifecycle control, health, and readiness.
+
+The public `Scheduler` now exposes immutable snapshots instead of leaking mutable repository aggregates:
+
+```python
+schedule = scheduler.inspect_schedule("billing-refresh")
+execution = scheduler.inspect_execution(execution_id)
+```
+
+Schedule control is explicit and transactional:
+
+```python
+scheduler.pause_schedule("billing-refresh")
+scheduler.resume_schedule("billing-refresh")
+scheduler.cancel_schedule("billing-refresh")
+```
+
+`resume_schedule()` recalculates the next occurrence from the Scheduler's explicit `Clock`; paused time is not implicitly replayed.
+
+Operational probes distinguish liveness from readiness:
+
+```python
+health = scheduler.health()
+readiness = scheduler.readiness()
+```
+
+`health()` reports whether the persistence boundary is reachable plus process-local runtime state. `readiness()` is stricter: the Scheduler must have completed crash recovery and durable reconciliation and must not be in graceful shutdown.
+
+No HTTP server is embedded in the core. REST, CLI, admin UI, Kubernetes probes, or service-specific control planes can be built as adapters over these Python contracts.
 
 ## Package shape
 

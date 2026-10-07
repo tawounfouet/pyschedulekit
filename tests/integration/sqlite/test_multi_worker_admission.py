@@ -2,9 +2,9 @@
 
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 
 import pytest
-from datetime import UTC, datetime
 
 from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator

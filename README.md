@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**Implementation — LOT-13: Catch-Up & Coalescing**
+**LOT-13 complete — next: LOT-14 Concurrency Policy Foundations**
 
 Completed:
 
@@ -23,7 +23,7 @@ Completed:
 - LOT-10 — Local Executor
 - LOT-11 — run_pending() End-to-End Slice
 - LOT-12 — Misfire Policy Foundations
-- LOT-13 — Catch-Up & Coalescing (branch qualification in progress)
+- LOT-13 — Catch-Up & Coalescing
 
 The implementation follows a domain-first roadmap:
 
@@ -279,7 +279,7 @@ ON_TIME / LATE_ELIGIBLE / MISFIRED
 MisfirePolicy
 ```
 
-`SKIP` and `RUN_NOW` are executable end-to-end. `CATCH_UP` and `COALESCE` are modeled but intentionally not enabled publicly until bounded backlog semantics are implemented.
+`SKIP`, `RUN_NOW`, `CATCH_UP`, and `COALESCE` are now executable end-to-end. Catch-Up drains bounded oldest-first batches; Coalesce requires a complete bounded scan and fails closed when the true latest due occurrence cannot be proven.
 
 ## Catch-Up and Coalescing
 

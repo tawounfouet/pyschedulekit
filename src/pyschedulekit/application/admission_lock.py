@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from pyschedulekit.domain.admission_lock import (
+    AdmissionLockOwnershipError,
     AdmissionToken,
     ScheduleAdmissionLock,
     ScheduleAdmissionLockHandle,
@@ -117,5 +118,5 @@ class ScheduleAdmissionLockCoordinator:
                 uow.admission_locks.save(lock)
                 uow.commit()
                 return True
-        except PersistenceConflictError:
+        except (PersistenceConflictError, AdmissionLockOwnershipError):
             return False

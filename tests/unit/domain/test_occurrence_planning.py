@@ -193,3 +193,49 @@ def test_same_schedule_revision_and_instant_reconstruct_same_occurrence_identity
 
     assert first == reconstructed
     assert first.key == reconstructed.key
+
+
+def test_backlog_planner_returns_due_occurrences_oldest_first() -> None:
+    schedule = _interval_schedule()
+    planner = OccurrencePlanner()
+
+    backlog = planner.due_backlog(
+        schedule,
+        until=_instant(hour=10, minute=35),
+        limit=10,
+    )
+
+    assert [occurrence.scheduled_at for occurrence in backlog.occurrences] == [
+        _instant(hour=10),
+        _instant(hour=10, minute=10),
+        _instant(hour=10, minute=20),
+        _instant(hour=10, minute=30),
+    ]
+    assert not backlog.has_more
+
+
+def test_backlog_planner_is_bounded_and_reports_more_due_work() -> None:
+    schedule = _interval_schedule()
+    planner = OccurrencePlanner()
+
+    backlog = planner.due_backlog(
+        schedule,
+        until=_instant(hour=10, minute=35),
+        limit=2,
+    )
+
+    assert [occurrence.scheduled_at for occurrence in backlog.occurrences] == [
+        _instant(hour=10),
+        _instant(hour=10, minute=10),
+    ]
+    assert backlog.has_more
+    assert schedule.next_run_time == _instant(hour=10)
+
+
+def test_backlog_planner_rejects_non_positive_limit() -> None:
+    with pytest.raises(ValueError, match="greater than or equal to 1"):
+        OccurrencePlanner().due_backlog(
+            _interval_schedule(),
+            until=_instant(hour=10),
+            limit=0,
+        )

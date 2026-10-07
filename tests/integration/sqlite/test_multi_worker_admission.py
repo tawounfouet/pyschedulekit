@@ -173,7 +173,7 @@ def test_t_admission_sql_003_expired_lock_can_be_recovered(tmp_path) -> None:
     assert result.execution is not None
 
 
-def test_t_admission_sql_004_v4_database_migrates_to_v5(tmp_path) -> None:
+def test_t_admission_sql_004_v4_database_migrates_through_current_schema(tmp_path) -> None:
     database = tmp_path / "scheduler.db"
     SqliteUnitOfWorkFactory(database)
 
@@ -181,6 +181,7 @@ def test_t_admission_sql_004_v4_database_migrates_to_v5(tmp_path) -> None:
     try:
         connection.execute("DROP INDEX ix_schedule_admission_locks_active")
         connection.execute("DROP TABLE schedule_admission_locks")
+        connection.execute("ALTER TABLE execution_claims DROP COLUMN generation")
         connection.execute("UPDATE pyschedulekit_schema SET version = 4")
         connection.commit()
     finally:
@@ -198,7 +199,7 @@ def test_t_admission_sql_004_v4_database_migrates_to_v5(tmp_path) -> None:
             """
         ).fetchone()
         assert version is not None
-        assert int(version[0]) == 5
+        assert int(version[0]) == 6
         assert table is not None
     finally:
         connection.close()

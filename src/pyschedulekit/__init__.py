@@ -28,10 +28,6 @@ from pyschedulekit.domain.retry import (
 )
 from pyschedulekit.domain.schedule import ScheduleId, TargetRef
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
-from pyschedulekit.ports.cancellation import (
-    CancellationToken,
-    ExecutionCancelledError,
-)
 from pyschedulekit.domain.triggers import (
     CronAmbiguousTimePolicy,
     CronDialect,

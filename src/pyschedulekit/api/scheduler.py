@@ -7,6 +7,7 @@ from threading import Lock
 from time import monotonic
 from uuid import uuid4
 
+from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
@@ -32,6 +33,7 @@ from pyschedulekit.application.shutdown import (
     ShutdownResult,
 )
 from pyschedulekit.application.wakeup import WakeUpPlanner
+from pyschedulekit.domain.claim import WorkerId
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.execution import Execution, ExecutionId, ExecutionState
 from pyschedulekit.domain.misfire import MisfirePolicy
@@ -67,12 +69,25 @@ class Scheduler:
         clock: Clock | None = None,
         uow_factory: UnitOfWorkFactory | None = None,
         registry: PythonTargetRegistry | None = None,
+        worker_id: str | WorkerId | None = None,
+        claim_ttl: Duration | None = None,
     ) -> None:
         self._clock: Clock = clock if clock is not None else SystemClock()
         self._uow_factory: UnitOfWorkFactory = (
             uow_factory if uow_factory is not None else InMemoryUnitOfWorkFactory()
         )
         self._registry = registry if registry is not None else PythonTargetRegistry()
+        self._worker_id = (
+            worker_id
+            if isinstance(worker_id, WorkerId)
+            else WorkerId(worker_id or uuid4().hex)
+        )
+        self._claim_ttl = claim_ttl if claim_ttl is not None else Duration.seconds(30)
+        self._claim_coordinator = ExecutionClaimCoordinator(
+            uow_factory=self._uow_factory,
+            worker_id=self._worker_id,
+            ttl=self._claim_ttl,
+        )
 
         self._execution_service = ExecutionService(uow_factory=self._uow_factory)
         self._recovery_service = CrashRecoveryService(
@@ -108,6 +123,7 @@ class Scheduler:
             scheduler_engine=SchedulerEngine(uow_factory=self._uow_factory),
             concurrency_coordinator=ConcurrencyCoordinator(uow_factory=self._uow_factory),
             execution_runner=execution_runner,
+            claim_coordinator=self._claim_coordinator,
             shutdown_coordinator=self._shutdown_coordinator,
         )
         self._runtime = ContinuousSchedulerLoop(
@@ -118,6 +134,12 @@ class Scheduler:
                 uow_factory=self._uow_factory,
             ),
         )
+
+    @property
+    def worker_id(self) -> WorkerId:
+        """Stable identity used by this Scheduler instance for durable claims."""
+
+        return self._worker_id
 
     def register_target(
         self,

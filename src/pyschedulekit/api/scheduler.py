@@ -7,6 +7,7 @@ from threading import Lock
 from time import monotonic
 from uuid import uuid4
 
+from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
@@ -71,6 +72,7 @@ class Scheduler:
         registry: PythonTargetRegistry | None = None,
         worker_id: str | WorkerId | None = None,
         claim_ttl: Duration | None = None,
+        admission_lock_ttl: Duration | None = None,
     ) -> None:
         self._clock: Clock = clock if clock is not None else SystemClock()
         self._uow_factory: UnitOfWorkFactory = (
@@ -81,10 +83,19 @@ class Scheduler:
             worker_id if isinstance(worker_id, WorkerId) else WorkerId(worker_id or uuid4().hex)
         )
         self._claim_ttl = claim_ttl if claim_ttl is not None else Duration.seconds(30)
+        self._admission_lock_ttl = (
+            admission_lock_ttl if admission_lock_ttl is not None else Duration.seconds(5)
+        )
         self._claim_coordinator = ExecutionClaimCoordinator(
             uow_factory=self._uow_factory,
             worker_id=self._worker_id,
             ttl=self._claim_ttl,
+        )
+
+        self._admission_lock_coordinator = ScheduleAdmissionLockCoordinator(
+            uow_factory=self._uow_factory,
+            worker_id=self._worker_id,
+            ttl=self._admission_lock_ttl,
         )
 
         self._execution_service = ExecutionService(uow_factory=self._uow_factory)
@@ -119,7 +130,10 @@ class Scheduler:
             clock=self._clock,
             uow_factory=self._uow_factory,
             scheduler_engine=SchedulerEngine(uow_factory=self._uow_factory),
-            concurrency_coordinator=ConcurrencyCoordinator(uow_factory=self._uow_factory),
+            concurrency_coordinator=ConcurrencyCoordinator(
+                uow_factory=self._uow_factory,
+                admission_lock_coordinator=self._admission_lock_coordinator,
+            ),
             execution_runner=execution_runner,
             claim_coordinator=self._claim_coordinator,
             shutdown_coordinator=self._shutdown_coordinator,

@@ -476,7 +476,7 @@ def _migrate_v5_to_v6(connection: sqlite3.Connection) -> None:
         _add_fencing_generation_columns(connection)
         connection.execute(
             "UPDATE pyschedulekit_schema SET version = ?",
-            (SCHEMA_VERSION,),
+            (6,),
         )
         connection.commit()
     except Exception:

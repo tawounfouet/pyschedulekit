@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-20 complete — next: LOT-21 SQL Persistence Foundations**
+**LOT-21 complete — next: LOT-22 Transactions / DB Constraints**
 
 Completed:
 
@@ -31,6 +31,7 @@ Completed:
 - LOT-18 — Continuous Scheduler Loop
 - LOT-19 — Wake-up Strategy
 - LOT-20 — Graceful Shutdown
+- LOT-21 — SQL Persistence Foundations
 
 The implementation follows a domain-first roadmap:
 
@@ -443,6 +444,22 @@ scheduler.shutdown(
 ```
 
 The shutdown gate prevents new Attempts from starting once drain begins. WAIT lets active work finish; CANCEL signals LOT-17 cancellation tokens. A timeout returns a structured result containing any Execution IDs still active.
+
+## SQL persistence foundations
+
+LOT-21 adds a durable SQLite adapter without changing the domain or application layer:
+
+```python
+from pyschedulekit import Scheduler, SqliteUnitOfWorkFactory
+
+scheduler = Scheduler(
+    uow_factory=SqliteUnitOfWorkFactory("scheduler.db"),
+)
+```
+
+Runtime query fields remain relational SQL columns, while immutable definitions and policies use versioned JSON snapshots. The adapter preserves the existing identity-map, write-set, commit/rollback, and optimistic-version semantics.
+
+LOT-22 will harden database constraints and transaction guarantees.
 
 ## Package shape
 

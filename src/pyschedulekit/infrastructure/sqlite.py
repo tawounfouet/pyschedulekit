@@ -478,7 +478,7 @@ class SqliteExecutionRequestRepository:
             """
             SELECT id
             FROM execution_requests
-            ORDER BY created_at, aggregate_type, aggregate_id, sequence, id
+            ORDER BY created_at, id
             LIMIT ?
             """,
             (limit,),
@@ -750,7 +750,7 @@ class SqliteExecutionRepository:
             SELECT id
             FROM executions
             WHERE state = ?
-            ORDER BY created_at, aggregate_type, aggregate_id, sequence, id
+            ORDER BY created_at, id
             LIMIT ?
             """,
             (ExecutionState.RUNNING.value, limit),
@@ -1143,7 +1143,7 @@ class SqliteOutboxRepository:
             SELECT id
             FROM outbox_messages
             WHERE state = ?
-            ORDER BY created_at, id
+            ORDER BY created_at, aggregate_type, aggregate_id, sequence, id
             LIMIT ?
             """,
             (OutboxState.PENDING.value, limit),

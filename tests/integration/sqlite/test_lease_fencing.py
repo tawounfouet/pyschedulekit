@@ -198,11 +198,11 @@ def test_t_lease_sql_004_v5_database_migrates_to_v6(tmp_path) -> None:
         connection.execute("DROP TABLE schedule_materialization_leases")
         connection.execute("ALTER TABLE execution_claims DROP COLUMN generation")
         connection.execute("ALTER TABLE schedule_admission_locks DROP COLUMN generation")
-                connection.execute("DROP INDEX IF EXISTS ix_executions_retention")
+        connection.execute("DROP INDEX IF EXISTS ix_executions_retention")
         connection.execute("DROP INDEX IF EXISTS ix_execution_requests_retention")
         connection.execute("DROP INDEX IF EXISTS ix_outbox_published")
         connection.execute("ALTER TABLE executions DROP COLUMN completed_at")
-connection.execute("UPDATE pyschedulekit_schema SET version = 5")
+        connection.execute("UPDATE pyschedulekit_schema SET version = 5")
         connection.commit()
     finally:
         connection.close()

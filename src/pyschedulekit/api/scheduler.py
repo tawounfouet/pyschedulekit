@@ -5,10 +5,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from uuid import uuid4
 
+from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
+from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.schedule import (
     Schedule,
@@ -60,7 +62,7 @@ class Scheduler:
             clock=self._clock,
             uow_factory=self._uow_factory,
             scheduler_engine=SchedulerEngine(uow_factory=self._uow_factory),
-            execution_service=execution_service,
+            concurrency_coordinator=ConcurrencyCoordinator(uow_factory=self._uow_factory),
             execution_runner=execution_runner,
         )
 
@@ -82,6 +84,7 @@ class Scheduler:
         id: str | None = None,
         timezone: Timezone | None = None,
         misfire: MisfirePolicy | None = None,
+        concurrency: ConcurrencyPolicy | None = None,
     ) -> ScheduleId:
         """Create and persist one Schedule using the current Clock reference."""
 
@@ -96,6 +99,9 @@ class Scheduler:
             timezone=timezone,
         )
         effective_misfire = misfire if misfire is not None else MisfirePolicy.run_now()
+        effective_concurrency = (
+            concurrency if concurrency is not None else ConcurrencyPolicy.allow()
+        )
 
         schedule = Schedule.create(
             schedule_id=schedule_id,
@@ -104,6 +110,7 @@ class Scheduler:
                 trigger=trigger,
                 timezone=effective_timezone,
                 misfire=effective_misfire,
+                concurrency=effective_concurrency,
             ),
             reference=self._clock.now(),
         )

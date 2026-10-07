@@ -18,6 +18,7 @@ def make_outbox_message(
     aggregate_id: str,
     created_at: Instant,
     payload: dict[str, str],
+    sequence: int = 0,
 ) -> OutboxMessage:
     """Create one deterministic outbox message from a lifecycle fact."""
 
@@ -27,6 +28,7 @@ def make_outbox_message(
         aggregate_id=aggregate_id,
         payload=tuple(payload.items()),
         created_at=created_at,
+        sequence=sequence,
     )
 
 

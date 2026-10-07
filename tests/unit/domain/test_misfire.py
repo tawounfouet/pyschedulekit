@@ -7,6 +7,7 @@ import pytest
 from pyschedulekit.domain.misfire import (
     LatenessClassifier,
     LatenessStatus,
+    InvalidRecoveryLimitError,
     MisfireDecisionAction,
     MisfireEvaluator,
     MisfirePolicy,
@@ -148,3 +149,16 @@ def test_t_mis_012_policy_factories_preserve_explicit_grace() -> None:
     assert MisfirePolicy.run_now(grace=grace).grace == grace
     assert MisfirePolicy.catch_up(grace=grace).grace == grace
     assert MisfirePolicy.coalesce(grace=grace).grace == grace
+
+
+def test_t_mis_013_recovery_limit_must_be_positive() -> None:
+    with pytest.raises(InvalidRecoveryLimitError):
+        MisfirePolicy.catch_up(max_occurrences=0)
+
+    with pytest.raises(InvalidRecoveryLimitError):
+        MisfirePolicy.coalesce(max_occurrences=-1)
+
+
+def test_t_mis_014_policy_factories_preserve_recovery_limit() -> None:
+    assert MisfirePolicy.catch_up(max_occurrences=7).max_occurrences == 7
+    assert MisfirePolicy.coalesce(max_occurrences=11).max_occurrences == 11

@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 from types import TracebackType
-from typing import cast
+from typing import NoReturn, cast
 from uuid import uuid4
 
 from pyschedulekit.domain.execution import (
@@ -78,7 +78,7 @@ def _optional_duration(value: object) -> Duration | None:
     return None if value is None else Duration.seconds(cast(float, value))
 
 
-def _raise_integrity_error(exc: sqlite3.IntegrityError) -> None:
+def _raise_integrity_error(exc: sqlite3.IntegrityError) -> NoReturn:
     message = str(exc)
 
     if "UNIQUE constraint failed: schedules.id" in message:

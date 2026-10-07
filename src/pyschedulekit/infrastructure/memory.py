@@ -5,7 +5,13 @@ from __future__ import annotations
 from threading import RLock
 from types import TracebackType
 
-from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
+from pyschedulekit.domain.execution import (
+    Attempt,
+    AttemptId,
+    Execution,
+    ExecutionId,
+    ExecutionState,
+)
 from pyschedulekit.domain.execution_request import (
     ExecutionRequest,
     ExecutionRequestState,
@@ -397,6 +403,26 @@ class InMemoryExecutionRepository:
                 f"Execution {execution.id.value!r} has no tracked committed version."
             )
         self._dirty.add(execution.id)
+
+    def list_queued(self, *, limit: int) -> list[Execution]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+
+        with self._store._lock:
+            candidate_ids = set(self._store._executions)
+        candidate_ids.update(self._tracked)
+
+        queued: list[Execution] = []
+        for execution_id in candidate_ids:
+            execution = self._tracked.get(execution_id)
+            if execution is None:
+                execution = self.get(execution_id)
+            if execution is None or execution.state is not ExecutionState.QUEUED:
+                continue
+            queued.append(execution)
+
+        queued.sort(key=lambda execution: (execution.created_at.value, execution.id.value))
+        return queued[:limit]
 
     def _validate_commit_locked(self) -> None:
         for execution_id in self._new:

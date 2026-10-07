@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Protocol
 
+from pyschedulekit.domain.admission_lock import ScheduleAdmissionLock
 from pyschedulekit.domain.claim import ExecutionClaim
 from pyschedulekit.domain.execution import Attempt, AttemptId, Execution, ExecutionId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
@@ -44,6 +45,10 @@ class DuplicateExecutionError(PersistenceConflictError):
 
 class DuplicateAttemptError(PersistenceConflictError):
     """Raised when an Attempt duplicates an existing ID or attempt number."""
+
+
+class DuplicateAdmissionLockError(PersistenceConflictError):
+    """Raised when a Schedule already owns a persisted admission lock."""
 
 
 class DuplicateExecutionClaimError(PersistenceConflictError):
@@ -132,6 +137,12 @@ class AttemptRepository(Protocol):
     def list_for_execution(self, execution_id: ExecutionId) -> list[Attempt]: ...
 
 
+class ScheduleAdmissionLockRepository(Protocol):
+    def add(self, lock: ScheduleAdmissionLock) -> None: ...
+    def get(self, schedule_id: ScheduleId) -> ScheduleAdmissionLock | None: ...
+    def save(self, lock: ScheduleAdmissionLock) -> None: ...
+
+
 class ExecutionClaimRepository(Protocol):
     """Transactional repository for durable Execution ownership claims."""
 
@@ -161,6 +172,7 @@ class UnitOfWork(Protocol):
     requests: ExecutionRequestRepository
     executions: ExecutionRepository
     attempts: AttemptRepository
+    admission_locks: ScheduleAdmissionLockRepository
     claims: ExecutionClaimRepository
     outbox: OutboxRepository
 

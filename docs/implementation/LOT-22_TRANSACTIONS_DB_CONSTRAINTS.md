@@ -315,4 +315,4 @@ LOT-22 does not yet implement:
 
 ## Next
 
-`LOT-23 — Crash Recovery`
+`LOT-23 — Crash Recovery` (implemented: orphaned RUNNING reconciliation, retry/cancellation recovery, and fail-closed startup barrier)

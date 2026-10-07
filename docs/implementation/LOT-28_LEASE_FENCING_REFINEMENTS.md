@@ -190,8 +190,7 @@ fencing_token: int | None
 Trusted Python callables may request it explicitly:
 
 ```python
-def job(*, fencing_token: int) -> None:
-    ...
+def job(*, fencing_token: int) -> None: ...
 ```
 
 or combine it with cooperative cancellation:
@@ -201,8 +200,7 @@ def job(
     *,
     cancellation_token,
     fencing_token: int,
-) -> None:
-    ...
+) -> None: ...
 ```
 
 For Scheduler-managed distributed execution, this value is the current Execution lease generation.

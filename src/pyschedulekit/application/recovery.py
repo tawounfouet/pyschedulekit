@@ -305,6 +305,8 @@ class CrashRecoveryService:
     ) -> tuple[list[ExecutionId], list[ExecutionId]]:
         with self._uow_factory() as uow:
             running = uow.executions.list_running(limit=limit)
+            if not running:
+                return [], []
             if self._claim_coordinator is None:
                 return [execution.id for execution in running], []
 

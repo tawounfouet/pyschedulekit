@@ -29,7 +29,7 @@ class OutboxMessageId:
         event_type: str,
         aggregate_type: str,
         aggregate_id: str,
-    ) -> "OutboxMessageId":
+    ) -> OutboxMessageId:
         canonical = f"{event_type}|{aggregate_type}|{aggregate_id}"
         return cls(sha256(canonical.encode("utf-8")).hexdigest())
 
@@ -102,7 +102,7 @@ class OutboxMessage:
         aggregate_id: str,
         payload: tuple[tuple[str, str], ...],
         created_at: Instant,
-    ) -> "OutboxMessage":
+    ) -> OutboxMessage:
         return cls(
             message_id=OutboxMessageId.deterministic(
                 event_type=event_type,

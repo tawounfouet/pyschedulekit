@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from threading import Condition, Event, RLock
+from threading import Condition, RLock
 from time import monotonic
 
 from pyschedulekit.domain.execution import ExecutionId
@@ -18,6 +18,10 @@ class ShutdownMode(StrEnum):
     CANCEL = "cancel"
 
 
+class ShutdownInProgressError(RuntimeError):
+    """Raised when new execution work tries to start during shutdown drain."""
+
+
 @dataclass(frozen=True, slots=True)
 class ShutdownResult:
     """Structured outcome of one graceful shutdown request."""
@@ -28,34 +32,42 @@ class ShutdownResult:
     active_execution_ids: tuple[ExecutionId, ...]
 
 
-class ShutdownGate:
-    """Thread-safe barrier preventing new admissions and Attempts during drain."""
+class ShutdownCoordinator:
+    """Atomically gate new work and track process-local active Executions."""
 
     def __init__(self) -> None:
-        self._event = Event()
+        self._condition = Condition(RLock())
+        self._requested = False
+        self._active: set[ExecutionId] = set()
 
     @property
     def is_requested(self) -> bool:
-        return self._event.is_set()
+        with self._condition:
+            return self._requested
 
     def request(self) -> None:
-        self._event.set()
+        with self._condition:
+            self._requested = True
+            self._condition.notify_all()
 
     def reset(self) -> None:
-        self._event.clear()
-
-
-class ExecutionActivityTracker:
-    """Track process-local Executions currently inside executor invocation."""
-
-    def __init__(self) -> None:
-        self._active: set[ExecutionId] = set()
-        self._condition = Condition(RLock())
-
-    def enter(self, execution_id: ExecutionId) -> None:
         with self._condition:
+            if self._active:
+                raise RuntimeError(
+                    "Cannot reset shutdown coordination while Executions are active."
+                )
+            self._requested = False
+            self._condition.notify_all()
+
+    def try_enter(self, execution_id: ExecutionId) -> bool:
+        """Atomically refuse new execution work after shutdown was requested."""
+
+        with self._condition:
+            if self._requested:
+                return False
             self._active.add(execution_id)
             self._condition.notify_all()
+            return True
 
     def leave(self, execution_id: ExecutionId) -> None:
         with self._condition:
@@ -66,12 +78,8 @@ class ExecutionActivityTracker:
         with self._condition:
             return tuple(sorted(self._active, key=lambda item: item.value))
 
-    def wait_until_empty(self, *, timeout: Duration | None) -> bool:
-        deadline = (
-            monotonic() + timeout.total_seconds
-            if timeout is not None
-            else None
-        )
+    def wait_until_drained(self, *, timeout: Duration | None) -> bool:
+        deadline = monotonic() + timeout.total_seconds if timeout is not None else None
 
         with self._condition:
             while self._active:

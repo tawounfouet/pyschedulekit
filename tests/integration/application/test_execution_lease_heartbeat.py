@@ -13,6 +13,7 @@ from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRe
 from pyschedulekit.domain.time import Duration
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 from pyschedulekit.infrastructure.time import SystemClock
 
 
@@ -31,7 +32,7 @@ def test_t_lease_heartbeat_001_renews_during_long_running_callable() -> None:
         created_at=created_at,
     )
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     service = ExecutionService(uow_factory=factory)

@@ -39,7 +39,15 @@ jobs:
         run: python -m twine check --strict dist/*
 
       - name: Validate distribution contract
-        run: python scripts/verify_distribution.py dist
+        run: python -m scripts.verify_distribution dist
+
+      - name: Dry-run release candidate version gate
+        shell: bash
+        run: |
+          release_tag="$(python -c 'import pyschedulekit; print(f"v{pyschedulekit.__version__}")')"
+          python -m scripts.verify_release_candidate \
+            --release-tag "$release_tag" \
+            dist
 
       - name: Record distribution checksums
         run: sha256sum dist/*

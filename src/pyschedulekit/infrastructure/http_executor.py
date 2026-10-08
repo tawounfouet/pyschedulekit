@@ -83,14 +83,13 @@ class HttpTargetRegistry:
         self._targets: dict[str, HttpRequestSpec] = {}
 
     def register(self, reference: str, request: HttpRequestSpec) -> None:
-        normalized = reference.strip()
-        if not normalized:
+        if not reference.strip():
             raise ValueError("HTTP target reference must not be empty.")
-        if normalized in self._targets:
+        if reference in self._targets:
             raise DuplicateHttpTargetRegistrationError(
-                f"HTTP target reference {normalized!r} is already registered."
+                f"HTTP target reference {reference!r} is already registered."
             )
-        self._targets[normalized] = request
+        self._targets[reference] = request
 
     def resolve(self, reference: str) -> HttpRequestSpec:
         try:

@@ -54,23 +54,20 @@ def _schedule(schedule_id: str = "schedule-1") -> Schedule:
     )
 
 
-def _request(schedule_id: ScheduleId | None = None) -> ExecutionRequest:
+def _request(
+    schedule_id: ScheduleId | None = None,
+    *,
+    request_id: str = "request-1",
+) -> ExecutionRequest:
     effective_schedule_id = schedule_id or ScheduleId("schedule-1")
     return ExecutionRequest(
-        id=RequestId("request-1"),
+        id=RequestId(request_id),
         occurrence_key=OccurrenceKey(
             schedule_id=effective_schedule_id,
             schedule_revision=ScheduleRevision(1),
             scheduled_at=_instant(),
         ),
         target=TargetRef.python("jobs:refresh"),
-        created_at=_instant(),
-    )
-
-
-def _execution() -> Execution:
-    return Execution.from_request(
-        request=_request(),
         created_at=_instant(),
     )
 
@@ -123,26 +120,27 @@ def test_foreign_key_contract_rejects_orphans(
     tmp_path: Path,
 ) -> None:
     factory = _factory(adapter, tmp_path)
-    request = _request()
-    execution = Execution.from_request(
-        request=request,
-        created_at=_instant(),
-    )
-    attempt = execution.start_attempt(started_at=_instant())
 
     with factory() as uow:
         if orphan_kind == "request":
-            uow.requests.add(request)
-        elif orphan_kind == "execution":
-            uow.executions.add(execution)
-        elif orphan_kind == "attempt":
-            uow.attempts.add(attempt)
+            uow.requests.add(_request())
+        elif orphan_kind in ("execution", "attempt", "claim"):
+            request = _request()
+            request.mark_dispatched()
+            execution = Execution.from_request(
+                request=request,
+                created_at=_instant(),
+            )
+            if orphan_kind == "execution":
+                uow.executions.add(execution)
+            elif orphan_kind == "attempt":
+                uow.attempts.add(execution.start_attempt(started_at=_instant()))
+            else:
+                uow.claims.add(_claim(execution))
         elif orphan_kind == "admission_lock":
             uow.admission_locks.add(_admission_lock(ScheduleId("missing-schedule")))
         elif orphan_kind == "materialization_lease":
             uow.materialization_leases.add(_materialization_lease(ScheduleId("missing-schedule")))
-        elif orphan_kind == "claim":
-            uow.claims.add(_claim(execution))
         else:
             raise AssertionError(f"Unknown orphan kind: {orphan_kind}")
 
@@ -158,6 +156,7 @@ def test_complete_staged_graph_commits_in_one_transaction(
     factory = _factory(adapter, tmp_path)
     schedule = _schedule()
     request = _request(schedule.id)
+    request.mark_dispatched()
     execution = Execution.from_request(
         request=request,
         created_at=_instant(),
@@ -190,18 +189,21 @@ def test_staged_queries_observe_uncommitted_work(
     tmp_path: Path,
 ) -> None:
     factory = _factory(adapter, tmp_path)
-    request = _request()
+    pending_request = _request(request_id="pending-request")
+    execution_request = _request(request_id="execution-request")
+    execution_request.mark_dispatched()
     execution = Execution.from_request(
-        request=request,
+        request=execution_request,
         created_at=_instant(),
     )
 
     with factory() as uow:
-        uow.requests.add(request)
+        uow.requests.add(pending_request)
 
         assert uow.requests.has_pending() is True
-        assert [item.id for item in uow.requests.list_pending(limit=1)] == [request.id]
+        assert [item.id for item in uow.requests.list_pending(limit=1)] == [pending_request.id]
 
+        uow.requests.add(execution_request)
         uow.executions.add(execution)
 
         assert uow.executions.next_runnable_at(now=_instant()) == _instant()

@@ -119,10 +119,10 @@ LOT-32 qualifies terminal graph cleanup, active-state preservation, pending-outb
 LOT-30  Observability            ✅
 LOT-31  Operational API          ✅
 LOT-32  Retention / Cleanup      ✅
-LOT-33  Additional Executors    ⏭ NEXT
-LOT-34  Public API Hardening     ⬜
+LOT-33  Additional Executors     ✅
+LOT-34  Public API Hardening    ⏭ NEXT
 ```
 
 ## Next
 
-`LOT-33 — Additional Executors`
+`LOT-34 — Public API Hardening`

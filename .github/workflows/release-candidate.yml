@@ -1,0 +1,106 @@
+name: Release Candidate Gate
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to validate against the selected ref (for dry-run qualification)."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-release-candidate:
+    name: Qualify release candidate
+    runs-on: ubuntu-latest
+    outputs:
+      release-tag: ${{ steps.release-tag.outputs.value }}
+      package-version: ${{ steps.package-version.outputs.value }}
+
+    steps:
+      - name: Checkout candidate commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: release-tag
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            release_tag="$INPUT_RELEASE_TAG"
+          else
+            release_tag="$REF_NAME"
+          fi
+
+          test -n "$release_tag"
+          echo "value=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "Release candidate tag: $release_tag"
+
+      - name: Verify tagged commit belongs to main
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" "origin/main"; then
+            echo "Release tags must point to commits reachable from main." >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install release tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[release]"
+
+      - name: Read source package version
+        id: package-version
+        shell: bash
+        run: |
+          package_version="$(python -c 'import pyschedulekit; print(pyschedulekit.__version__)')"
+          echo "value=$package_version" >> "$GITHUB_OUTPUT"
+          echo "Source package version: $package_version"
+
+      - name: Build release candidate distributions
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
+          python -m build
+
+      - name: Validate package metadata and README rendering
+        run: python -m twine check --strict dist/*
+
+      - name: Validate distribution contract
+        run: python -m scripts.verify_distribution dist
+
+      - name: Enforce tag, source, and artifact version identity
+        run: |
+          python -m scripts.verify_release_candidate \
+            --release-tag "${{ steps.release-tag.outputs.value }}" \
+            dist
+
+      - name: Record release candidate checksums
+        run: sha256sum dist/* | tee release-candidate-sha256.txt
+
+      - name: Upload qualified release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-dists-${{ steps.release-tag.outputs.value }}
+          path: |
+            dist/
+            release-candidate-sha256.txt
+          if-no-files-found: error
+          retention-days: 30

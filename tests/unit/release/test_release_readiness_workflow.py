@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-WORKFLOW = Path(".github/workflows/release-readiness.yml")
+REPO_ROOT = Path(__file__).resolve().parents[3]
+WORKFLOW = REPO_ROOT / ".github/workflows/release-readiness.yml"
 
 
 def _workflow_text() -> str:

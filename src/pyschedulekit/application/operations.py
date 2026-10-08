@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pyschedulekit.application.execution_service import ExecutionNotFoundError
-from pyschedulekit.domain.execution import Execution, ExecutionId
+from pyschedulekit.domain.execution import Execution, ExecutionId, ExecutionPolicySnapshot, ExecutionState
 from pyschedulekit.domain.schedule import Schedule, ScheduleId, ScheduleState
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.errors import PyScheduleKitNotFoundError
@@ -54,6 +54,13 @@ class ScheduleSnapshot:
     target_reference: str
     timezone: str
     timeout_seconds: float | None
+    policy_snapshot: ExecutionPolicySnapshot
+
+    @property
+    def id(self) -> ExecutionId:
+        """Compatibility alias matching the domain Execution identity property."""
+
+        return self.execution_id
 
     @classmethod
     def from_schedule(cls, schedule: Schedule) -> ScheduleSnapshot:
@@ -77,7 +84,7 @@ class ExecutionSnapshot:
 
     execution_id: ExecutionId
     request_id: str
-    state: str
+    state: ExecutionState
     created_at: Instant
     attempt_count: int
     active_attempt_number: int | None
@@ -96,7 +103,7 @@ class ExecutionSnapshot:
         return cls(
             execution_id=execution.id,
             request_id=execution.request_id.value,
-            state=execution.state.value,
+            state=execution.state,
             created_at=execution.created_at,
             attempt_count=execution.attempt_count,
             active_attempt_number=execution.active_attempt_number,
@@ -114,6 +121,7 @@ class ExecutionSnapshot:
                 result.failure.code if result is not None and result.failure is not None else None
             ),
             completed_at=result.completed_at if result is not None else None,
+            policy_snapshot=execution.policy_snapshot,
         )
 
 

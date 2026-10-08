@@ -272,8 +272,8 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
     connection.execute("PRAGMA foreign_keys = ON")
 
     if not _schema_metadata_exists(connection):
-        _create_v8_schema(connection)
-        return
+        if _create_v8_schema(connection):
+            return
 
     row = connection.execute("SELECT version FROM pyschedulekit_schema LIMIT 1").fetchone()
     if row is None:
@@ -321,9 +321,13 @@ def _schema_metadata_exists(connection: sqlite3.Connection) -> bool:
     )
 
 
-def _create_v8_schema(connection: sqlite3.Connection) -> None:
+def _create_v8_schema(connection: sqlite3.Connection) -> bool:
     connection.execute("BEGIN IMMEDIATE")
     try:
+        if _schema_metadata_exists(connection):
+            connection.rollback()
+            return False
+
         connection.execute(
             "CREATE TABLE pyschedulekit_schema (version INTEGER NOT NULL CHECK(version >= 1))"
         )
@@ -349,6 +353,7 @@ def _create_v8_schema(connection: sqlite3.Connection) -> None:
         connection.rollback()
         raise
     _verify_v8_schema(connection)
+    return True
 
 
 def _migrate_v1_to_v2(connection: sqlite3.Connection) -> None:

@@ -8,11 +8,12 @@ from pyschedulekit.application.execution_service import ExecutionNotFoundError
 from pyschedulekit.domain.execution import Execution, ExecutionId
 from pyschedulekit.domain.schedule import Schedule, ScheduleId, ScheduleState
 from pyschedulekit.domain.time import Instant
+from pyschedulekit.errors import PyScheduleKitNotFoundError
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
 
 
-class ScheduleNotFoundError(LookupError):
+class ScheduleNotFoundError(PyScheduleKitNotFoundError):
     """Raised when an operational Schedule lookup cannot resolve an identity."""
 
 

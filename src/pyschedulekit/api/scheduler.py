@@ -102,9 +102,7 @@ class Scheduler:
             uow_factory if uow_factory is not None else InMemoryUnitOfWorkFactory()
         )
         self._registry = registry if registry is not None else PythonTargetRegistry()
-        self._http_registry = (
-            http_registry if http_registry is not None else HttpTargetRegistry()
-        )
+        self._http_registry = http_registry if http_registry is not None else HttpTargetRegistry()
         configured_executors: dict[str, Executor] = {
             "python": LocalExecutor(
                 registry=self._registry,

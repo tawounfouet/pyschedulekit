@@ -6,8 +6,8 @@ from pyschedulekit.testing.triggers import TriggerContractSuite, TriggerContract
 
 __all__ = [
     "FixedClock",
-    "add_request_with_parent",
     "MutableClock",
     "TriggerContractSuite",
     "TriggerContractViolation",
+    "add_request_with_parent",
 ]

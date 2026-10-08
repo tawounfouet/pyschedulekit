@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout candidate commit
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
 
@@ -62,7 +62,7 @@ jobs:
           fi
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
           cache: pip
@@ -107,7 +107,7 @@ jobs:
           subject-checksums: release-candidate-sha256.txt
 
       - name: Upload qualified release candidate
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: release-candidate-dists-${{ steps.release-tag.outputs.value }}
           path: |
@@ -132,7 +132,7 @@ jobs:
 
     steps:
       - name: Download exact qualified release candidate
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: release-candidate-dists-${{ needs.qualify-release-candidate.outputs.release-tag }}
           path: release-candidate/
@@ -160,10 +160,10 @@ jobs:
 
     steps:
       - name: Checkout tagged source for smoke-test script
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
 
@@ -211,7 +211,7 @@ jobs:
 
     steps:
       - name: Download exact qualified release candidate
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
           name: release-candidate-dists-${{ needs.qualify-release-candidate.outputs.release-tag }}
           path: release-candidate/

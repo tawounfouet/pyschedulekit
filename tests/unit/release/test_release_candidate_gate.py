@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-
 from scripts import verify_release_candidate as release_gate
 
 

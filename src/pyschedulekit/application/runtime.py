@@ -8,10 +8,11 @@ from pyschedulekit.application.observability import Observer
 from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
 from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.time import Duration
+from pyschedulekit.errors import PyScheduleKitStateError
 from pyschedulekit.ports.runtime import LoopWaiter
 
 
-class RuntimeAlreadyRunningError(RuntimeError):
+class RuntimeAlreadyRunningError(PyScheduleKitStateError):
     """Raised when the same runtime is started more than once concurrently."""
 
 

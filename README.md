@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-32 complete — next: LOT-33 Additional Executors**
+**LOT-33 complete — next: LOT-34 Public API Hardening**
 
 Completed:
 
@@ -43,6 +43,7 @@ Completed:
 - LOT-30 — Observability
 - LOT-31 — Operational API
 - LOT-32 — Retention / Cleanup
+- LOT-33 — Additional Executors
 
 The implementation follows a domain-first roadmap:
 
@@ -739,6 +740,54 @@ The following are never cleanup candidates: active/non-terminal execution state,
 `limit` is a global logical cleanup budget for one call. Cleanup is transactional and emits `retention.cleanup.completed` through the existing observability port.
 
 SQLite schema v8 adds an indexed `executions.completed_at` column plus retention indexes for executions, requests, and published outbox messages. Existing v7 data is migrated and terminal completion timestamps are backfilled from the durable execution result JSON.
+
+## Additional executors
+
+LOT-33 removes the last hard wiring between `Scheduler` and `LocalExecutor`.
+
+Execution now routes by declarative target kind:
+
+```text
+TargetRef.python(...) ─┐
+                      ├─→ RoutingExecutor → concrete Executor
+TargetRef.http(...)   ─┤
+TargetRef.workflow(...)┘   (when a custom executor is supplied)
+```
+
+Python and HTTP are configured by default. HTTP targets remain opaque registry references rather than persisted raw request configuration:
+
+```python
+from pyschedulekit import HttpRequestSpec
+
+target = scheduler.register_http_target(
+    "billing-webhook",
+    HttpRequestSpec(url="https://example.test/hooks/billing"),
+)
+```
+
+The HTTP adapter is dependency-free and uses the Python standard library. It classifies 4xx failures as permanent except retry-oriented statuses such as 408/425/429, while 5xx and transport failures are transient.
+
+Distributed metadata crosses the executor boundary:
+
+```text
+Execution.idempotency_key
+        ↓
+Idempotency-Key
+
+ExecutionClaim.generation
+        ↓
+X-PyScheduleKit-Fencing-Token
+```
+
+Custom target kinds can be injected without modifying the runtime:
+
+```python
+scheduler = Scheduler(
+    executors={"workflow": workflow_executor},
+)
+```
+
+Executor adapters still return normalized `ExecutorOutcome` values; retry, timeout, cancellation, claims, Attempt lifecycle, persistence, and observability remain application-layer responsibilities.
 
 ## Package shape
 

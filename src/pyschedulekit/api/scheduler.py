@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from threading import Lock
 from time import monotonic
 from uuid import uuid4
@@ -59,13 +59,20 @@ from pyschedulekit.domain.time import Duration, Timezone
 from pyschedulekit.domain.trigger import Trigger
 from pyschedulekit.domain.triggers import CronTrigger
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
+from pyschedulekit.infrastructure.http_executor import (
+    HttpExecutor,
+    HttpRequestSpec,
+    HttpTargetRegistry,
+)
 from pyschedulekit.infrastructure.local_executor import (
     LocalExecutor,
     PythonTargetRegistry,
 )
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
 from pyschedulekit.infrastructure.runtime import EventLoopWaiter
 from pyschedulekit.infrastructure.time import SystemClock
+from pyschedulekit.ports.executor import Executor
 from pyschedulekit.ports.observability import ObservationSink
 from pyschedulekit.ports.outbox import OutboxPublisher
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
@@ -81,6 +88,8 @@ class Scheduler:
         clock: Clock | None = None,
         uow_factory: UnitOfWorkFactory | None = None,
         registry: PythonTargetRegistry | None = None,
+        http_registry: HttpTargetRegistry | None = None,
+        executors: Mapping[str, Executor] | None = None,
         worker_id: str | WorkerId | None = None,
         claim_ttl: Duration | None = None,
         lease_heartbeat_interval: Duration | None = None,
@@ -93,6 +102,20 @@ class Scheduler:
             uow_factory if uow_factory is not None else InMemoryUnitOfWorkFactory()
         )
         self._registry = registry if registry is not None else PythonTargetRegistry()
+        self._http_registry = http_registry if http_registry is not None else HttpTargetRegistry()
+        configured_executors: dict[str, Executor] = {
+            "python": LocalExecutor(
+                registry=self._registry,
+                clock=self._clock,
+            ),
+            "http": HttpExecutor(
+                registry=self._http_registry,
+                clock=self._clock,
+            ),
+        }
+        if executors is not None:
+            configured_executors.update(executors)
+        self._executor = RoutingExecutor(configured_executors)
         self._worker_id = (
             worker_id if isinstance(worker_id, WorkerId) else WorkerId(worker_id or uuid4().hex)
         )
@@ -161,10 +184,7 @@ class Scheduler:
         execution_runner = ExecutionRunner(
             uow_factory=self._uow_factory,
             execution_service=self._execution_service,
-            executor=LocalExecutor(
-                registry=self._registry,
-                clock=self._clock,
-            ),
+            executor=self._executor,
             clock=self._clock,
             claim_coordinator=self._claim_coordinator,
             lease_heartbeat_interval=self._lease_heartbeat_interval,
@@ -216,6 +236,16 @@ class Scheduler:
 
         self._registry.register(reference, target)
         return TargetRef.python(reference)
+
+    def register_http_target(
+        self,
+        reference: str,
+        request: HttpRequestSpec,
+    ) -> TargetRef:
+        """Register a trusted HTTP request and return its opaque declarative TargetRef."""
+
+        self._http_registry.register(reference, request)
+        return TargetRef.http(reference)
 
     def add_schedule(
         self,

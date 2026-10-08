@@ -137,6 +137,7 @@ class ExecutionRunner:
                 fencing_token=(
                     active_claim_handle.generation if active_claim_handle is not None else None
                 ),
+                idempotency_key=execution_snapshot.idempotency_key.value,
             )
             completed_at = self._clock.now()
 
@@ -202,6 +203,7 @@ class ExecutionRunner:
                 state=execution.state.value,
                 succeeded=outcome.succeeded,
                 retry_scheduled=not execution.is_terminal,
+                target_kind=execution_snapshot.target.kind,
                 failure_category=(
                     outcome.failure.category.value if outcome.failure is not None else "NONE"
                 ),

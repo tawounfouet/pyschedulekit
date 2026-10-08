@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- `RoutingExecutor` for explicit target-kind dispatch.
+- Dependency-free `HttpExecutor`, `HttpTargetRegistry`, `HttpRequestSpec`, and `HttpMethod`.
+- Public Scheduler HTTP-target registration and custom executor injection.
+- Executor-port idempotency-key propagation from durable Execution identity.
+- HTTP `Idempotency-Key` and `X-PyScheduleKit-Fencing-Token` propagation.
+- Normalized HTTP status, transport, timeout, and cancellation failure semantics.
+- `target_kind` on execution-attempt observations.
+- LOT-33 routing, HTTP, retry, metadata propagation, custom-executor, and end-to-end qualification.
 - Explicit `RetentionPolicy` and `Scheduler.cleanup()` operational API.
 - Transactional bounded cleanup for terminal Execution graphs and terminal orphan requests.
 - Published-only outbox retention; pending outbox messages are never cleanup candidates.

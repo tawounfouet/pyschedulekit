@@ -83,11 +83,25 @@ from pyschedulekit.domain.triggers import (
     DateTrigger,
     IntervalTrigger,
 )
+from pyschedulekit.infrastructure.http_executor import (
+    HttpExecutor,
+    HttpMethod,
+    HttpRequestSpec,
+    HttpTargetRegistry,
+)
 from pyschedulekit.infrastructure.observability import InMemoryObservationSink
+from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.ports.cancellation import (
     CancellationToken,
     ExecutionCancelledError,
+)
+from pyschedulekit.ports.executor import (
+    Executor,
+    ExecutorOutcome,
+    PreparedTarget,
+    TargetResolutionError,
+    UnsupportedTargetError,
 )
 from pyschedulekit.ports.observability import Observation, ObservationSink
 from pyschedulekit.ports.outbox import OutboxPublisher
@@ -120,9 +134,15 @@ __all__ = [
     "ExecutionId",
     "ExecutionNotFoundError",
     "ExecutionSnapshot",
+    "Executor",
+    "ExecutorOutcome",
     "ExponentialBackoff",
     "FixedBackoff",
     "GracePeriod",
+    "HttpExecutor",
+    "HttpMethod",
+    "HttpRequestSpec",
+    "HttpTargetRegistry",
     "InMemoryObservationSink",
     "Instant",
     "IntervalTrigger",
@@ -138,6 +158,7 @@ __all__ = [
     "OutboxPublishError",
     "OutboxPublisher",
     "OutboxState",
+    "PreparedTarget",
     "ReconciliationActiveRuntimeError",
     "ReconciliationIncompleteError",
     "ReconciliationIssue",
@@ -146,6 +167,7 @@ __all__ = [
     "RetryDecision",
     "RetryDecisionReason",
     "RetryPolicy",
+    "RoutingExecutor",
     "RunPendingError",
     "RunPendingResult",
     "RuntimeAlreadyRunningError",
@@ -163,7 +185,9 @@ __all__ = [
     "ShutdownResult",
     "SqliteUnitOfWorkFactory",
     "TargetRef",
+    "TargetResolutionError",
     "Timezone",
+    "UnsupportedTargetError",
     "WorkerId",
     "__version__",
 ]

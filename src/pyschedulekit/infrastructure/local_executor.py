@@ -132,7 +132,10 @@ class LocalExecutor:
         timeout: Duration | None = None,
         cancellation_token: CancellationToken | None = None,
         fencing_token: int | None = None,
+        idempotency_key: str | None = None,
     ) -> ExecutorOutcome:
+        del idempotency_key
+
         if not isinstance(prepared, PreparedPythonTarget):
             raise TargetResolutionError(
                 "LocalExecutor can only execute PreparedPythonTarget values."

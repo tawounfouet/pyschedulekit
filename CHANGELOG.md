@@ -6,7 +6,16 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ## [Unreleased]
 
+## [0.1.0a1] - 2026-10-08
+
 ### Added
+
+- Manual Release Readiness rehearsal workflow that never creates or pushes a release tag.
+- Executable release preflight covering version identity, frozen changelog, and external-control acknowledgements.
+- Explicit GO / NO-GO checklist for the first real release.
+- Deterministic failure/retry/recovery matrix across qualification, TestPyPI, PyPI, and GitHub Release stages.
+- Yank-and-fix-forward policy for defective published artifacts; published versions are never overwritten.
+- Immutable Release recovery discipline and security-incident release procedure.
 
 - GitHub artifact build-provenance attestations for tagged wheel/sdist release candidates.
 - SHA-pinned official `actions/attest` integration with tag-only provenance generation.

@@ -88,7 +88,7 @@ def test_t_executor_e2e_001_http_runs_through_public_scheduler(monkeypatch) -> N
         return _Response(204)
 
     monkeypatch.setattr(
-        "pyschedulekit.infrastructure.http_executor.urlopen",
+        "pyschedulekit.infrastructure.http_executor._open_http_request",
         fake_urlopen,
     )
 
@@ -128,7 +128,7 @@ def test_t_executor_e2e_002_http_transient_failure_uses_retry_policy(monkeypatch
         return _Response(200)
 
     monkeypatch.setattr(
-        "pyschedulekit.infrastructure.http_executor.urlopen",
+        "pyschedulekit.infrastructure.http_executor._open_http_request",
         flaky_urlopen,
     )
 

@@ -59,6 +59,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, Timezone
 from pyschedulekit.domain.trigger import Trigger
 from pyschedulekit.domain.triggers import CronTrigger
+from pyschedulekit.errors import PyScheduleKitConfigurationError
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor,
@@ -127,9 +128,13 @@ class Scheduler:
             else Duration.seconds(self._claim_ttl.total_seconds / 3)
         )
         if self._lease_heartbeat_interval.total_seconds <= 0:
-            raise ValueError("lease_heartbeat_interval must be greater than zero.")
+            raise PyScheduleKitConfigurationError(
+                "lease_heartbeat_interval must be greater than zero."
+            )
         if self._lease_heartbeat_interval >= self._claim_ttl:
-            raise ValueError("lease_heartbeat_interval must be shorter than claim_ttl.")
+            raise PyScheduleKitConfigurationError(
+                "lease_heartbeat_interval must be shorter than claim_ttl."
+            )
         self._admission_lock_ttl = (
             admission_lock_ttl if admission_lock_ttl is not None else Duration.seconds(5)
         )
@@ -487,7 +492,9 @@ class Scheduler:
         """Continuously run with adaptive wake-up bounded by max_sleep."""
 
         if max_sleep is not None and poll_interval is not None:
-            raise ValueError("Use either max_sleep or poll_interval, not both.")
+            raise PyScheduleKitConfigurationError(
+                "Use either max_sleep or poll_interval, not both."
+            )
 
         effective_max_sleep = max_sleep or poll_interval or Duration.seconds(1)
         self._ensure_recovered()

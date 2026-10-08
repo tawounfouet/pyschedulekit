@@ -224,6 +224,7 @@ class Scheduler:
                 clock=self._clock,
                 uow_factory=self._uow_factory,
             ),
+            clock=self._clock,
             observer=self._observer,
         )
 

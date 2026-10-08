@@ -47,9 +47,14 @@ def test_concurrent_fresh_database_bootstrap_is_atomic_and_idempotent(tmp_path) 
         database = tmp_path / f"scheduler-{round_number}.db"
         barrier = Barrier(workers)
 
-        def initialize(_: int) -> None:
-            barrier.wait(timeout=5)
-            factory = SqliteUnitOfWorkFactory(database)
+        def initialize(
+            _: int,
+            *,
+            start_barrier=barrier,
+            target_database=database,
+        ) -> None:
+            start_barrier.wait(timeout=5)
+            factory = SqliteUnitOfWorkFactory(target_database)
             with factory():
                 pass
 

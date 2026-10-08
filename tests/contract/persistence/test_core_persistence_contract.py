@@ -23,7 +23,10 @@ from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
-from pyschedulekit.ports.persistence import ReferentialIntegrityError, UnitOfWorkFactory
+from pyschedulekit.ports.persistence import (
+    ReferentialIntegrityError,
+    UnitOfWorkFactory,
+)
 
 
 _BACKENDS = ("memory", "sqlite")

@@ -45,6 +45,7 @@ def test_t_testpypi_003_publish_action_is_sha_pinned_without_static_credentials(
 
     assert f"pypa/gh-action-pypi-publish@{ACTION_SHA}" in publish_section
     assert "repository-url: https://test.pypi.org/legacy/" in publish_section
+    assert "attestations: true" in publish_section
     assert "username:" not in publish_section
     assert "password:" not in publish_section
     assert "PYPI_TOKEN" not in publish_section

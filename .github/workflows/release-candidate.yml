@@ -18,6 +18,11 @@ jobs:
   qualify-release-candidate:
     name: Qualify release candidate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     outputs:
       release-tag: ${{ steps.release-tag.outputs.value }}
       package-version: ${{ steps.package-version.outputs.value }}
@@ -94,6 +99,12 @@ jobs:
 
       - name: Record release candidate checksums
         run: sha256sum dist/* | tee release-candidate-sha256.txt
+
+      - name: Attest tagged release candidate build provenance
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-checksums: release-candidate-sha256.txt
 
       - name: Upload qualified release candidate
         uses: actions/upload-artifact@v4
@@ -268,3 +279,104 @@ jobs:
         run: |
           cd /tmp
           python "$GITHUB_WORKSPACE/scripts/smoke_installed_package.py"
+
+
+  create-github-release:
+    name: Create GitHub prerelease with qualified assets
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - qualify-release-candidate
+      - verify-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      attestations: read
+
+    steps:
+      - name: Download exact qualified release candidate
+        uses: actions/download-artifact@v5
+        with:
+          name: release-candidate-dists-${{ needs.qualify-release-candidate.outputs.release-tag }}
+          path: release-candidate/
+
+      - name: Verify retained candidate checksums
+        shell: bash
+        run: |
+          cd release-candidate
+          sha256sum --check release-candidate-sha256.txt
+
+      - name: Verify GitHub build provenance before release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for artifact in release-candidate/dist/*; do
+            gh attestation verify "$artifact" --repo "$GITHUB_REPOSITORY"
+          done
+
+      - name: Create GitHub prerelease from existing tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.qualify-release-candidate.outputs.release-tag }}
+          PACKAGE_VERSION: ${{ needs.qualify-release-candidate.outputs.package-version }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            release-candidate/dist/* \
+            release-candidate/release-candidate-sha256.txt \
+            --verify-tag \
+            --title "PyScheduleKit $PACKAGE_VERSION" \
+            --generate-notes \
+            --prerelease \
+            --latest=false
+
+  verify-github-release:
+    name: Verify GitHub release assets and provenance
+    needs:
+      - qualify-release-candidate
+      - create-github-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      attestations: read
+
+    steps:
+      - name: Verify GitHub release metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.qualify-release-candidate.outputs.release-tag }}
+        run: |
+          test "$(gh release view "$RELEASE_TAG" --json tagName --jq .tagName)" = "$RELEASE_TAG"
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = "false"
+          test "$(gh release view "$RELEASE_TAG" --json isPrerelease --jq .isPrerelease)" = "true"
+
+      - name: Download GitHub release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.qualify-release-candidate.outputs.release-tag }}
+        run: |
+          mkdir -p release-assets/dist
+          gh release download "$RELEASE_TAG" \
+            --dir release-assets/dist \
+            --pattern '*.whl' \
+            --pattern '*.tar.gz'
+          gh release download "$RELEASE_TAG" \
+            --dir release-assets \
+            --pattern 'release-candidate-sha256.txt'
+
+      - name: Verify downloaded release assets against checksum manifest
+        shell: bash
+        run: |
+          cd release-assets
+          sha256sum --check release-candidate-sha256.txt
+
+      - name: Verify GitHub build provenance for released artifacts
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for artifact in release-assets/dist/*; do
+            gh attestation verify "$artifact" --repo "$GITHUB_REPOSITORY"
+          done

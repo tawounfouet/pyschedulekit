@@ -1,193 +1,126 @@
-"""PyScheduleKit public package."""
+"""Stable convenience imports for PyScheduleKit."""
+
+from __future__ import annotations
+
+import warnings
+from importlib import import_module
 
 from pyschedulekit._version import __version__
-from pyschedulekit.api import Scheduler
-from pyschedulekit.application.execution_service import ExecutionNotFoundError
-from pyschedulekit.application.operations import (
-    ExecutionSnapshot,
-    ScheduleNotFoundError,
-    SchedulerHealth,
-    SchedulerReadiness,
-    ScheduleSnapshot,
-)
-from pyschedulekit.application.outbox import (
-    OutboxDispatchResult,
-    OutboxPublishError,
-)
-from pyschedulekit.application.reconciliation import (
-    ReconciliationActiveRuntimeError,
-    ReconciliationIncompleteError,
-    ReconciliationIssue,
-    ReconciliationResult,
-)
-from pyschedulekit.application.recovery import (
-    CrashRecoveryActiveRuntimeError,
-    CrashRecoveryError,
-    CrashRecoveryIncompleteError,
-    CrashRecoveryResult,
-)
-from pyschedulekit.application.retention import CleanupResult, RetentionPolicy
-from pyschedulekit.application.run_pending import (
-    RunPendingError,
-    RunPendingResult,
-)
-from pyschedulekit.application.runtime import RuntimeAlreadyRunningError
-from pyschedulekit.application.shutdown import ShutdownMode, ShutdownResult
-from pyschedulekit.domain.admission_lock import (
-    AdmissionLockOwnershipError,
-    AdmissionToken,
-    ScheduleAdmissionLock,
-    ScheduleAdmissionLockHandle,
-    ScheduleAdmissionLockState,
-)
-from pyschedulekit.domain.claim import (
-    ClaimOwnershipError,
-    ClaimToken,
-    ExecutionClaim,
-    ExecutionClaimHandle,
-    ExecutionClaimState,
-    WorkerId,
-)
-from pyschedulekit.domain.concurrency import (
+from pyschedulekit.api import (
+    AdmissionSnapshot,
+    AttemptId,
+    CancellationToken,
+    CleanupResult,
+    Clock,
+    ConcurrencyDecision,
     ConcurrencyDecisionAction,
     ConcurrencyMode,
     ConcurrencyOverflowPolicy,
     ConcurrencyPolicy,
-)
-from pyschedulekit.domain.execution import ExecutionId
-from pyschedulekit.domain.misfire import (
-    LatenessStatus,
-    MisfirePolicy,
-    MisfirePolicyAction,
-)
-from pyschedulekit.domain.outbox import (
-    OutboxMessage,
-    OutboxMessageId,
-    OutboxState,
-)
-from pyschedulekit.domain.retry import (
-    ExponentialBackoff,
-    FixedBackoff,
-    NoBackoff,
-    RetryDecision,
-    RetryDecisionReason,
-    RetryPolicy,
-)
-from pyschedulekit.domain.schedule import ScheduleId, ScheduleState, TargetRef
-from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
-from pyschedulekit.domain.triggers import (
+    CrashRecoveryActiveRuntimeError,
+    CrashRecoveryError,
+    CrashRecoveryIncompleteError,
+    CrashRecoveryResult,
     CronAmbiguousTimePolicy,
     CronDialect,
     CronNonexistentTimePolicy,
     CronTrigger,
     DateTrigger,
-    IntervalTrigger,
-)
-from pyschedulekit.infrastructure.http_executor import (
+    Duration,
+    ExecutionCancelledError,
+    ExecutionId,
+    ExecutionNotFoundError,
+    ExecutionPolicySnapshot,
+    ExecutionRunSnapshot,
+    ExecutionSnapshot,
+    ExecutionState,
+    Executor,
+    ExecutorOutcome,
+    ExponentialBackoff,
+    Failure,
+    FailureCategory,
+    FixedBackoff,
+    GracePeriod,
     HttpExecutor,
     HttpMethod,
     HttpRequestSpec,
     HttpTargetRegistry,
-)
-from pyschedulekit.infrastructure.observability import InMemoryObservationSink
-from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
-from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
-from pyschedulekit.ports.cancellation import (
-    CancellationToken,
-    ExecutionCancelledError,
-)
-from pyschedulekit.ports.executor import (
-    Executor,
-    ExecutorOutcome,
+    InMemoryObservationSink,
+    Instant,
+    IntervalTrigger,
+    LocalExecutor,
+    MisfirePolicy,
+    MisfirePolicyAction,
+    NoBackoff,
+    Observation,
+    ObservationSink,
+    OutboxDispatchResult,
+    OutboxMessage,
+    OutboxMessageId,
+    OutboxPublishError,
+    OutboxPublisher,
+    OutboxState,
     PreparedTarget,
+    PyScheduleKitConfigurationError,
+    PyScheduleKitDeprecationWarning,
+    PyScheduleKitError,
+    PyScheduleKitNotFoundError,
+    PyScheduleKitStateError,
+    PyScheduleKitTargetError,
+    PythonTargetRegistry,
+    ReconciliationActiveRuntimeError,
+    ReconciliationIncompleteError,
+    ReconciliationIssue,
+    ReconciliationResult,
+    RequestId,
+    RetentionPolicy,
+    RetryDecision,
+    RetryDecisionReason,
+    RetryPolicy,
+    RoutingExecutor,
+    RunPendingError,
+    RunPendingResult,
+    RuntimeAlreadyRunningError,
+    ScheduleId,
+    ScheduleNotFoundError,
+    ScheduleSnapshot,
+    ScheduleState,
+    Scheduler,
+    SchedulerHealth,
+    SchedulerReadiness,
+    ShutdownMode,
+    ShutdownResult,
+    SqliteUnitOfWorkFactory,
+    TargetRef,
     TargetResolutionError,
+    Timezone,
+    Trigger,
+    UnitOfWorkFactory,
     UnsupportedTargetError,
+    WorkerId,
 )
-from pyschedulekit.ports.observability import Observation, ObservationSink
-from pyschedulekit.ports.outbox import OutboxPublisher
+from pyschedulekit.api._manifest import LEGACY_ROOT_NAMES, STABLE_PUBLIC_NAMES
 
-__all__ = [
-    "AdmissionLockOwnershipError",
-    "AdmissionToken",
-    "CancellationToken",
-    "ClaimOwnershipError",
-    "ClaimToken",
-    "CleanupResult",
-    "ConcurrencyDecisionAction",
-    "ConcurrencyMode",
-    "ConcurrencyOverflowPolicy",
-    "ConcurrencyPolicy",
-    "CrashRecoveryActiveRuntimeError",
-    "CrashRecoveryError",
-    "CrashRecoveryIncompleteError",
-    "CrashRecoveryResult",
-    "CronAmbiguousTimePolicy",
-    "CronDialect",
-    "CronNonexistentTimePolicy",
-    "CronTrigger",
-    "DateTrigger",
-    "Duration",
-    "ExecutionCancelledError",
-    "ExecutionClaim",
-    "ExecutionClaimHandle",
-    "ExecutionClaimState",
-    "ExecutionId",
-    "ExecutionNotFoundError",
-    "ExecutionSnapshot",
-    "Executor",
-    "ExecutorOutcome",
-    "ExponentialBackoff",
-    "FixedBackoff",
-    "GracePeriod",
-    "HttpExecutor",
-    "HttpMethod",
-    "HttpRequestSpec",
-    "HttpTargetRegistry",
-    "InMemoryObservationSink",
-    "Instant",
-    "IntervalTrigger",
-    "LatenessStatus",
-    "MisfirePolicy",
-    "MisfirePolicyAction",
-    "NoBackoff",
-    "Observation",
-    "ObservationSink",
-    "OutboxDispatchResult",
-    "OutboxMessage",
-    "OutboxMessageId",
-    "OutboxPublishError",
-    "OutboxPublisher",
-    "OutboxState",
-    "PreparedTarget",
-    "ReconciliationActiveRuntimeError",
-    "ReconciliationIncompleteError",
-    "ReconciliationIssue",
-    "ReconciliationResult",
-    "RetentionPolicy",
-    "RetryDecision",
-    "RetryDecisionReason",
-    "RetryPolicy",
-    "RoutingExecutor",
-    "RunPendingError",
-    "RunPendingResult",
-    "RuntimeAlreadyRunningError",
-    "ScheduleAdmissionLock",
-    "ScheduleAdmissionLockHandle",
-    "ScheduleAdmissionLockState",
-    "ScheduleId",
-    "ScheduleNotFoundError",
-    "ScheduleSnapshot",
-    "ScheduleState",
-    "Scheduler",
-    "SchedulerHealth",
-    "SchedulerReadiness",
-    "ShutdownMode",
-    "ShutdownResult",
-    "SqliteUnitOfWorkFactory",
-    "TargetRef",
-    "TargetResolutionError",
-    "Timezone",
-    "UnsupportedTargetError",
-    "WorkerId",
-    "__version__",
-]
+__all__ = [*STABLE_PUBLIC_NAMES, "__version__"]
+
+_LEGACY_ROOT_NAMES = frozenset(LEGACY_ROOT_NAMES)
+
+
+def __getattr__(name: str) -> object:
+    if name not in _LEGACY_ROOT_NAMES:
+        raise AttributeError(f"module 'pyschedulekit' has no attribute {name!r}")
+
+    warnings.warn(
+        (
+            f"pyschedulekit.{name} is no longer part of the stable root API; "
+            f"import it from pyschedulekit.experimental instead."
+        ),
+        PyScheduleKitDeprecationWarning,
+        stacklevel=2,
+    )
+    experimental = import_module("pyschedulekit.experimental")
+    return getattr(experimental, name)
+
+
+def __dir__() -> list[str]:
+    return sorted({*globals(), *_LEGACY_ROOT_NAMES})

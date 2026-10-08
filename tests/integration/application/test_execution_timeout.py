@@ -18,6 +18,7 @@ from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRe
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 from pyschedulekit.testing import MutableClock
 
 
@@ -44,7 +45,7 @@ def _dispatch(
         retry_policy=retry,
     )
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     service = ExecutionService(uow_factory=factory)

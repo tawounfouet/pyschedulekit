@@ -18,15 +18,14 @@ class ReleasePreflightError(RuntimeError):
 class ExternalReadiness:
     """Operator-confirmed external controls that the repository cannot prove itself."""
 
-    testpypi_trusted_publisher: bool
     pypi_trusted_publisher: bool
     immutable_releases: bool
+    testpypi_trusted_publisher: bool = True
 
     @property
     def ready(self) -> bool:
         return (
-            self.testpypi_trusted_publisher
-            and self.pypi_trusted_publisher
+            self.pypi_trusted_publisher
             and self.immutable_releases
         )
 
@@ -65,8 +64,6 @@ def validate_release_preflight(
 
     if not readiness.ready:
         missing = []
-        if not readiness.testpypi_trusted_publisher:
-            missing.append("TestPyPI Trusted Publisher")
         if not readiness.pypi_trusted_publisher:
             missing.append("PyPI Trusted Publisher")
         if not readiness.immutable_releases:

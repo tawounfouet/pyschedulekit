@@ -10,14 +10,13 @@ def _workflow_text() -> str:
     return WORKFLOW.read_text(encoding="utf-8")
 
 
-def test_t_pypi_001_publish_job_requires_successful_testpypi_verification() -> None:
+def test_t_pypi_001_publish_job_requires_successful_qualification() -> None:
     workflow = _workflow_text()
     publish_section = workflow.split("  publish-pypi:", 1)[1].split(
         "  verify-pypi:",
         1,
     )[0]
 
-    assert "verify-testpypi" in publish_section
     assert "qualify-release-candidate" in publish_section
     assert "github.event_name == 'push'" in publish_section
     assert "startsWith(github.ref, 'refs/tags/v')" in publish_section

@@ -6,12 +6,12 @@ on:
       release_tag:
         description: "Canonical release tag to rehearse. This workflow never creates it."
         required: true
-        default: "v0.1.0a2"
+        default: "v0.1.0a3"
         type: string
       testpypi_trusted_publisher_ready:
         description: "TestPyPI Trusted Publisher matches the release-candidate workflow identity."
-        required: true
-        default: false
+        required: false
+        default: true
         type: boolean
       pypi_trusted_publisher_ready:
         description: "PyPI Trusted Publisher matches the release-candidate workflow identity."

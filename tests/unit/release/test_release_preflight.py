@@ -67,7 +67,6 @@ def test_t_release_preflight_003_rejects_unfrozen_changelog(tmp_path: Path) -> N
 @pytest.mark.parametrize(
     ("field", "expected"),
     [
-        ("testpypi_trusted_publisher", "TestPyPI Trusted Publisher"),
         ("pypi_trusted_publisher", "PyPI Trusted Publisher"),
         ("immutable_releases", "GitHub Immutable Releases"),
     ],

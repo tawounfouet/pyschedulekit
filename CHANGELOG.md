@@ -6,6 +6,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ## [Unreleased]
 
+## [0.1.0a3] - 2026-10-08
+
+### Changed
+
+- Streamlined release workflow to publish directly to PyPI via Trusted Publishing OIDC, aligning with `pyworkflowkit` and `pytransformkit`.
+- Bumped package version to `0.1.0a3`.
+
 ## [0.1.0a2] - 2026-10-08
 
 ### Fixed

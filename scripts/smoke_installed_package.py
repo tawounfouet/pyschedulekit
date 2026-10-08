@@ -12,7 +12,7 @@ import pyschedulekit.api as public_api
 def main() -> None:
     installed_version = version("pyschedulekit")
     assert installed_version == pyschedulekit.__version__
-    assert installed_version == "0.1.0a2"
+    assert installed_version == "0.1.0a3"
 
     assert pyschedulekit.Scheduler is public_api.Scheduler
     assert pyschedulekit.IntervalTrigger is public_api.IntervalTrigger

@@ -1,0 +1,112 @@
+name: Release Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Canonical release tag to rehearse. This workflow never creates it."
+        required: true
+        default: "v0.1.0a1"
+        type: string
+      testpypi_trusted_publisher_ready:
+        description: "TestPyPI Trusted Publisher matches the release-candidate workflow identity."
+        required: true
+        default: false
+        type: boolean
+      pypi_trusted_publisher_ready:
+        description: "PyPI Trusted Publisher matches the release-candidate workflow identity."
+        required: true
+        default: false
+        type: boolean
+      immutable_releases_ready:
+        description: "GitHub Immutable Releases is enabled for this repository."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  release-readiness:
+    name: Rehearse release without creating a tag
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require main branch
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "Release readiness must run from main; current ref is $GITHUB_REF." >&2
+            exit 1
+          fi
+
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Confirm external release controls
+        shell: bash
+        env:
+          TESTPYPI_READY: ${{ inputs.testpypi_trusted_publisher_ready }}
+          PYPI_READY: ${{ inputs.pypi_trusted_publisher_ready }}
+          IMMUTABLE_RELEASES_READY: ${{ inputs.immutable_releases_ready }}
+        run: |
+          test "$TESTPYPI_READY" = "true"
+          test "$PYPI_READY" = "true"
+          test "$IMMUTABLE_RELEASES_READY" = "true"
+
+      - name: Refuse an already-used release tag
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release tag $RELEASE_TAG already exists. Never reuse or move a release tag." >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install release tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[release]"
+
+      - name: Run release preflight
+        run: |
+          python -m scripts.release_preflight \
+            --release-tag "${{ inputs.release_tag }}" \
+            --testpypi-trusted-publisher-ready \
+            --pypi-trusted-publisher-ready \
+            --immutable-releases-ready
+
+      - name: Rehearse distribution build and validation
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
+          python -m build
+          python -m twine check --strict dist/*
+          python -m scripts.verify_distribution dist
+          python -m scripts.verify_release_candidate \
+            --release-tag "${{ inputs.release_tag }}" \
+            dist
+
+      - name: Show go-live tag commands
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          echo "Release readiness passed."
+          echo "This workflow intentionally did not create or push a tag."
+          echo
+          echo "Operator go-live commands:"
+          echo "  git fetch origin main"
+          echo "  git switch main"
+          echo "  git pull --ff-only origin main"
+          echo "  git tag -a $RELEASE_TAG -m 'PyScheduleKit $RELEASE_TAG'"
+          echo "  git push origin $RELEASE_TAG"

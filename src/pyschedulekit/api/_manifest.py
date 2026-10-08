@@ -56,6 +56,7 @@ STABLE_PUBLIC_NAMES = (
     "OutboxState",
     "PreparedTarget",
     "PyScheduleKitConfigurationError",
+    "PyScheduleKitDeprecationWarning",
     "PyScheduleKitError",
     "PyScheduleKitNotFoundError",
     "PyScheduleKitStateError",

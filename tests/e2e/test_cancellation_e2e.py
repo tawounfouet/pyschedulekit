@@ -12,7 +12,7 @@ from pyschedulekit import (
     RetryPolicy,
     Scheduler,
 )
-from pyschedulekit.application.run_pending import RunPendingResult
+from pyschedulekit import RunPendingResult
 from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.domain.execution_request import RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey

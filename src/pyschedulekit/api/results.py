@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from pyschedulekit.application.concurrency import AdmissionResult
 from pyschedulekit.application.execution_runner import ExecutionRunResult
 from pyschedulekit.application.operations import ExecutionSnapshot
-from pyschedulekit.application.run_pending import RunPendingResult as InternalRunPendingResult
+from pyschedulekit.application.run_pending import (
+    RunPendingError,
+    RunPendingResult as InternalRunPendingResult,
+)
 from pyschedulekit.domain.concurrency import ConcurrencyDecision, ConcurrencyDecisionAction
 from pyschedulekit.domain.execution import AttemptId, ExecutionId
 from pyschedulekit.domain.execution_request import RequestId
@@ -70,7 +73,7 @@ class RunPendingResult:
     unsupported_policy_schedules: tuple[ScheduleId, ...]
     recovery_limit_schedules: tuple[ScheduleId, ...]
     admissions: tuple[AdmissionSnapshot, ...]
-    errors: tuple[object, ...]
+    errors: tuple[RunPendingError, ...]
     claim_denied_execution_ids: tuple[ExecutionId, ...]
     materialization_denied_schedule_ids: tuple[ScheduleId, ...]
 

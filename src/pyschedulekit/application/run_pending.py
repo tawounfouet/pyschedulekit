@@ -19,7 +19,11 @@ from pyschedulekit.application.shutdown import (
 )
 from pyschedulekit.domain.claim import ClaimOwnershipError, ExecutionClaimHandle
 from pyschedulekit.domain.concurrency import ConcurrencyDecisionAction
-from pyschedulekit.domain.execution import Execution, ExecutionId
+from pyschedulekit.domain.execution import (
+    Execution,
+    ExecutionId,
+    InvalidExecutionTransitionError,
+)
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.domain.time import Instant
@@ -159,6 +163,7 @@ class RunPendingService:
                     )
                 )
             except PersistenceConflictError:
+                self._release_unstarted_claim(claim_handle)
                 errors.append(
                     RunPendingError(
                         request_id=request.id,
@@ -189,6 +194,15 @@ class RunPendingService:
                     self._execution_runner.run(
                         execution_id=execution.id,
                         claim_handle=claim_handle,
+                    )
+                )
+            except InvalidExecutionTransitionError:
+                self._release_unstarted_claim(claim_handle)
+                errors.append(
+                    RunPendingError(
+                        request_id=execution.request_id,
+                        code="execution.transition",
+                        message="Execution state changed concurrently; skipped this cycle.",
                     )
                 )
             except ClaimOwnershipError:

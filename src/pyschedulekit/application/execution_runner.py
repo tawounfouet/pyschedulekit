@@ -203,6 +203,7 @@ class ExecutionRunner:
                 state=execution.state.value,
                 succeeded=outcome.succeeded,
                 retry_scheduled=not execution.is_terminal,
+                target_kind=execution_snapshot.target.kind,
                 failure_category=(
                     outcome.failure.category.value if outcome.failure is not None else "NONE"
                 ),

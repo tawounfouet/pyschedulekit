@@ -10,9 +10,9 @@ from pyschedulekit import (
     ExecutionId,
     IntervalTrigger,
     RetryPolicy,
+    RunPendingResult,
     Scheduler,
 )
-from pyschedulekit import RunPendingResult
 from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.domain.execution_request import RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey

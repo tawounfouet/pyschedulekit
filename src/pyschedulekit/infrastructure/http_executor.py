@@ -56,9 +56,7 @@ class HttpRequestSpec:
                 "HTTP executor URL must use http:// or https:// with a host."
             )
         if parsed.username is not None or parsed.password is not None:
-            raise PyScheduleKitConfigurationError(
-                "HTTP executor URL must not embed credentials."
-            )
+            raise PyScheduleKitConfigurationError("HTTP executor URL must not embed credentials.")
 
         seen: set[str] = set()
         for name, value in self.headers:

@@ -5,7 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pyschedulekit.application.execution_service import ExecutionNotFoundError
-from pyschedulekit.domain.execution import Execution, ExecutionId, ExecutionPolicySnapshot, ExecutionState
+from pyschedulekit.domain.execution import (
+    Execution,
+    ExecutionId,
+    ExecutionPolicySnapshot,
+    ExecutionState,
+)
 from pyschedulekit.domain.schedule import Schedule, ScheduleId, ScheduleState
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.errors import PyScheduleKitNotFoundError

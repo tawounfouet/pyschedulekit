@@ -94,9 +94,7 @@ class HttpTargetRegistry:
         try:
             return self._targets[reference]
         except KeyError as exc:
-            raise TargetResolutionError(
-                f"HTTP target {reference!r} is not registered."
-            ) from exc
+            raise TargetResolutionError(f"HTTP target {reference!r} is not registered.") from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,9 +132,7 @@ class HttpExecutor:
         idempotency_key: str | None = None,
     ) -> ExecutorOutcome:
         if not isinstance(prepared, PreparedHttpTarget):
-            raise TargetResolutionError(
-                "HttpExecutor can only execute PreparedHttpTarget values."
-            )
+            raise TargetResolutionError("HttpExecutor can only execute PreparedHttpTarget values.")
         if timeout is not None and timeout.total_seconds <= 0:
             raise ValueError("Executor timeout must be greater than zero.")
         if cancellation_token is not None and cancellation_token.is_cancelled:
@@ -180,9 +176,7 @@ class HttpExecutor:
         retryable = status in {408, 425, 429} or status >= 500
         return ExecutorOutcome(
             failure=Failure(
-                category=(
-                    FailureCategory.TRANSIENT if retryable else FailureCategory.PERMANENT
-                ),
+                category=(FailureCategory.TRANSIENT if retryable else FailureCategory.PERMANENT),
                 code=f"http.status.{status}",
                 message="HTTP target returned a non-success status.",
                 occurred_at=self._clock.now(),

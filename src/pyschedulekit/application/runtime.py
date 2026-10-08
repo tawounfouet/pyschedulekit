@@ -10,6 +10,7 @@ from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.time import Duration
 from pyschedulekit.errors import PyScheduleKitStateError
 from pyschedulekit.ports.runtime import LoopWaiter
+from pyschedulekit.ports.time import Clock
 
 
 class RuntimeAlreadyRunningError(PyScheduleKitStateError):
@@ -25,11 +26,13 @@ class ContinuousSchedulerLoop:
         run_pending_service: RunPendingService,
         waiter: LoopWaiter,
         wakeup_planner: WakeUpPlanner,
+        clock: Clock,
         observer: Observer | None = None,
     ) -> None:
         self._run_pending_service = run_pending_service
         self._waiter = waiter
         self._wakeup_planner = wakeup_planner
+        self._clock = clock
         self._observer = observer or Observer()
         self._stop_event = Event()
         self._wake_event = Event()
@@ -99,9 +102,35 @@ class ContinuousSchedulerLoop:
             self._wake_event.clear()
             self._stopped_event.clear()
 
+        consecutive_failures = 0
         try:
             while not self._stop_event.is_set():
-                result = self._run_pending_service.run_pending(limit=limit)
+                try:
+                    result = self._run_pending_service.run_pending(limit=limit)
+                except Exception as exc:
+                    consecutive_failures += 1
+                    failed_at = self._clock.now()
+                    self._observer.record(
+                        name="runtime.cycle.error",
+                        recorded_at=failed_at,
+                        error_type=type(exc).__name__,
+                        consecutive_failures=consecutive_failures,
+                        retry_delay_seconds=max_sleep.total_seconds,
+                    )
+
+                    if self._stop_event.is_set():
+                        break
+
+                    self._wake_event.clear()
+                    self._waiter.wait(
+                        duration=max_sleep,
+                        wake_event=self._wake_event,
+                    )
+                    if self._stop_event.is_set():
+                        break
+                    continue
+
+                consecutive_failures = 0
                 with self._state_lock:
                     self._cycles_completed += 1
                     cycle_number = self._cycles_completed

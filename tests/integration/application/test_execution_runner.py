@@ -13,6 +13,7 @@ from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRe
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 from pyschedulekit.ports.executor import TargetResolutionError, UnsupportedTargetError
 from pyschedulekit.testing import MutableClock
 
@@ -38,7 +39,7 @@ def _persist_request(
         created_at=_instant(hour=9, minute=59),
     )
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
     return request
 

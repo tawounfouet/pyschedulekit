@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Release-engineering roadmap separated from the functional LOT roadmap.
+- Dedicated `release` optional dependency group with `build` and `twine`.
+- Wheel + sdist qualification through `python -m build`.
+- Strict distribution metadata and README validation with `twine check --strict`.
+- Artifact-level wheel/sdist contract verifier including PEP 561 marker checks.
+- Clean-install smoke qualification for wheel and sdist on Python 3.11, 3.12, and 3.13.
+- GitHub Actions distribution artifact retained for downstream publication without rebuilding.
+
 - Explicit stable API manifest shared by `pyschedulekit.api` and root convenience exports.
 - `pyschedulekit.experimental` namespace for low-level coordination primitives.
 - Deprecated compatibility shims for legacy root-level experimental imports.

@@ -104,3 +104,70 @@ jobs:
             release-candidate-sha256.txt
           if-no-files-found: error
           retention-days: 30
+
+
+  publish-testpypi:
+    name: Publish qualified candidate to TestPyPI
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - qualify-release-candidate
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/pyschedulekit
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download qualified release candidate
+        uses: actions/download-artifact@v5
+        with:
+          name: release-candidate-dists-${{ needs.qualify-release-candidate.outputs.release-tag }}
+          path: release-candidate/
+
+      - name: Verify retained candidate checksums
+        shell: bash
+        run: |
+          cd release-candidate
+          sha256sum --check release-candidate-sha256.txt
+
+      - name: Publish exact qualified distributions to TestPyPI
+        uses: pypa/gh-action-pypi-publish@f0b2c5066dd5e752990bc69b0109e84563bc8db1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: release-candidate/dist/
+
+  verify-testpypi:
+    name: Verify published package from TestPyPI
+    needs:
+      - qualify-release-candidate
+      - publish-testpypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout tagged source for smoke-test script
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install published package from TestPyPI
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            --index-url https://test.pypi.org/simple/ \
+            --no-deps \
+            "pyschedulekit==${{ needs.qualify-release-candidate.outputs.package-version }}"
+          python -m pip check
+
+      - name: Smoke-test TestPyPI installation outside source tree
+        shell: bash
+        run: |
+          cd /tmp
+          python "$GITHUB_WORKSPACE/scripts/smoke_installed_package.py"

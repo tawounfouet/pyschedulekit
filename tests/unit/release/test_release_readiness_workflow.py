@@ -31,7 +31,7 @@ def test_t_release_readiness_002_requires_external_control_acknowledgements() ->
 def test_t_release_readiness_003_refuses_non_main_and_existing_tag() -> None:
     workflow = _workflow_text()
 
-    assert 'refs/heads/main' in workflow
+    assert "refs/heads/main" in workflow
     assert "git ls-remote --exit-code --tags origin" in workflow
     assert "Never reuse or move a release tag." in workflow
 

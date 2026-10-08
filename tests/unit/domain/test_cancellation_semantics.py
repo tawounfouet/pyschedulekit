@@ -7,6 +7,8 @@ from pyschedulekit.domain.execution import (
     ExecutionId,
     ExecutionPolicySnapshot,
     ExecutionState,
+    Failure,
+    FailureCategory,
     IdempotencyKey,
 )
 from pyschedulekit.domain.execution_request import RequestId
@@ -60,3 +62,41 @@ def test_t_cancel_003_repeated_running_cancellation_request_is_idempotent() -> N
     assert execution.request_cancellation(requested_at=_instant(2)) is False
     assert execution.version == version
     assert execution.cancellation_requested_at == _instant(1)
+
+
+def _failure() -> Failure:
+    return Failure(
+        category=FailureCategory.TRANSIENT,
+        code="target.unavailable",
+        message="Target is temporarily unavailable.",
+        occurred_at=_instant(2),
+        retryable_hint=True,
+    )
+
+
+def test_t_cancel_004_requested_cancellation_prevents_retry_wait_on_failure() -> None:
+    execution = _execution()
+    attempt = execution.start_attempt(started_at=_instant())
+    execution.request_cancellation(requested_at=_instant(1))
+    attempt.fail(failure=_failure(), completed_at=_instant(2))
+
+    result = execution.finish_attempt(attempt=attempt, retry_at=_instant(10))
+
+    assert result is not None
+    assert execution.state is ExecutionState.FAILED
+    assert execution.state is not ExecutionState.RETRY_WAIT
+    assert execution.next_attempt_at is None
+
+
+def test_t_cancel_005_requested_cancellation_prevents_retry_wait_on_timeout() -> None:
+    execution = _execution()
+    attempt = execution.start_attempt(started_at=_instant())
+    execution.request_cancellation(requested_at=_instant(1))
+    attempt.timeout(completed_at=_instant(2))
+
+    result = execution.finish_attempt(attempt=attempt, retry_at=_instant(10))
+
+    assert result is not None
+    assert execution.state is ExecutionState.TIMED_OUT
+    assert execution.state is not ExecutionState.RETRY_WAIT
+    assert execution.next_attempt_at is None

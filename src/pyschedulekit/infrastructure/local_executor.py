@@ -184,6 +184,10 @@ class LocalExecutor:
         worker.start()
 
         if not completed.wait(timeout.total_seconds):
+            # LOT-17: a requested cancellation is normalized to CANCELLED even
+            # when the non-cooperative callable forces the timeout path.
+            if cancellation_token is not None and cancellation_token.is_cancelled:
+                return self._cancelled_outcome()
             return self._timeout_outcome()
 
         if crashes:

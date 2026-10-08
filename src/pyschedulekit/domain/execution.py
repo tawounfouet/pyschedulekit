@@ -517,7 +517,11 @@ class Execution:
         result = attempt.result
         self._active_attempt_number = None
 
-        if retry_at is not None:
+        # LOT-17: cancellation always wins over retry. A requested cancellation
+        # must never leave the Execution parked in RETRY_WAIT; when one is
+        # recorded the Execution terminates now (no RetryEvaluator decision,
+        # no later Attempt).
+        if retry_at is not None and self._cancellation_requested_at is None:
             if result.state not in (AttemptState.FAILED, AttemptState.TIMED_OUT):
                 raise InvalidExecutionTransitionError(
                     "Only failed or timed-out Attempts may enter RETRY_WAIT."

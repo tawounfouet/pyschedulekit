@@ -1,18 +1,21 @@
 """LOT-10 unit tests for registered-callable local execution."""
 
 from datetime import UTC, datetime
+from threading import Event, Thread
 
 import pytest
 
 from pyschedulekit.domain.execution import FailureCategory
 from pyschedulekit.domain.schedule import TargetRef
-from pyschedulekit.domain.time import Instant
+from pyschedulekit.domain.time import Duration, Instant
+from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.local_executor import (
     DuplicateTargetRegistrationError,
     InvalidCallableTargetError,
     LocalExecutor,
     PythonTargetRegistry,
 )
+from pyschedulekit.ports.cancellation import CancellationToken
 from pyschedulekit.ports.executor import TargetResolutionError, UnsupportedTargetError
 from pyschedulekit.testing import MutableClock
 
@@ -194,3 +197,44 @@ def test_local_executor_injects_fencing_token_when_requested() -> None:
 
     assert outcome.succeeded
     assert observed == [7]
+
+
+def test_local_executor_timeout_normalizes_requested_cancellation() -> None:
+    """LOT-17: a requested cancellation wins even when the timeout path fires."""
+
+    registry = PythonTargetRegistry()
+    started = Event()
+    release = Event()
+
+    def target(cancellation_token: CancellationToken) -> None:
+        del cancellation_token
+        started.set()
+        release.wait(1)  # ignores cancellation on purpose
+
+    registry.register("slow", target)
+    executor = LocalExecutor(registry=registry, clock=MutableClock(_instant()))
+    controller = InMemoryCancellationController()
+    token = controller.token_for("execution-1")
+    prepared = executor.prepare(TargetRef.python("slow"))
+
+    outcomes: list[object] = []
+    worker = Thread(
+        target=lambda: outcomes.append(
+            executor.execute(
+                prepared,
+                timeout=Duration.seconds(0.1),
+                cancellation_token=token,
+            )
+        )
+    )
+    worker.start()
+    assert started.wait(1)
+
+    controller.cancel("execution-1")
+    worker.join(2)
+    release.set()
+
+    assert not worker.is_alive()
+    outcome = outcomes[0]
+    assert outcome.failure is not None
+    assert outcome.failure.category is FailureCategory.CANCELLED

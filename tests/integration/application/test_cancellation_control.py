@@ -6,12 +6,17 @@ from time import sleep
 
 from pyschedulekit.application.execution_runner import ExecutionRunner, ExecutionRunResult
 from pyschedulekit.application.execution_service import ExecutionService
-from pyschedulekit.domain.execution import AttemptState, Execution, ExecutionState
+from pyschedulekit.domain.execution import (
+    AttemptState,
+    Execution,
+    ExecutionState,
+    FailureCategory,
+)
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRef
-from pyschedulekit.domain.time import Instant
+from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
@@ -27,6 +32,7 @@ def _dispatch(
     factory: InMemoryUnitOfWorkFactory,
     *,
     retry: RetryPolicy | None = None,
+    timeout: Duration | None = None,
 ) -> tuple[ExecutionService, Execution]:
     request = ExecutionRequest(
         id=RequestId("request-cancellation"),
@@ -38,6 +44,7 @@ def _dispatch(
         target=TargetRef.python("cancel-target"),
         created_at=_instant(),
         retry_policy=retry,
+        timeout=timeout,
     )
     with factory() as uow:
         uow.requests.add(request)
@@ -153,4 +160,63 @@ def test_t_cancel_run_003_retry_wait_cancellation_prevents_next_attempt() -> Non
     assert cancelled.state is ExecutionState.CANCELLED
     assert cancelled.attempt_count == 1
     with factory() as uow:
+        assert uow.executions.list_runnable(now=_instant(2), limit=10) == []
+
+
+def test_t_cancel_run_004_non_cooperative_timeout_is_cancelled_without_retry() -> None:
+    """LOT-17: cancellation wins over retry even through the timeout path."""
+
+    factory = InMemoryUnitOfWorkFactory()
+    service, execution = _dispatch(
+        factory,
+        retry=RetryPolicy(max_attempts=3),
+        timeout=Duration.seconds(0.1),
+    )
+    clock = MutableClock(_instant())
+    registry = PythonTargetRegistry()
+    controller = InMemoryCancellationController()
+    started = Event()
+    release = Event()
+    result_box: list[ExecutionRunResult] = []
+
+    def target(cancellation_token: CancellationToken) -> None:
+        del cancellation_token
+        started.set()
+        release.wait(1)  # ignores cancellation on purpose
+
+    registry.register("cancel-target", target)
+    runner = ExecutionRunner(
+        uow_factory=factory,
+        execution_service=service,
+        executor=LocalExecutor(registry=registry, clock=clock),
+        clock=clock,
+        cancellation_controller=controller,
+    )
+
+    worker = Thread(
+        target=lambda: result_box.append(runner.run(execution_id=execution.id)),
+    )
+    worker.start()
+    assert started.wait(1)
+
+    requested = service.request_cancellation(
+        execution_id=execution.id,
+        requested_at=_instant(1),
+    )
+    controller.cancel(execution.id.value)
+    worker.join(2)
+    release.set()
+
+    assert not worker.is_alive()
+    assert requested.cancellation_requested
+    assert len(result_box) == 1
+    result = result_box[0]
+    assert result.execution.state is ExecutionState.CANCELLED
+    assert result.retry_decision is None
+    assert result.outcome.failure is not None
+    assert result.outcome.failure.category is FailureCategory.CANCELLED
+
+    with factory() as uow:
+        attempts = uow.attempts.list_for_execution(execution.id)
+        assert [attempt.state for attempt in attempts] == [AttemptState.CANCELLED]
         assert uow.executions.list_runnable(now=_instant(2), limit=10) == []

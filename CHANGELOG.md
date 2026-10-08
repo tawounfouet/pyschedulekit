@@ -6,6 +6,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ## [Unreleased]
 
+## [0.1.0a2] - 2026-10-08
+
+### Fixed
+
+- Corrected the `pypa/gh-action-pypi-publish` action commit SHA to valid release commit `dc37677b2e1c63e2034f94d8a5b11f265b73ba33` (v1.14.2) in `.github/workflows/release-candidate.yml` and related tests/documentation.
+- Incremented package version to `0.1.0a2` following release runbook fix-forward discipline after `v0.1.0a1` publishing failure.
+
 ## [0.1.0a1] - 2026-10-08
 
 ### Added

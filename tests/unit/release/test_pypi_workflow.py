@@ -3,7 +3,7 @@
 from pathlib import Path
 
 WORKFLOW = Path(".github/workflows/release-candidate.yml")
-ACTION_SHA = "f0b2c5066dd5e752990bc69b0109e84563bc8db1"
+ACTION_SHA = "dc37677b2e1c63e2034f94d8a5b11f265b73ba33"
 
 
 def _workflow_text() -> str:

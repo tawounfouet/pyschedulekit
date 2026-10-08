@@ -144,7 +144,7 @@ jobs:
           sha256sum --check release-candidate-sha256.txt
 
       - name: Publish exact qualified distributions to TestPyPI
-        uses: pypa/gh-action-pypi-publish@f0b2c5066dd5e752990bc69b0109e84563bc8db1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: release-candidate/dist/
@@ -227,7 +227,7 @@ jobs:
           sha256sum --check release-candidate-sha256.txt
 
       - name: Publish exact qualified distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@f0b2c5066dd5e752990bc69b0109e84563bc8db1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
         with:
           packages-dir: release-candidate/dist/
           attestations: true

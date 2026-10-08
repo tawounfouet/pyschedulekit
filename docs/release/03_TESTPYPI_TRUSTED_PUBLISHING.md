@@ -102,7 +102,7 @@ The workflow uses the official PyPA publication action, pinned to an immutable c
 
 ```text
 pypa/gh-action-pypi-publish
-@f0b2c5066dd5e752990bc69b0109e84563bc8db1
+@dc37677b2e1c63e2034f94d8a5b11f265b73ba33
 ```
 
 The target repository is:

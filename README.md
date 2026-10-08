@@ -846,7 +846,7 @@ PyScheduleKitError
 └── PyScheduleKitTargetError
 ```
 
-PyScheduleKit is now packaged as a PEP 561 typed library. Version `0.1.0a1` is sourced only from `pyschedulekit._version` and reused by package metadata.
+PyScheduleKit is now packaged as a PEP 561 typed library. Version `0.1.0a3` is sourced only from `pyschedulekit._version` and reused by package metadata.
 
 ## Package shape
 
@@ -872,8 +872,30 @@ python -m pip install -U pip
 pip install -e ".[dev]"
 pytest
 ruff check .
+ruff format --check .
 mypy src
 ```
+
+## Audit (2026-10-08)
+
+A full codebase audit was produced on 2026-10-08. The documents are written in French and are the entry point for any remediation work:
+
+- [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) — verified facts, metrics, and 12 confirmed bugs (B1–B12) with `file:line` references.
+- [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) — scores, systemic pattern, architecture/security/process critique, repair-vs-rewrite verdict.
+- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — phased remediation plan (Phases 0–5) with ready-to-apply fixes and regression tests.
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system view, `run_pending()` lifecycle, key flows, data model, cross-cutting conventions.
+- [`INDEX.md`](./INDEX.md) — documentation entry point and code map.
+
+Current state of the quality gate (run from the repository root):
+
+```bash
+ruff check .          # passing
+ruff format --check . # FAILING on scripts/release_preflight.py (bug B3)
+mypy src              # passing
+pytest                # 453 tests passing, 86 % coverage
+```
+
+No environment variables are required: the library reads no configuration from the environment (`os.getenv` is forbidden inside `domain/` and unused elsewhere).
 
 ## Roadmap
 

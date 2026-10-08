@@ -1,5 +1,7 @@
 """LOT-33 unit tests for dependency-free HTTP execution."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from urllib.error import HTTPError, URLError
 from urllib.request import Request

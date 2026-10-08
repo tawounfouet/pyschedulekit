@@ -20,8 +20,8 @@ REL-01  Wheel + sdist Build                        ✅
 REL-02  Artifact / Metadata Validation             ✅
 REL-03  Clean-Install Matrix                       ✅
 REL-04  Version / Tag / Release Candidate Gate     ✅
-REL-05  TestPyPI Trusted Publishing               ⏭ NEXT
-REL-06  PyPI Trusted Publishing                    ⬜
+REL-05  TestPyPI Trusted Publishing                🟡 READY
+REL-06  PyPI Trusted Publishing                   ⏭ NEXT
 REL-07  GitHub Release + Provenance                ⬜
 REL-08  Release Runbook / Rollback Discipline      ⬜
 ```
@@ -133,4 +133,8 @@ The qualified release-candidate artifacts are retained for 30 days together with
 
 ## Next milestone
 
-REL-05 will add TestPyPI Trusted Publishing on top of the qualified release-candidate workflow, using the same built artifacts rather than rebuilding them.
+REL-05 is implemented in the release-candidate workflow and is waiting for external Trusted Publisher activation on TestPyPI.
+
+The implementation reuses the exact qualified artifact, grants OIDC permission only to the publication job, targets the dedicated `testpypi` environment, publishes through the official SHA-pinned PyPA action, and verifies the published package by reinstalling it from TestPyPI.
+
+REL-06 is the next implementation milestone. The real `v0.1.0a1` tag remains on hold until both TestPyPI and PyPI publication paths exist in the tagged commit.

@@ -1,0 +1,109 @@
+name: Distribution Qualification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-distributions:
+    name: Build and validate distributions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install release tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[release]"
+
+      - name: Build wheel and source distribution
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --pretty=%ct)"
+          python -m build
+
+      - name: Validate package metadata and README rendering
+        run: python -m twine check --strict dist/*
+
+      - name: Validate distribution contract
+        run: python scripts/verify_distribution.py dist
+
+      - name: Record distribution checksums
+        run: sha256sum dist/*
+
+      - name: Upload release distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  clean-install:
+    name: Install ${{ matrix.distribution }} on Python ${{ matrix.python-version }}
+    needs:
+      - build-distributions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+        distribution:
+          - wheel
+          - sdist
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Download release distributions
+        uses: actions/download-artifact@v5
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Select distribution artifact
+        id: artifact
+        shell: bash
+        run: |
+          if [[ "${{ matrix.distribution }}" == "wheel" ]]; then
+            artifact="$(find dist -maxdepth 1 -type f -name '*.whl' -print -quit)"
+          else
+            artifact="$(find dist -maxdepth 1 -type f -name '*.tar.gz' -print -quit)"
+          fi
+          test -n "$artifact"
+          echo "path=$artifact" >> "$GITHUB_OUTPUT"
+
+      - name: Install built distribution
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "${{ steps.artifact.outputs.path }}"
+          python -m pip check
+
+      - name: Smoke-test installed package outside source tree
+        shell: bash
+        run: |
+          cd /tmp
+          python "$GITHUB_WORKSPACE/scripts/smoke_installed_package.py"

@@ -190,7 +190,10 @@ def test_staged_queries_observe_uncommitted_work(
 ) -> None:
     factory = _factory(adapter, tmp_path)
     pending_request = _request(request_id="pending-request")
-    execution_request = _request(request_id="execution-request")
+    execution_request = _request(
+        ScheduleId("execution-schedule"),
+        request_id="execution-request",
+    )
     execution_request.mark_dispatched()
     execution = Execution.from_request(
         request=execution_request,

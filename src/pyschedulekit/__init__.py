@@ -83,13 +83,13 @@ from pyschedulekit.domain.triggers import (
     DateTrigger,
     IntervalTrigger,
 )
-from pyschedulekit.infrastructure.observability import InMemoryObservationSink
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor,
     HttpMethod,
     HttpRequestSpec,
     HttpTargetRegistry,
 )
+from pyschedulekit.infrastructure.observability import InMemoryObservationSink
 from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.ports.cancellation import (
@@ -107,7 +107,6 @@ from pyschedulekit.ports.observability import Observation, ObservationSink
 from pyschedulekit.ports.outbox import OutboxPublisher
 
 __all__ = [
-    "__version__",
     "AdmissionLockOwnershipError",
     "AdmissionToken",
     "CancellationToken",
@@ -156,8 +155,8 @@ __all__ = [
     "OutboxDispatchResult",
     "OutboxMessage",
     "OutboxMessageId",
-    "OutboxPublisher",
     "OutboxPublishError",
+    "OutboxPublisher",
     "OutboxState",
     "PreparedTarget",
     "ReconciliationActiveRuntimeError",
@@ -177,11 +176,11 @@ __all__ = [
     "ScheduleAdmissionLockState",
     "ScheduleId",
     "ScheduleNotFoundError",
+    "ScheduleSnapshot",
+    "ScheduleState",
     "Scheduler",
     "SchedulerHealth",
     "SchedulerReadiness",
-    "ScheduleSnapshot",
-    "ScheduleState",
     "ShutdownMode",
     "ShutdownResult",
     "SqliteUnitOfWorkFactory",
@@ -190,4 +189,5 @@ __all__ = [
     "Timezone",
     "UnsupportedTargetError",
     "WorkerId",
+    "__version__",
 ]

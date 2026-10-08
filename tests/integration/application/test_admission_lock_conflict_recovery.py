@@ -11,8 +11,15 @@ from pyschedulekit.domain.admission_lock import (
 from pyschedulekit.domain.claim import WorkerId
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
-from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRef
+from pyschedulekit.domain.schedule import (
+    Schedule,
+    ScheduleDefinition,
+    ScheduleId,
+    ScheduleRevision,
+    TargetRef,
+)
 from pyschedulekit.domain.time import Duration, Instant
+from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.ports.persistence import PersistenceConflictError
 
@@ -38,6 +45,17 @@ class ConflictAfterLockCoordinator(ConcurrencyCoordinator):
 def test_persistence_conflict_releases_owned_admission_lock_immediately() -> None:
     factory = InMemoryUnitOfWorkFactory()
     schedule_id = ScheduleId("schedule-conflict")
+    schedule = Schedule.create(
+        schedule_id=schedule_id,
+        definition=ScheduleDefinition(
+            target=TargetRef.python("jobs:conflict"),
+            trigger=IntervalTrigger(
+                every=Duration.minutes(10),
+                anchor=_instant(),
+            ),
+        ),
+        reference=_instant(),
+    )
     request = ExecutionRequest(
         id=RequestId("request-conflict"),
         occurrence_key=OccurrenceKey(
@@ -49,6 +67,7 @@ def test_persistence_conflict_releases_owned_admission_lock_immediately() -> Non
         created_at=_instant(),
     )
     with factory() as uow:
+        uow.schedules.add(schedule)
         uow.requests.add(request)
         uow.commit()
 

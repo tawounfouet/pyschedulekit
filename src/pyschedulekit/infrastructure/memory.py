@@ -438,11 +438,7 @@ class InMemoryExecutionRequestRepository:
         return candidates[:limit]
 
     def has_pending(self) -> bool:
-        with self._store._lock:
-            return any(
-                request.state is ExecutionRequestState.PENDING
-                for request in self._store._execution_requests.values()
-            )
+        return bool(self.list_pending(limit=1))
 
     def list_for_reconciliation(self, *, limit: int) -> list[ExecutionRequest]:
         if limit < 1:
@@ -662,7 +658,16 @@ class InMemoryExecutionRepository:
 
     def next_runnable_at(self, *, now: Instant) -> Instant | None:
         with self._store._lock:
-            executions = list(self._store._executions.values())
+            candidate_ids = set(self._store._executions)
+        candidate_ids.update(self._tracked)
+
+        executions: list[Execution] = []
+        for execution_id in candidate_ids:
+            execution = self._tracked.get(execution_id)
+            if execution is None:
+                execution = self.get(execution_id)
+            if execution is not None:
+                executions.append(execution)
 
         if any(execution.state is ExecutionState.QUEUED for execution in executions):
             return now
@@ -1393,6 +1398,34 @@ class InMemoryUnitOfWork:
         self.rollback()
         self._active = False
 
+    def _validate_referential_integrity_locked(self) -> None:
+        schedule_ids = set(self._store._schedules)
+        schedule_ids.update(self._schedules._new)
+        for request_id in self._requests._new:
+            request = self._requests._tracked[request_id]
+            if request.occurrence_key.schedule_id not in schedule_ids:
+                raise ReferentialIntegrityError(
+                    "ExecutionRequest references a Schedule that does not exist."
+                )
+
+        request_ids = set(self._store._execution_requests)
+        request_ids.update(self._requests._new)
+        for execution_id in self._executions._new:
+            execution = self._executions._tracked[execution_id]
+            if execution.request_id not in request_ids:
+                raise ReferentialIntegrityError(
+                    "Execution references an ExecutionRequest that does not exist."
+                )
+
+        execution_ids = set(self._store._executions)
+        execution_ids.update(self._executions._new)
+        for attempt_id in self._attempts._new:
+            attempt = self._attempts._tracked[attempt_id]
+            if attempt.execution_id not in execution_ids:
+                raise ReferentialIntegrityError(
+                    "Attempt references an Execution that does not exist."
+                )
+
     def commit(self) -> None:
         self._require_active()
         repositories = (
@@ -1408,6 +1441,7 @@ class InMemoryUnitOfWork:
         )
 
         with self._store._lock:
+            self._validate_referential_integrity_locked()
             for repository in repositories:
                 repository._validate_commit_locked()
             for repository in repositories:

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Duration
+from pyschedulekit.errors import PyScheduleKitConfigurationError
 from pyschedulekit.ports.cancellation import CancellationToken
 from pyschedulekit.ports.executor import (
     Executor,
@@ -34,13 +35,19 @@ class RoutingExecutor:
         for kind, executor in executors.items():
             target_kind = kind.strip()
             if not target_kind:
-                raise ValueError("Executor target kind must not be empty.")
+                raise PyScheduleKitConfigurationError(
+                    "Executor target kind must not be empty."
+                )
             if target_kind in normalized:
-                raise ValueError(f"Duplicate executor target kind: {target_kind!r}.")
+                raise PyScheduleKitConfigurationError(
+                    f"Duplicate executor target kind: {target_kind!r}."
+                )
             normalized[target_kind] = executor
 
         if not normalized:
-            raise ValueError("RoutingExecutor requires at least one executor.")
+            raise PyScheduleKitConfigurationError(
+                "RoutingExecutor requires at least one executor."
+            )
 
         self._executors = normalized
 

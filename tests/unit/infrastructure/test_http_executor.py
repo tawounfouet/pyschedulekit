@@ -105,7 +105,7 @@ def test_t_http_004_success_propagates_execution_metadata(monkeypatch) -> None:
         return _Response(204)
 
     monkeypatch.setattr(
-        "pyschedulekit.infrastructure.http_executor.urlopen",
+        "pyschedulekit.infrastructure.http_executor._open_http_request",
         fake_urlopen,
     )
 
@@ -147,7 +147,7 @@ def test_t_http_005_status_classification(
         raise HTTPError(request.full_url, status, "failure", None, None)
 
     monkeypatch.setattr(
-        "pyschedulekit.infrastructure.http_executor.urlopen",
+        "pyschedulekit.infrastructure.http_executor._open_http_request",
         failing_urlopen,
     )
 
@@ -168,7 +168,7 @@ def test_t_http_006_transport_and_timeout_are_retryable(monkeypatch) -> None:
         raise URLError("connection refused")
 
     monkeypatch.setattr(
-        "pyschedulekit.infrastructure.http_executor.urlopen",
+        "pyschedulekit.infrastructure.http_executor._open_http_request",
         unreachable,
     )
     transport = executor.execute(executor.prepare(TargetRef.http("notify")))
@@ -181,7 +181,7 @@ def test_t_http_006_transport_and_timeout_are_retryable(monkeypatch) -> None:
         raise TimeoutError
 
     monkeypatch.setattr(
-        "pyschedulekit.infrastructure.http_executor.urlopen",
+        "pyschedulekit.infrastructure.http_executor._open_http_request",
         timed_out,
     )
     timeout = executor.execute(executor.prepare(TargetRef.http("notify")))
@@ -199,7 +199,7 @@ def test_t_http_007_pre_cancelled_request_never_performs_io(monkeypatch) -> None
         raise AssertionError("HTTP I/O should not run")
 
     monkeypatch.setattr(
-        "pyschedulekit.infrastructure.http_executor.urlopen",
+        "pyschedulekit.infrastructure.http_executor._open_http_request",
         should_not_run,
     )
 

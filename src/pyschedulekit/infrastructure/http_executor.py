@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import socket
 from dataclasses import dataclass
 from enum import StrEnum
 from urllib.error import HTTPError, URLError
@@ -162,10 +161,10 @@ class HttpExecutor:
                 status = int(response.status)
         except HTTPError as exc:
             return self._http_status_outcome(int(exc.code))
-        except (TimeoutError, socket.timeout):
+        except TimeoutError:
             return self._timeout_outcome()
         except URLError as exc:
-            if isinstance(exc.reason, (TimeoutError, socket.timeout)):
+            if isinstance(exc.reason, TimeoutError):
                 return self._timeout_outcome()
             return self._transport_outcome()
         except OSError:

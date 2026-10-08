@@ -23,7 +23,10 @@ REL-04  Version / Tag / Release Candidate Gate     ✅
 REL-05  TestPyPI Trusted Publishing                🟡 READY
 REL-06  PyPI Trusted Publishing                    🟡 READY
 REL-07  GitHub Release + Provenance                🟡 READY
-REL-08  Release Runbook / Rollback Discipline     ⏭ NEXT
+REL-08  Release Runbook / Rollback Discipline      ✅
+
+RELEASE ENGINEERING IMPLEMENTATION COMPLETE
+GO-LIVE PENDING EXTERNAL CONTROLS
 ```
 
 ## Release invariants
@@ -145,4 +148,6 @@ REL-07 is now implemented: tagged builds receive GitHub artifact provenance, and
 
 Before the first real tag, enable GitHub Immutable Releases so the published tag/assets receive release-level immutability and release attestation in addition to the build provenance.
 
-The real `v0.1.0a1` tag remains on hold until REL-08 is present and all external release controls are ready.
+REL-08 is now implemented with an executable preflight, a manual no-side-effect readiness rehearsal, a GO / NO-GO checklist, and deterministic retry/yank/fix-forward rules.
+
+The release-engineering implementation is complete. The real `v0.1.0a1` tag remains on hold until the external Trusted Publisher identities, GitHub environments, and Immutable Releases setting are ready and the Release Readiness workflow passes on `main`.

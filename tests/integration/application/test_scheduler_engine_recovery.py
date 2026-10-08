@@ -16,6 +16,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 
 
 def _instant(minute: int = 0) -> Instant:
@@ -154,7 +155,7 @@ def test_t_rec_005_coalesce_preserves_preexisting_durable_intent() -> None:
         created_at=_instant(),
     )
     with factory() as uow:
-        uow.requests.add(existing)
+        add_request_with_parent(uow=uow, request=existing)
         uow.commit()
 
     result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))
@@ -182,7 +183,7 @@ def test_t_rec_006_catch_up_reuses_existing_request_and_creates_missing_ones() -
         created_at=_instant(),
     )
     with factory() as uow:
-        uow.requests.add(existing)
+        add_request_with_parent(uow=uow, request=existing)
         uow.commit()
 
     result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))

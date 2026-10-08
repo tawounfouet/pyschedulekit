@@ -68,8 +68,8 @@ from pyschedulekit.infrastructure.local_executor import (
     LocalExecutor,
     PythonTargetRegistry,
 )
-from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
 from pyschedulekit.infrastructure.runtime import EventLoopWaiter
 from pyschedulekit.infrastructure.time import SystemClock
 from pyschedulekit.ports.executor import Executor

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyschedulekit"
-version = "0.1.0a0"
+dynamic = ["version"]
 description = "A domain-first Python scheduling framework built to make scheduling semantics explicit, testable, and durable."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["scheduling", "scheduler", "cron", "python", "domain-driven-design"]
 classifiers = [
-  "Development Status :: 2 - Pre-Alpha",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python",
@@ -43,6 +43,9 @@ Issues = "https://github.com/tawounfouet/pyschedulekit/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+version = { attr = "pyschedulekit._version.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]

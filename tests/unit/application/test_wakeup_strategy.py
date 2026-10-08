@@ -13,7 +13,7 @@ from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRef
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
-from pyschedulekit.testing import MutableClock
+from pyschedulekit.testing import MutableClock, add_request_with_parent
 
 
 def _instant(hour: int = 10, minute: int = 0) -> Instant:
@@ -88,7 +88,7 @@ def test_t_wakeup_004_pending_request_returns_zero_delay() -> None:
         created_at=_instant(),
     )
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.seconds(30))
@@ -111,7 +111,7 @@ def test_t_wakeup_005_waiting_admission_does_not_busy_loop() -> None:
         state=ExecutionRequestState.WAITING_ADMISSION,
     )
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     delay = _planner(clock=clock, factory=factory).next_delay(max_sleep=Duration.seconds(30))

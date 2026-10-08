@@ -438,11 +438,7 @@ class InMemoryExecutionRequestRepository:
         return candidates[:limit]
 
     def has_pending(self) -> bool:
-        with self._store._lock:
-            return any(
-                request.state is ExecutionRequestState.PENDING
-                for request in self._store._execution_requests.values()
-            )
+        return bool(self.list_pending(limit=1))
 
     def list_for_reconciliation(self, *, limit: int) -> list[ExecutionRequest]:
         if limit < 1:
@@ -662,17 +658,24 @@ class InMemoryExecutionRepository:
 
     def next_runnable_at(self, *, now: Instant) -> Instant | None:
         with self._store._lock:
-            executions = list(self._store._executions.values())
+            execution_ids = set(self._store._executions)
+        execution_ids.update(self._tracked)
 
-        if any(execution.state is ExecutionState.QUEUED for execution in executions):
-            return now
+        retry_times: list[Instant] = []
+        for execution_id in execution_ids:
+            execution = self._tracked.get(execution_id)
+            if execution is None:
+                execution = self.get(execution_id)
+            if execution is None:
+                continue
+            if execution.state is ExecutionState.QUEUED:
+                return now
+            if (
+                execution.state is ExecutionState.RETRY_WAIT
+                and execution.next_attempt_at is not None
+            ):
+                retry_times.append(execution.next_attempt_at)
 
-        retry_times = [
-            execution.next_attempt_at
-            for execution in executions
-            if execution.state is ExecutionState.RETRY_WAIT
-            and execution.next_attempt_at is not None
-        ]
         if not retry_times:
             return None
         next_retry = min(retry_times)
@@ -912,10 +915,6 @@ class InMemoryScheduleAdmissionLockRepository:
                 raise DuplicateAdmissionLockError(
                     f"ScheduleAdmissionLock {schedule_id.value!r} already exists."
                 )
-            if schedule_id not in self._store._schedules:
-                raise ReferentialIntegrityError(
-                    "ScheduleAdmissionLock references a Schedule that does not exist."
-                )
         for schedule_id in self._dirty:
             committed = self._store._admission_locks.get(schedule_id)
             expected = self._expected_versions[schedule_id]
@@ -993,10 +992,6 @@ class InMemoryScheduleMaterializationLeaseRepository:
             if schedule_id in self._store._materialization_leases:
                 raise DuplicateMaterializationLeaseError(
                     f"ScheduleMaterializationLease {schedule_id.value!r} already exists."
-                )
-            if schedule_id not in self._store._schedules:
-                raise ReferentialIntegrityError(
-                    "ScheduleMaterializationLease references a Schedule that does not exist."
                 )
 
         for schedule_id in self._dirty:
@@ -1076,10 +1071,6 @@ class InMemoryExecutionClaimRepository:
             if execution_id in self._store._claims:
                 raise DuplicateExecutionClaimError(
                     f"ExecutionClaim {execution_id.value!r} already exists."
-                )
-            if execution_id not in self._store._executions:
-                raise ReferentialIntegrityError(
-                    "ExecutionClaim references an Execution that does not exist."
                 )
 
         for execution_id in self._dirty:
@@ -1408,12 +1399,62 @@ class InMemoryUnitOfWork:
         )
 
         with self._store._lock:
+            self._validate_referential_integrity_locked()
             for repository in repositories:
                 repository._validate_commit_locked()
             for repository in repositories:
                 repository._apply_commit_locked()
             for repository in repositories:
                 repository._after_commit()
+
+    def _validate_referential_integrity_locked(self) -> None:
+        schedule_ids = set(self._store._schedules)
+        schedule_ids.update(self._schedules._new)
+
+        request_ids = set(self._store._execution_requests)
+        request_ids.update(self._requests._new)
+
+        execution_ids = set(self._store._executions)
+        execution_ids.update(self._executions._new)
+
+        for request_id in self._requests._new:
+            request = self._requests._tracked[request_id]
+            if request.occurrence_key.schedule_id not in schedule_ids:
+                raise ReferentialIntegrityError(
+                    "ExecutionRequest references a Schedule that does not exist."
+                )
+
+        for execution_id in self._executions._new:
+            execution = self._executions._tracked[execution_id]
+            if execution.request_id not in request_ids:
+                raise ReferentialIntegrityError(
+                    "Execution references an ExecutionRequest that does not exist."
+                )
+
+        for attempt_id in self._attempts._new:
+            attempt = self._attempts._tracked[attempt_id]
+            if attempt.execution_id not in execution_ids:
+                raise ReferentialIntegrityError(
+                    "Attempt references an Execution that does not exist."
+                )
+
+        for schedule_id in self._admission_locks._new:
+            if schedule_id not in schedule_ids:
+                raise ReferentialIntegrityError(
+                    "ScheduleAdmissionLock references a Schedule that does not exist."
+                )
+
+        for schedule_id in self._materialization_leases._new:
+            if schedule_id not in schedule_ids:
+                raise ReferentialIntegrityError(
+                    "ScheduleMaterializationLease references a Schedule that does not exist."
+                )
+
+        for execution_id in self._claims._new:
+            if execution_id not in execution_ids:
+                raise ReferentialIntegrityError(
+                    "ExecutionClaim references an Execution that does not exist."
+                )
 
     def rollback(self) -> None:
         self._schedules._rollback()

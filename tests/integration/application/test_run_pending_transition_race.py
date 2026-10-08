@@ -16,7 +16,7 @@ from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRe
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
-from pyschedulekit.testing import MutableClock
+from pyschedulekit.testing import MutableClock, add_request_with_parent
 
 
 def _instant(hour: int = 10, minute: int = 0) -> Instant:
@@ -70,7 +70,7 @@ def test_run_pending_survives_cancel_between_listing_and_attempt_start() -> None
         created_at=_instant(hour=9, minute=50),
     )
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     execution_service = ExecutionService(uow_factory=factory)

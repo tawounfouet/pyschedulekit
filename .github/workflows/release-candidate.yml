@@ -186,3 +186,85 @@ jobs:
         run: |
           cd /tmp
           python "$GITHUB_WORKSPACE/scripts/smoke_installed_package.py"
+
+
+  publish-pypi:
+    name: Publish verified release to PyPI
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs:
+      - qualify-release-candidate
+      - verify-testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pyschedulekit
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download exact qualified release candidate
+        uses: actions/download-artifact@v5
+        with:
+          name: release-candidate-dists-${{ needs.qualify-release-candidate.outputs.release-tag }}
+          path: release-candidate/
+
+      - name: Verify retained candidate checksums
+        shell: bash
+        run: |
+          cd release-candidate
+          sha256sum --check release-candidate-sha256.txt
+
+      - name: Publish exact qualified distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@f0b2c5066dd5e752990bc69b0109e84563bc8db1
+        with:
+          packages-dir: release-candidate/dist/
+          attestations: true
+
+  verify-pypi:
+    name: Verify published package from PyPI
+    needs:
+      - qualify-release-candidate
+      - publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout tagged source for smoke-test script
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install published package from PyPI
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+
+          package="pyschedulekit==${{ needs.qualify-release-candidate.outputs.package-version }}"
+          for attempt in 1 2 3 4 5 6; do
+            if python -m pip install \
+              --index-url https://pypi.org/simple/ \
+              --no-deps \
+              "$package"; then
+              break
+            fi
+
+            if [[ "$attempt" == "6" ]]; then
+              echo "Published package did not become installable from PyPI." >&2
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          python -m pip check
+
+      - name: Smoke-test PyPI installation outside source tree
+        shell: bash
+        run: |
+          cd /tmp
+          python "$GITHUB_WORKSPACE/scripts/smoke_installed_package.py"

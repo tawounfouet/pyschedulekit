@@ -7,6 +7,7 @@ import pytest
 from pyschedulekit import (
     Duration,
     ExecutionNotFoundError,
+    ExecutionState,
     Instant,
     IntervalTrigger,
     Scheduler,
@@ -71,7 +72,7 @@ def test_t_operational_e2e_002_execution_inspection_returns_snapshot() -> None:
     snapshot = scheduler.inspect_execution(execution_id)
 
     assert snapshot.execution_id == execution_id
-    assert snapshot.state == "success"
+    assert snapshot.state is ExecutionState.SUCCESS
     assert snapshot.attempt_count == 1
     assert snapshot.is_terminal is True
     assert snapshot.completed_at is not None

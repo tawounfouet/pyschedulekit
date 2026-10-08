@@ -137,6 +137,7 @@ class ExecutionRunner:
                 fencing_token=(
                     active_claim_handle.generation if active_claim_handle is not None else None
                 ),
+                idempotency_key=execution_snapshot.idempotency_key.value,
             )
             completed_at = self._clock.now()
 

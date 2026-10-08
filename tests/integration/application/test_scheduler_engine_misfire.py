@@ -21,6 +21,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant
 from pyschedulekit.domain.triggers import DateTrigger, IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 
 
 def _instant(minute: int = 0, second: int = 0) -> Instant:
@@ -182,7 +183,7 @@ def test_t_mis_027_existing_durable_request_wins_over_later_skip_policy() -> Non
         created_at=_instant(),
     )
     with factory() as uow:
-        uow.requests.add(preexisting)
+        add_request_with_parent(uow=uow, request=preexisting)
         uow.commit()
 
     result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(minute=35))

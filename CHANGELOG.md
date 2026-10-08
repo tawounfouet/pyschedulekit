@@ -8,6 +8,15 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- GitHub artifact build-provenance attestations for tagged wheel/sdist release candidates.
+- SHA-pinned official `actions/attest` integration with tag-only provenance generation.
+- GitHub prerelease creation only after successful production PyPI verification.
+- Exact qualified wheel, sdist, and SHA-256 manifest attachment to the GitHub Release.
+- Existing-tag enforcement, generated release notes, prerelease semantics, and latest-release suppression for alpha versions.
+- Consumer-side GitHub Release verification through asset re-download, checksum validation, and attestation verification.
+- Release workflow fitness tests covering provenance permissions, no rebuild, exact assets, and post-release verification.
+- Immutable Releases documented as a preflight hardening requirement for first production release.
+
 - Production PyPI Trusted Publishing downstream of successful TestPyPI verification.
 - Dedicated `pypi` GitHub environment and job-scoped OIDC permission for production publication.
 - Exact qualified artifact reuse and checksum verification before PyPI upload.

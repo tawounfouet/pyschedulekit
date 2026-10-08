@@ -13,8 +13,8 @@ from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRe
 from pyschedulekit.domain.time import Duration
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
-from pyschedulekit.testing import add_request_with_parent
 from pyschedulekit.infrastructure.time import SystemClock
+from pyschedulekit.testing import add_request_with_parent
 
 
 def test_t_lease_heartbeat_001_renews_during_long_running_callable() -> None:

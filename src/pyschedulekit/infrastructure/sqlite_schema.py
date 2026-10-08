@@ -271,9 +271,8 @@ def initialize_sqlite_schema(connection: sqlite3.Connection) -> None:
 
     connection.execute("PRAGMA foreign_keys = ON")
 
-    if not _schema_metadata_exists(connection):
-        if _create_v8_schema(connection):
-            return
+    if not _schema_metadata_exists(connection) and _create_v8_schema(connection):
+        return
 
     row = connection.execute("SELECT version FROM pyschedulekit_schema LIMIT 1").fetchone()
     if row is None:

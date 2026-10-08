@@ -53,7 +53,10 @@ def _validate_wheel(dist_dir: Path) -> Path:
         metadata = Parser().parsestr(archive.read(metadata_path.as_posix()).decode("utf-8"))
 
     _require(metadata.get("Name") == PROJECT_NAME, "Wheel metadata has an unexpected Name.")
-    _require(metadata.get("Version") == __version__, "Wheel metadata version does not match runtime.")
+    _require(
+        metadata.get("Version") == __version__,
+        "Wheel metadata version does not match runtime.",
+    )
     _require(
         metadata.get("Requires-Python") == ">=3.11",
         "Wheel metadata must declare Requires-Python >=3.11.",

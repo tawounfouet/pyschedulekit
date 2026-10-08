@@ -11,9 +11,7 @@ from pyschedulekit.infrastructure.sqlite_schema import SCHEMA_VERSION
 def _assert_current_schema(database) -> None:
     connection = sqlite3.connect(database)
     try:
-        row = connection.execute(
-            "SELECT version FROM pyschedulekit_schema LIMIT 1"
-        ).fetchone()
+        row = connection.execute("SELECT version FROM pyschedulekit_schema LIMIT 1").fetchone()
         assert row is not None
         assert int(row[0]) == SCHEMA_VERSION
 

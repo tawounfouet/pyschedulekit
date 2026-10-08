@@ -5,7 +5,6 @@ in-memory and SQLite UnitOfWork implementations.
 """
 
 from datetime import UTC, datetime
-from pathlib import Path
 
 import pytest
 
@@ -23,10 +22,7 @@ from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
-from pyschedulekit.ports.persistence import (
-    ReferentialIntegrityError,
-    UnitOfWorkFactory,
-)
+from pyschedulekit.ports.persistence import ReferentialIntegrityError
 
 
 _BACKENDS = ("memory", "sqlite")
@@ -36,7 +32,7 @@ def _instant(minute: int = 0) -> Instant:
     return Instant(datetime(2026, 1, 1, 10, minute, tzinfo=UTC))
 
 
-def _factory(backend: str, tmp_path: Path) -> UnitOfWorkFactory:
+def _factory(backend: str, tmp_path):
     if backend == "memory":
         return InMemoryUnitOfWorkFactory()
     if backend == "sqlite":
@@ -86,7 +82,7 @@ def _execution_for(request: ExecutionRequest) -> Execution:
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_orphan_request_is_rejected(
     backend: str,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     factory = _factory(backend, tmp_path)
 
@@ -104,7 +100,7 @@ def test_orphan_request_is_rejected(
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_orphan_execution_is_rejected(
     backend: str,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     factory = _factory(backend, tmp_path)
     request = _request(request_id="missing-request")
@@ -119,7 +115,7 @@ def test_orphan_execution_is_rejected(
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_orphan_attempt_is_rejected(
     backend: str,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     factory = _factory(backend, tmp_path)
     request = _request(request_id="missing-request")
@@ -135,7 +131,7 @@ def test_orphan_attempt_is_rejected(
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_complete_execution_graph_can_be_committed_in_one_unit_of_work(
     backend: str,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     factory = _factory(backend, tmp_path)
     schedule = _schedule()
@@ -160,7 +156,7 @@ def test_complete_execution_graph_can_be_committed_in_one_unit_of_work(
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_staged_pending_request_is_visible_before_commit(
     backend: str,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     factory = _factory(backend, tmp_path)
     schedule = _schedule()
@@ -177,7 +173,7 @@ def test_staged_pending_request_is_visible_before_commit(
 @pytest.mark.parametrize("backend", _BACKENDS)
 def test_staged_queued_execution_is_visible_to_next_runnable_at(
     backend: str,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     factory = _factory(backend, tmp_path)
     schedule = _schedule()

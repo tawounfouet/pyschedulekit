@@ -19,6 +19,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import DateTrigger, IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 
 
 def _instant(hour: int = 10, minute: int = 0) -> Instant:
@@ -230,7 +231,7 @@ def test_existing_request_repairs_checkpoint_without_creating_duplicate() -> Non
     )
 
     with factory() as uow:
-        uow.requests.add(preexisting)
+        add_request_with_parent(uow=uow, request=preexisting)
         uow.commit()
 
     engine = SchedulerEngine(uow_factory=factory)
@@ -265,7 +266,7 @@ def test_request_commit_conflict_does_not_advance_schedule_checkpoint() -> None:
     )
 
     with factory() as uow:
-        uow.requests.add(collision)
+        add_request_with_parent(uow=uow, request=collision)
         uow.commit()
 
     engine = SchedulerEngine(uow_factory=factory)
@@ -302,7 +303,7 @@ def test_conflict_on_one_schedule_does_not_block_another_schedule() -> None:
         created_at=_instant(hour=9),
     )
     with factory() as uow:
-        uow.requests.add(collision)
+        add_request_with_parent(uow=uow, request=collision)
         uow.commit()
 
     result = SchedulerEngine(uow_factory=factory).evaluate(evaluation_now=_instant(hour=10))

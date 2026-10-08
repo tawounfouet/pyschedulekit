@@ -20,6 +20,7 @@ from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRef
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 
 
 def _instant(minute: int = 0) -> Instant:
@@ -52,7 +53,7 @@ def _persist(
 ) -> None:
     with factory() as uow:
         for request in requests:
-            uow.requests.add(request)
+            add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
 

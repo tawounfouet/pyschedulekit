@@ -35,7 +35,8 @@ from pyschedulekit.application.recovery import (
     CrashRecoveryService,
 )
 from pyschedulekit.application.retention import CleanupResult, RetentionPolicy, RetentionService
-from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
+from pyschedulekit.api.results import RunPendingResult
+from pyschedulekit.application.run_pending import RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.application.shutdown import (
@@ -46,7 +47,7 @@ from pyschedulekit.application.shutdown import (
 from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.claim import WorkerId
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
-from pyschedulekit.domain.execution import Execution, ExecutionId, ExecutionState
+from pyschedulekit.domain.execution import ExecutionId, ExecutionState
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import (
@@ -370,8 +371,8 @@ class Scheduler:
             shutdown_requested=shutdown_requested,
         )
 
-    def cancel_execution(self, execution_id: ExecutionId | str) -> Execution:
-        """Request cancellation of one logical Execution."""
+    def cancel_execution(self, execution_id: ExecutionId | str) -> ExecutionSnapshot:
+        """Request cancellation and return an immutable Execution snapshot."""
 
         normalized = (
             execution_id if isinstance(execution_id, ExecutionId) else ExecutionId(execution_id)
@@ -383,7 +384,7 @@ class Scheduler:
         if not execution.is_terminal:
             self._cancellation_controller.cancel(normalized.value)
         self._runtime.wake()
-        return execution
+        return ExecutionSnapshot.from_execution(execution)
 
     @property
     def last_recovery_result(self) -> CrashRecoveryResult | None:
@@ -403,7 +404,8 @@ class Scheduler:
 
     @property
     def last_result(self) -> RunPendingResult | None:
-        return self._runtime.last_result
+        result = self._runtime.last_result
+        return RunPendingResult.from_internal(result) if result is not None else None
 
     def recover(self, *, limit: int = 1000) -> CrashRecoveryResult:
         """Reconcile persisted orphaned RUNNING Executions before scheduling."""
@@ -472,7 +474,8 @@ class Scheduler:
 
         self._ensure_recovered()
         self._ensure_reconciled()
-        return self._run_pending_service.run_pending(limit=limit)
+        result = self._run_pending_service.run_pending(limit=limit)
+        return RunPendingResult.from_internal(result)
 
     def run_forever(
         self,

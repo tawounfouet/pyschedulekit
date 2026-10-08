@@ -6,7 +6,6 @@ import argparse
 from pathlib import Path
 
 from pyschedulekit import __version__
-
 from scripts.verify_distribution import validate as validate_distribution
 
 
@@ -27,7 +26,9 @@ def release_version_from_tag(release_tag: str) -> str:
         raise ReleaseCandidateValidationError("Release tag must include a version after 'v'.")
 
     if release_tag != release_tag.strip():
-        raise ReleaseCandidateValidationError("Release tag must not contain surrounding whitespace.")
+        raise ReleaseCandidateValidationError(
+            "Release tag must not contain surrounding whitespace."
+        )
 
     return version
 

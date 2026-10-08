@@ -33,7 +33,7 @@ def _parameter_names(callable_object: object) -> tuple[str, ...]:
 
 
 def test_t_public_api_001_manifest_is_sorted_unique_and_exact() -> None:
-    assert STABLE_PUBLIC_NAMES == tuple(sorted(STABLE_PUBLIC_NAMES))
+    assert tuple(sorted(STABLE_PUBLIC_NAMES)) == STABLE_PUBLIC_NAMES
     assert len(STABLE_PUBLIC_NAMES) == len(set(STABLE_PUBLIC_NAMES))
     assert public_api.__all__ == list(STABLE_PUBLIC_NAMES)
     assert pyschedulekit.__all__ == [*STABLE_PUBLIC_NAMES, "__version__"]

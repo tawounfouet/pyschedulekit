@@ -7,6 +7,7 @@ from threading import Lock
 from time import monotonic
 from uuid import uuid4
 
+from pyschedulekit.api.results import RunPendingResult
 from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
@@ -35,7 +36,6 @@ from pyschedulekit.application.recovery import (
     CrashRecoveryService,
 )
 from pyschedulekit.application.retention import CleanupResult, RetentionPolicy, RetentionService
-from pyschedulekit.api.results import RunPendingResult
 from pyschedulekit.application.run_pending import RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine

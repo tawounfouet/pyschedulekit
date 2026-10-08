@@ -22,22 +22,23 @@ from pyschedulekit.domain.execution_request import (
     RequestId,
 )
 from pyschedulekit.domain.time import Instant
+from pyschedulekit.errors import PyScheduleKitNotFoundError, PyScheduleKitStateError
 from pyschedulekit.ports.persistence import UnitOfWork, UnitOfWorkFactory
 
 
-class ExecutionRequestNotFoundError(LookupError):
+class ExecutionRequestNotFoundError(PyScheduleKitNotFoundError):
     """Raised when an ExecutionRequest cannot be found."""
 
 
-class ExecutionNotFoundError(LookupError):
+class ExecutionNotFoundError(PyScheduleKitNotFoundError):
     """Raised when an Execution cannot be found."""
 
 
-class AttemptNotFoundError(LookupError):
+class AttemptNotFoundError(PyScheduleKitNotFoundError):
     """Raised when an Attempt cannot be found."""
 
 
-class ExecutionConsistencyError(RuntimeError):
+class ExecutionConsistencyError(PyScheduleKitStateError):
     """Raised when persisted execution state violates expected invariants."""
 
 

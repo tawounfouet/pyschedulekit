@@ -96,7 +96,13 @@ class ConcurrencyCoordinator:
                 created_at=created_at,
                 lock_handle=acquisition.handle,
             )
-        except (AdmissionLockOwnershipError, PersistenceConflictError):
+        except PersistenceConflictError:
+            self._admission_lock_coordinator.release(
+                handle=acquisition.handle,
+                released_at=self._now(created_at),
+            )
+            return self._lock_denied_result(request_id)
+        except AdmissionLockOwnershipError:
             return self._lock_denied_result(request_id)
         except Exception:
             self._admission_lock_coordinator.release(

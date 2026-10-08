@@ -24,10 +24,7 @@ class ExternalReadiness:
 
     @property
     def ready(self) -> bool:
-        return (
-            self.pypi_trusted_publisher
-            and self.immutable_releases
-        )
+        return self.pypi_trusted_publisher and self.immutable_releases
 
 
 def validate_changelog(path: Path, *, package_version: str) -> None:

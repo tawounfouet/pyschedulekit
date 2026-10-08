@@ -21,8 +21,8 @@ REL-02  Artifact / Metadata Validation             ✅
 REL-03  Clean-Install Matrix                       ✅
 REL-04  Version / Tag / Release Candidate Gate     ✅
 REL-05  TestPyPI Trusted Publishing                🟡 READY
-REL-06  PyPI Trusted Publishing                   ⏭ NEXT
-REL-07  GitHub Release + Provenance                ⬜
+REL-06  PyPI Trusted Publishing                    🟡 READY
+REL-07  GitHub Release + Provenance               ⏭ NEXT
 REL-08  Release Runbook / Rollback Discipline      ⬜
 ```
 
@@ -137,4 +137,8 @@ REL-05 is implemented in the release-candidate workflow and is waiting for exter
 
 The implementation reuses the exact qualified artifact, grants OIDC permission only to the publication job, targets the dedicated `testpypi` environment, publishes through the official SHA-pinned PyPA action, and verifies the published package by reinstalling it from TestPyPI.
 
-REL-06 is the next implementation milestone. The real `v0.1.0a1` tag remains on hold until both TestPyPI and PyPI publication paths exist in the tagged commit.
+REL-06 is now implemented and waits for the external PyPI Trusted Publisher identity to be activated.
+
+Production publication is downstream of successful TestPyPI verification and reuses the same retained release candidate without rebuilding.
+
+The real `v0.1.0a1` tag remains on hold until REL-07 and REL-08 are present and both Trusted Publisher identities/environments are ready.

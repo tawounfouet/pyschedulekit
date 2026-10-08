@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Production PyPI Trusted Publishing downstream of successful TestPyPI verification.
+- Dedicated `pypi` GitHub environment and job-scoped OIDC permission for production publication.
+- Exact qualified artifact reuse and checksum verification before PyPI upload.
+- SHA-pinned official PyPA publishing action with PEP 740 attestations enabled for production.
+- Post-publish reinstall and smoke verification from the canonical PyPI simple index.
+- Release workflow fitness tests enforcing TestPyPI-before-PyPI promotion, no rebuild, and no static credentials.
+
 - TestPyPI Trusted Publishing job using GitHub OIDC with no static package-index credential.
 - Dedicated `testpypi` GitHub environment binding for the publisher identity.
 - SHA-pinned official PyPA publishing action with PEP 740 attestations enabled.

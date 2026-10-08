@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Canonical release-candidate tag gate enforcing `v<package-version>`.
+- Release tag/source/artifact version identity verification before publication.
+- Main-line ancestry check for real tag-triggered release candidates.
+- Release-candidate SHA-256 checksum manifest and 30-day artifact retention.
+- Unit qualification for canonical tags, malformed tags, mismatch short-circuiting, and artifact delegation.
+- Pull-request dry-run of the release-candidate gate through Distribution Qualification.
+- Dedicated tagged `Release Candidate Gate` workflow with no publication side effects.
+
 - Release-engineering roadmap separated from the functional LOT roadmap.
 - Dedicated `release` optional dependency group with `build` and `twine`.
 - Wheel + sdist qualification through `python -m build`.

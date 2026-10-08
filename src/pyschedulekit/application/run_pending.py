@@ -163,7 +163,6 @@ class RunPendingService:
                     )
                 )
             except PersistenceConflictError:
-                self._release_unstarted_claim(claim_handle)
                 errors.append(
                     RunPendingError(
                         request_id=request.id,
@@ -229,6 +228,7 @@ class RunPendingService:
                     )
                 )
             except PersistenceConflictError:
+                self._release_unstarted_claim(claim_handle)
                 errors.append(
                     RunPendingError(
                         request_id=execution.request_id,

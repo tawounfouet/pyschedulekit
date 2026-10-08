@@ -22,8 +22,8 @@ REL-03  Clean-Install Matrix                       ✅
 REL-04  Version / Tag / Release Candidate Gate     ✅
 REL-05  TestPyPI Trusted Publishing                🟡 READY
 REL-06  PyPI Trusted Publishing                    🟡 READY
-REL-07  GitHub Release + Provenance               ⏭ NEXT
-REL-08  Release Runbook / Rollback Discipline      ⬜
+REL-07  GitHub Release + Provenance                🟡 READY
+REL-08  Release Runbook / Rollback Discipline     ⏭ NEXT
 ```
 
 ## Release invariants
@@ -141,4 +141,8 @@ REL-06 is now implemented and waits for the external PyPI Trusted Publisher iden
 
 Production publication is downstream of successful TestPyPI verification and reuses the same retained release candidate without rebuilding.
 
-The real `v0.1.0a1` tag remains on hold until REL-07 and REL-08 are present and both Trusted Publisher identities/environments are ready.
+REL-07 is now implemented: tagged builds receive GitHub artifact provenance, and a GitHub prerelease is created only after successful PyPI verification using the exact retained wheel/sdist plus checksum manifest.
+
+Before the first real tag, enable GitHub Immutable Releases so the published tag/assets receive release-level immutability and release attestation in addition to the build provenance.
+
+The real `v0.1.0a1` tag remains on hold until REL-08 is present and all external release controls are ready.

@@ -8,22 +8,25 @@ from datetime import UTC, datetime
 
 import pytest
 
+from pyschedulekit import (
+    Duration,
+    Instant,
+    IntervalTrigger,
+    RequestId,
+    ScheduleId,
+    SqliteUnitOfWorkFactory,
+    TargetRef,
+)
 from pyschedulekit.domain.execution import Execution
-from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
+from pyschedulekit.domain.execution_request import ExecutionRequest
 from pyschedulekit.domain.occurrence import OccurrenceKey
 from pyschedulekit.domain.schedule import (
     Schedule,
     ScheduleDefinition,
-    ScheduleId,
     ScheduleRevision,
-    TargetRef,
 )
-from pyschedulekit.domain.time import Duration, Instant
-from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
-from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.ports.persistence import ReferentialIntegrityError
-
 
 _BACKENDS = ("memory", "sqlite")
 

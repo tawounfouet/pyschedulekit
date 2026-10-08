@@ -62,6 +62,12 @@ class ScheduleSnapshot:
 
         return self.execution_id
 
+    @property
+    def cancellation_requested(self) -> bool:
+        """Whether cooperative cancellation has been requested."""
+
+        return self.cancellation_requested_at is not None
+
     @classmethod
     def from_schedule(cls, schedule: Schedule) -> ScheduleSnapshot:
         timeout = schedule.definition.timeout

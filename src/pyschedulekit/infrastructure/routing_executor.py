@@ -35,9 +35,7 @@ class RoutingExecutor:
         for kind, executor in executors.items():
             target_kind = kind.strip()
             if not target_kind:
-                raise PyScheduleKitConfigurationError(
-                    "Executor target kind must not be empty."
-                )
+                raise PyScheduleKitConfigurationError("Executor target kind must not be empty.")
             if target_kind in normalized:
                 raise PyScheduleKitConfigurationError(
                     f"Duplicate executor target kind: {target_kind!r}."
@@ -45,9 +43,7 @@ class RoutingExecutor:
             normalized[target_kind] = executor
 
         if not normalized:
-            raise PyScheduleKitConfigurationError(
-                "RoutingExecutor requires at least one executor."
-            )
+            raise PyScheduleKitConfigurationError("RoutingExecutor requires at least one executor.")
 
         self._executors = normalized
 

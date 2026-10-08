@@ -53,8 +53,8 @@ REL-00  Distribution Contract                     ✅
 REL-01  Wheel + sdist Build                        ✅
 REL-02  Artifact / Metadata Validation             ✅
 REL-03  Clean-Install Matrix                       ✅
-REL-04  Version / Tag / Release Candidate Gate     ⏭ NEXT
-REL-05  TestPyPI Trusted Publishing                ⬜
+REL-04  Version / Tag / Release Candidate Gate     ✅
+REL-05  TestPyPI Trusted Publishing               ⏭ NEXT
 REL-06  PyPI Trusted Publishing                    ⬜
 REL-07  GitHub Release + Provenance                ⬜
 REL-08  Release Runbook / Rollback Discipline      ⬜

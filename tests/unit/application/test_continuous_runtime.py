@@ -13,6 +13,7 @@ from pyschedulekit.application.runtime import (
 )
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.infrastructure.observability import InMemoryObservationSink
+from pyschedulekit.testing import FixedClock
 
 
 def _empty_result() -> RunPendingResult:
@@ -69,6 +70,7 @@ def _runtime(
         run_pending_service=effective_service,
         waiter=effective_waiter,
         wakeup_planner=StubWakeUpPlanner(),
+        clock=FixedClock(_empty_result().evaluation_now),
     )
     effective_waiter.runtime = runtime
     return runtime, effective_service, effective_waiter
@@ -110,6 +112,7 @@ def test_t_runtime_003_rejects_concurrent_second_start() -> None:
         run_pending_service=StubRunPendingService(),
         waiter=BlockingWaiter(),
         wakeup_planner=StubWakeUpPlanner(),
+        clock=FixedClock(_empty_result().evaluation_now),
     )
     worker = Thread(
         target=lambda: runtime.run_forever(
@@ -145,6 +148,7 @@ def test_t_runtime_005_emits_cycle_and_wait_observations() -> None:
         run_pending_service=service,
         waiter=waiter,
         wakeup_planner=StubWakeUpPlanner(),
+        clock=FixedClock(_empty_result().evaluation_now),
         observer=Observer(sink),
     )
     waiter.runtime = runtime

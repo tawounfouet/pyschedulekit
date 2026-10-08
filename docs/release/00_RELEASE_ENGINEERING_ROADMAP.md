@@ -19,8 +19,8 @@ REL-00  Distribution Contract                     ✅
 REL-01  Wheel + sdist Build                        ✅
 REL-02  Artifact / Metadata Validation             ✅
 REL-03  Clean-Install Matrix                       ✅
-REL-04  Version / Tag / Release Candidate Gate     ⏭ NEXT
-REL-05  TestPyPI Trusted Publishing                ⬜
+REL-04  Version / Tag / Release Candidate Gate     ✅
+REL-05  TestPyPI Trusted Publishing               ⏭ NEXT
 REL-06  PyPI Trusted Publishing                    ⬜
 REL-07  GitHub Release + Provenance                ⬜
 REL-08  Release Runbook / Rollback Discipline      ⬜
@@ -113,16 +113,24 @@ PUBLISH THAT ARTIFACT
 
 A later publication job must not rebuild the package independently, because doing so would publish bytes that were not the exact bytes previously qualified.
 
-## Next milestone
+## Release candidate gate
 
-REL-04 will introduce an explicit release-candidate gate:
+REL-04 makes the release identity executable:
 
 ```text
-package version
-      ==
-release tag version
-      ==
-artifact metadata version
+tag vX.Y.Z
+    ↓
+source version X.Y.Z
+    ↓
+wheel / sdist version X.Y.Z
+    ↓
+exact equality required
 ```
 
-Only after that invariant is executable will TestPyPI publication be enabled.
+A real tag-triggered release candidate must also point to a commit reachable from `main`.
+
+The qualified release-candidate artifacts are retained for 30 days together with their SHA-256 checksums. Publication remains disabled at this stage.
+
+## Next milestone
+
+REL-05 will add TestPyPI Trusted Publishing on top of the qualified release-candidate workflow, using the same built artifacts rather than rebuilding them.

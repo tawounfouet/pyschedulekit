@@ -8,10 +8,11 @@ from typing import Protocol
 from pyschedulekit.domain.execution import Failure
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Duration
+from pyschedulekit.errors import PyScheduleKitTargetError
 from pyschedulekit.ports.cancellation import CancellationToken
 
 
-class ExecutorError(RuntimeError):
+class ExecutorError(PyScheduleKitTargetError):
     """Base error raised by executor control-plane operations."""
 
 

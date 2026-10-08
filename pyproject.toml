@@ -59,6 +59,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"
+pythonpath = ["."]
 testpaths = ["tests"]
 
 [tool.coverage.run]

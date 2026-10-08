@@ -140,9 +140,7 @@ def test_foreign_key_contract_rejects_orphans(
         elif orphan_kind == "admission_lock":
             uow.admission_locks.add(_admission_lock(ScheduleId("missing-schedule")))
         elif orphan_kind == "materialization_lease":
-            uow.materialization_leases.add(
-                _materialization_lease(ScheduleId("missing-schedule"))
-            )
+            uow.materialization_leases.add(_materialization_lease(ScheduleId("missing-schedule")))
         elif orphan_kind == "claim":
             uow.claims.add(_claim(execution))
         else:

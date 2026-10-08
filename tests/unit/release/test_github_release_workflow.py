@@ -53,7 +53,7 @@ def test_t_github_release_003_release_uses_existing_tag_and_prerelease_semantics
     assert "--generate-notes" in release_section
     assert "--prerelease" in release_section
     assert "--latest=false" in release_section
-    assert 'release-candidate/dist/*' in release_section
+    assert "release-candidate/dist/*" in release_section
     assert "release-candidate/release-candidate-sha256.txt" in release_section
 
 

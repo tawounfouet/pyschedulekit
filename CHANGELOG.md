@@ -8,6 +8,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- TestPyPI Trusted Publishing job using GitHub OIDC with no static package-index credential.
+- Dedicated `testpypi` GitHub environment binding for the publisher identity.
+- SHA-pinned official PyPA publishing action with PEP 740 attestations enabled.
+- Exact retained release-candidate artifact reuse and checksum verification before upload.
+- Post-publish installation and smoke verification from the TestPyPI simple index.
+- Bounded TestPyPI indexing retry to distinguish propagation delay from publication failure.
+- Workflow fitness tests preventing rebuilds, static credentials, or OIDC/environment drift.
+
 - Canonical release-candidate tag gate enforcing `v<package-version>`.
 - Release tag/source/artifact version identity verification before publication.
 - Main-line ancestry check for real tag-triggered release candidates.

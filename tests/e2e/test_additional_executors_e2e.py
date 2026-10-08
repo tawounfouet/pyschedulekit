@@ -84,9 +84,7 @@ def test_t_executor_e2e_001_http_runs_through_public_scheduler(monkeypatch) -> N
 
     def fake_urlopen(request, timeout=None):
         del timeout
-        observed_headers.append(
-            {name.lower(): value for name, value in request.header_items()}
-        )
+        observed_headers.append({name.lower(): value for name, value in request.header_items()})
         return _Response(204)
 
     monkeypatch.setattr(

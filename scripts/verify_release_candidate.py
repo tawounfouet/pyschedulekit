@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pyschedulekit import __version__
 
-from verify_distribution import validate as validate_distribution
+from scripts.verify_distribution import validate as validate_distribution
 
 
 class ReleaseCandidateValidationError(RuntimeError):

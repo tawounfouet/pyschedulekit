@@ -1,5 +1,7 @@
 """LOT-33 end-to-end qualification for routed HTTP and custom executors."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from urllib.error import HTTPError

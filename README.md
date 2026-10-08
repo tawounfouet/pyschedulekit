@@ -6,7 +6,7 @@ PyScheduleKit is a Python scheduling framework designed first as a rigorous lear
 
 ## Project status
 
-**LOT-33 complete — next: LOT-34 Public API Hardening**
+**LOT-34 complete — initial roadmap complete**
 
 Completed:
 
@@ -44,6 +44,7 @@ Completed:
 - LOT-31 — Operational API
 - LOT-32 — Retention / Cleanup
 - LOT-33 — Additional Executors
+- LOT-34 — Public API Hardening
 
 The implementation follows a domain-first roadmap:
 
@@ -788,6 +789,46 @@ scheduler = Scheduler(
 ```
 
 Executor adapters still return normalized `ExecutorOutcome` values; retry, timeout, cancellation, claims, Attempt lifecycle, persistence, and observability remain application-layer responsibilities.
+
+## Public API stability
+
+LOT-34 defines the first explicit compatibility boundary for PyScheduleKit.
+
+The canonical stable namespace is:
+
+```python
+import pyschedulekit.api as psk
+```
+
+For convenience, the same stable symbols are re-exported at the package root:
+
+```python
+from pyschedulekit import Scheduler, IntervalTrigger, RetryPolicy
+```
+
+The exact stable symbol set is machine-readable and CI-enforced through `pyschedulekit.api._manifest.STABLE_PUBLIC_NAMES`.
+
+Low-level coordination primitives that were historically available at the package root now live under:
+
+```python
+from pyschedulekit.experimental import ExecutionClaim, ScheduleAdmissionLock
+```
+
+Legacy root access remains temporarily compatible through `PyScheduleKitDeprecationWarning`, but experimental APIs are not covered by compatibility guarantees.
+
+Public `Scheduler` methods return immutable snapshots/results rather than mutable domain aggregates. In particular, `run_pending()` and `cancel_execution()` no longer leak mutable `Execution` Aggregate Roots.
+
+The stable exception categories are:
+
+```text
+PyScheduleKitError
+├── PyScheduleKitConfigurationError
+├── PyScheduleKitStateError
+├── PyScheduleKitNotFoundError
+└── PyScheduleKitTargetError
+```
+
+PyScheduleKit is now packaged as a PEP 561 typed library. Version `0.1.0a1` is sourced only from `pyschedulekit._version` and reused by package metadata.
 
 ## Package shape
 

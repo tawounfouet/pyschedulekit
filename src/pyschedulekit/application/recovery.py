@@ -17,6 +17,7 @@ from pyschedulekit.domain.execution import (
 )
 from pyschedulekit.domain.retry import RetryEvaluator
 from pyschedulekit.domain.time import Instant
+from pyschedulekit.errors import PyScheduleKitStateError
 from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWork, UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
 
@@ -64,7 +65,7 @@ class CrashRecoveryResult:
         return len(self.cancelled_execution_ids)
 
 
-class CrashRecoveryConsistencyError(RuntimeError):
+class CrashRecoveryConsistencyError(PyScheduleKitStateError):
     """Raised when persisted RUNNING state cannot be reconciled safely."""
 
     def __init__(self, *, code: str, message: str) -> None:
@@ -72,11 +73,11 @@ class CrashRecoveryConsistencyError(RuntimeError):
         self.code = code
 
 
-class CrashRecoveryActiveRuntimeError(RuntimeError):
+class CrashRecoveryActiveRuntimeError(PyScheduleKitStateError):
     """Raised when manual crash recovery is requested while local work is active."""
 
 
-class CrashRecoveryIncompleteError(RuntimeError):
+class CrashRecoveryIncompleteError(PyScheduleKitStateError):
     """Raised when persisted RUNNING state remains after a recovery pass."""
 
     def __init__(self, result: CrashRecoveryResult) -> None:

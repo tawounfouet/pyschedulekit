@@ -8,6 +8,17 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Explicit stable API manifest shared by `pyschedulekit.api` and root convenience exports.
+- `pyschedulekit.experimental` namespace for low-level coordination primitives.
+- Deprecated compatibility shims for legacy root-level experimental imports.
+- Stable `PyScheduleKitError` hierarchy for configuration, state, lookup, and target errors.
+- Immutable public run-pending snapshots that no longer leak mutable Execution aggregates.
+- Immutable `Scheduler.cancel_execution()` result via `ExecutionSnapshot`.
+- End-to-end typed public result coverage for `RequestId`, `AttemptId`, decisions, failures, and policies.
+- Public Scheduler signature fitness tests and exact export-manifest tests.
+- PEP 561 `py.typed` packaging marker.
+- Single-source package version metadata and version `0.1.0a1`.
+- LOT-34 public API contract, deprecation, typing, signature, and version qualification.
 - `RoutingExecutor` for explicit target-kind dispatch.
 - Dependency-free `HttpExecutor`, `HttpTargetRegistry`, `HttpRequestSpec`, and `HttpMethod`.
 - Public Scheduler HTTP-target registration and custom executor injection.

@@ -11,6 +11,7 @@ from urllib.request import Request, urlopen
 from pyschedulekit.domain.execution import Failure, FailureCategory
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Duration
+from pyschedulekit.errors import PyScheduleKitConfigurationError
 from pyschedulekit.ports.cancellation import CancellationToken
 from pyschedulekit.ports.executor import (
     ExecutorOutcome,
@@ -51,23 +52,27 @@ class HttpRequestSpec:
     def __post_init__(self) -> None:
         parsed = urlparse(self.url)
         if parsed.scheme not in {"http", "https"} or parsed.hostname is None:
-            raise ValueError("HTTP executor URL must use http:// or https:// with a host.")
+            raise PyScheduleKitConfigurationError(
+                "HTTP executor URL must use http:// or https:// with a host."
+            )
         if parsed.username is not None or parsed.password is not None:
-            raise ValueError("HTTP executor URL must not embed credentials.")
+            raise PyScheduleKitConfigurationError("HTTP executor URL must not embed credentials.")
 
         seen: set[str] = set()
         for name, value in self.headers:
             normalized = name.strip().lower()
             if not normalized:
-                raise ValueError("HTTP header name must not be empty.")
+                raise PyScheduleKitConfigurationError("HTTP header name must not be empty.")
             if normalized in seen:
-                raise ValueError(f"Duplicate HTTP header: {name!r}.")
+                raise PyScheduleKitConfigurationError(f"Duplicate HTTP header: {name!r}.")
             if normalized in _RESERVED_HEADERS:
-                raise ValueError(
+                raise PyScheduleKitConfigurationError(
                     f"HTTP header {name!r} is reserved for scheduler execution metadata."
                 )
             if "\r" in name or "\n" in name or "\r" in value or "\n" in value:
-                raise ValueError("HTTP headers must not contain CR/LF characters.")
+                raise PyScheduleKitConfigurationError(
+                    "HTTP headers must not contain CR/LF characters."
+                )
             seen.add(normalized)
 
 
@@ -83,7 +88,7 @@ class HttpTargetRegistry:
 
     def register(self, reference: str, request: HttpRequestSpec) -> None:
         if not reference.strip():
-            raise ValueError("HTTP target reference must not be empty.")
+            raise PyScheduleKitConfigurationError("HTTP target reference must not be empty.")
         if reference in self._targets:
             raise DuplicateHttpTargetRegistrationError(
                 f"HTTP target reference {reference!r} is already registered."
@@ -134,7 +139,7 @@ class HttpExecutor:
         if not isinstance(prepared, PreparedHttpTarget):
             raise TargetResolutionError("HttpExecutor can only execute PreparedHttpTarget values.")
         if timeout is not None and timeout.total_seconds <= 0:
-            raise ValueError("Executor timeout must be greater than zero.")
+            raise PyScheduleKitConfigurationError("Executor timeout must be greater than zero.")
         if cancellation_token is not None and cancellation_token.is_cancelled:
             return self._cancelled_outcome()
 

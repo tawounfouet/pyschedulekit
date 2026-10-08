@@ -7,6 +7,7 @@ from threading import Lock
 from time import monotonic
 from uuid import uuid4
 
+from pyschedulekit.api.results import RunPendingResult
 from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
@@ -35,7 +36,7 @@ from pyschedulekit.application.recovery import (
     CrashRecoveryService,
 )
 from pyschedulekit.application.retention import CleanupResult, RetentionPolicy, RetentionService
-from pyschedulekit.application.run_pending import RunPendingResult, RunPendingService
+from pyschedulekit.application.run_pending import RunPendingService
 from pyschedulekit.application.runtime import ContinuousSchedulerLoop
 from pyschedulekit.application.scheduler_engine import SchedulerEngine
 from pyschedulekit.application.shutdown import (
@@ -46,7 +47,7 @@ from pyschedulekit.application.shutdown import (
 from pyschedulekit.application.wakeup import WakeUpPlanner
 from pyschedulekit.domain.claim import WorkerId
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
-from pyschedulekit.domain.execution import Execution, ExecutionId, ExecutionState
+from pyschedulekit.domain.execution import ExecutionId, ExecutionState
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.schedule import (
@@ -58,6 +59,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, Timezone
 from pyschedulekit.domain.trigger import Trigger
 from pyschedulekit.domain.triggers import CronTrigger
+from pyschedulekit.errors import PyScheduleKitConfigurationError
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor,
@@ -126,9 +128,13 @@ class Scheduler:
             else Duration.seconds(self._claim_ttl.total_seconds / 3)
         )
         if self._lease_heartbeat_interval.total_seconds <= 0:
-            raise ValueError("lease_heartbeat_interval must be greater than zero.")
+            raise PyScheduleKitConfigurationError(
+                "lease_heartbeat_interval must be greater than zero."
+            )
         if self._lease_heartbeat_interval >= self._claim_ttl:
-            raise ValueError("lease_heartbeat_interval must be shorter than claim_ttl.")
+            raise PyScheduleKitConfigurationError(
+                "lease_heartbeat_interval must be shorter than claim_ttl."
+            )
         self._admission_lock_ttl = (
             admission_lock_ttl if admission_lock_ttl is not None else Duration.seconds(5)
         )
@@ -370,8 +376,8 @@ class Scheduler:
             shutdown_requested=shutdown_requested,
         )
 
-    def cancel_execution(self, execution_id: ExecutionId | str) -> Execution:
-        """Request cancellation of one logical Execution."""
+    def cancel_execution(self, execution_id: ExecutionId | str) -> ExecutionSnapshot:
+        """Request cancellation and return an immutable Execution snapshot."""
 
         normalized = (
             execution_id if isinstance(execution_id, ExecutionId) else ExecutionId(execution_id)
@@ -383,7 +389,7 @@ class Scheduler:
         if not execution.is_terminal:
             self._cancellation_controller.cancel(normalized.value)
         self._runtime.wake()
-        return execution
+        return ExecutionSnapshot.from_execution(execution)
 
     @property
     def last_recovery_result(self) -> CrashRecoveryResult | None:
@@ -403,7 +409,8 @@ class Scheduler:
 
     @property
     def last_result(self) -> RunPendingResult | None:
-        return self._runtime.last_result
+        result = self._runtime.last_result
+        return RunPendingResult.from_internal(result) if result is not None else None
 
     def recover(self, *, limit: int = 1000) -> CrashRecoveryResult:
         """Reconcile persisted orphaned RUNNING Executions before scheduling."""
@@ -472,7 +479,8 @@ class Scheduler:
 
         self._ensure_recovered()
         self._ensure_reconciled()
-        return self._run_pending_service.run_pending(limit=limit)
+        result = self._run_pending_service.run_pending(limit=limit)
+        return RunPendingResult.from_internal(result)
 
     def run_forever(
         self,
@@ -484,7 +492,9 @@ class Scheduler:
         """Continuously run with adaptive wake-up bounded by max_sleep."""
 
         if max_sleep is not None and poll_interval is not None:
-            raise ValueError("Use either max_sleep or poll_interval, not both.")
+            raise PyScheduleKitConfigurationError(
+                "Use either max_sleep or poll_interval, not both."
+            )
 
         effective_max_sleep = max_sleep or poll_interval or Duration.seconds(1)
         self._ensure_recovered()

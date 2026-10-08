@@ -297,9 +297,9 @@ LOT-30  Observability            ✅
 LOT-31  Operational API          ✅
 LOT-32  Retention / Cleanup      ✅
 LOT-33  Additional Executors     ✅
-LOT-34  Public API Hardening    ⏭ NEXT
+LOT-34  Public API Hardening     ✅
 ```
 
 ## Next
 
-`LOT-34 — Public API Hardening`
+Initial roadmap complete.

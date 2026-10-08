@@ -16,6 +16,7 @@ from pyschedulekit.domain.execution_request import (
     ExecutionRequestState,
     RequestId,
 )
+from pyschedulekit.errors import PyScheduleKitStateError
 from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWorkFactory
 
 
@@ -49,7 +50,7 @@ class ReconciliationResult:
         return not self.scan_truncated and not self.issues
 
 
-class ReconciliationIncompleteError(RuntimeError):
+class ReconciliationIncompleteError(PyScheduleKitStateError):
     """Raised when durable reconciliation cannot prove a coherent graph."""
 
     def __init__(self, result: ReconciliationResult) -> None:
@@ -59,7 +60,7 @@ class ReconciliationIncompleteError(RuntimeError):
         self.result = result
 
 
-class ReconciliationActiveRuntimeError(RuntimeError):
+class ReconciliationActiveRuntimeError(PyScheduleKitStateError):
     """Raised when manual reconciliation is requested while local work is active."""
 
 

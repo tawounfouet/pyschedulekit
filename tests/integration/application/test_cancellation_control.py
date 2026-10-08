@@ -20,6 +20,7 @@ from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 from pyschedulekit.ports.cancellation import CancellationToken
 from pyschedulekit.testing import MutableClock
 
@@ -47,7 +48,7 @@ def _dispatch(
         timeout=timeout,
     )
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     service = ExecutionService(uow_factory=factory)

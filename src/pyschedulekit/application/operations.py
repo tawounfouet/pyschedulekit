@@ -59,19 +59,6 @@ class ScheduleSnapshot:
     target_reference: str
     timezone: str
     timeout_seconds: float | None
-    policy_snapshot: ExecutionPolicySnapshot
-
-    @property
-    def id(self) -> ExecutionId:
-        """Compatibility alias matching the domain Execution identity property."""
-
-        return self.execution_id
-
-    @property
-    def cancellation_requested(self) -> bool:
-        """Whether cooperative cancellation has been requested."""
-
-        return self.cancellation_requested_at is not None
 
     @classmethod
     def from_schedule(cls, schedule: Schedule) -> ScheduleSnapshot:
@@ -107,6 +94,19 @@ class ExecutionSnapshot:
     failure_category: str | None
     failure_code: str | None
     completed_at: Instant | None
+    policy_snapshot: ExecutionPolicySnapshot
+
+    @property
+    def id(self) -> ExecutionId:
+        """Compatibility alias matching the domain Execution identity property."""
+
+        return self.execution_id
+
+    @property
+    def cancellation_requested(self) -> bool:
+        """Whether cooperative cancellation has been requested."""
+
+        return self.cancellation_requested_at is not None
 
     @classmethod
     def from_execution(cls, execution: Execution) -> ExecutionSnapshot:

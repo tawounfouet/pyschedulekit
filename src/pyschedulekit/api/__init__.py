@@ -1,6 +1,6 @@
 """Stable public API surface for PyScheduleKit."""
 
-# ruff: noqa: F401, I001
+# ruff: noqa: F401
 
 from pyschedulekit.api._manifest import STABLE_PUBLIC_NAMES
 from pyschedulekit.api.results import AdmissionSnapshot, ExecutionRunSnapshot, RunPendingResult

@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.parse import ParseResult, urlparse
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from pyschedulekit.domain.execution import Failure, FailureCategory
 from pyschedulekit.domain.schedule import TargetRef
@@ -23,12 +24,66 @@ from pyschedulekit.ports.time import Clock
 
 _IDEMPOTENCY_HEADER = "Idempotency-Key"
 _FENCING_HEADER = "X-PyScheduleKit-Fencing-Token"
+_MAX_REDIRECTS = 3
 _RESERVED_HEADERS = frozenset(
     {
         _IDEMPOTENCY_HEADER.lower(),
         _FENCING_HEADER.lower(),
     }
 )
+
+
+def _validate_http_url(url: str) -> ParseResult:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or parsed.hostname is None:
+        raise PyScheduleKitConfigurationError(
+            "HTTP executor URL must use http:// or https:// with a host."
+        )
+    if parsed.username is not None or parsed.password is not None:
+        raise PyScheduleKitConfigurationError("HTTP executor URL must not embed credentials.")
+    return parsed
+
+
+class _ControlledRedirectHandler(HTTPRedirectHandler):
+    """Allow only bounded same-host HTTP(S) redirects."""
+
+    def __init__(self, allowed_host: str) -> None:
+        super().__init__()
+        self._allowed_host = allowed_host.casefold()
+        self._hops = 0
+
+    def redirect_request(
+        self,
+        req: Request,
+        fp: Any,
+        code: int,
+        msg: str,
+        headers: Any,
+        newurl: str,
+    ) -> Request | None:
+        self._hops += 1
+        try:
+            redirected = _validate_http_url(newurl)
+            if self._hops > _MAX_REDIRECTS:
+                raise URLError("Blocked HTTP redirect: maximum redirect count exceeded.")
+            if redirected.hostname is None or redirected.hostname.casefold() != self._allowed_host:
+                raise URLError("Blocked HTTP redirect: destination host changed.")
+        except (PyScheduleKitConfigurationError, URLError) as exc:
+            try:
+                fp.close()
+            finally:
+                if isinstance(exc, URLError):
+                    raise
+                raise URLError("Blocked HTTP redirect: destination URL is not allowed.") from exc
+
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+def _open_http_request(request: Request, timeout: float | None = None) -> Any:
+    parsed = _validate_http_url(request.full_url)
+    assert parsed.hostname is not None
+    opener = build_opener(_ControlledRedirectHandler(parsed.hostname))
+    return opener.open(request, timeout=timeout)
 
 
 class HttpMethod(StrEnum):
@@ -50,13 +105,7 @@ class HttpRequestSpec:
     body: bytes | None = None
 
     def __post_init__(self) -> None:
-        parsed = urlparse(self.url)
-        if parsed.scheme not in {"http", "https"} or parsed.hostname is None:
-            raise PyScheduleKitConfigurationError(
-                "HTTP executor URL must use http:// or https:// with a host."
-            )
-        if parsed.username is not None or parsed.password is not None:
-            raise PyScheduleKitConfigurationError("HTTP executor URL must not embed credentials.")
+        _validate_http_url(self.url)
 
         seen: set[str] = set()
         for name, value in self.headers:
@@ -158,10 +207,14 @@ class HttpExecutor:
 
         timeout_seconds = None if timeout is None else timeout.total_seconds
         try:
-            with urlopen(request, timeout=timeout_seconds) as response:
+            with _open_http_request(request, timeout=timeout_seconds) as response:
                 status = int(response.status)
         except HTTPError as exc:
-            return self._http_status_outcome(int(exc.code))
+            try:
+                status = int(exc.code)
+            finally:
+                exc.close()
+            return self._http_status_outcome(status)
         except TimeoutError:
             return self._timeout_outcome()
         except URLError as exc:

@@ -57,7 +57,9 @@ REL-04  Version / Tag / Release Candidate Gate     ✅
 REL-05  TestPyPI Trusted Publishing                🟡 READY
 REL-06  PyPI Trusted Publishing                    🟡 READY
 REL-07  GitHub Release + Provenance                🟡 READY
-REL-08  Release Runbook / Rollback Discipline     ⏭ NEXT
+REL-08  Release Runbook / Rollback Discipline      ✅
+
+Release engineering implementation complete — go-live pending external controls.
 ```
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.

@@ -26,6 +26,7 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 
 
 def _instant(hour: int = 10, minute: int = 0) -> Instant:
@@ -55,7 +56,7 @@ def _persist_request(
     request: ExecutionRequest,
 ) -> None:
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
 
@@ -221,7 +222,7 @@ def test_t_sch_012_reschedule_does_not_modify_existing_execution() -> None:
 
     with factory() as uow:
         uow.schedules.add(schedule)
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     service = ExecutionService(uow_factory=factory)
@@ -257,7 +258,7 @@ def test_t_sch_013_pause_schedule_does_not_cancel_existing_execution() -> None:
 
     with factory() as uow:
         uow.schedules.add(schedule)
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     service = ExecutionService(uow_factory=factory)
@@ -286,7 +287,7 @@ def test_t_sch_014_cancel_schedule_does_not_cancel_existing_execution() -> None:
 
     with factory() as uow:
         uow.schedules.add(schedule)
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     service = ExecutionService(uow_factory=factory)

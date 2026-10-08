@@ -59,5 +59,5 @@ def test_t_testpypi_004_post_publish_verification_reads_from_testpypi() -> None:
     assert "--index-url https://test.pypi.org/simple/" in verify_section
     assert "--no-deps" in verify_section
     assert "needs.qualify-release-candidate.outputs.package-version" in verify_section
-    assert 'cd /tmp' in verify_section
+    assert "cd /tmp" in verify_section
     assert "scripts/smoke_installed_package.py" in verify_section

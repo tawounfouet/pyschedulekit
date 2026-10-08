@@ -14,6 +14,7 @@ from pyschedulekit.domain.schedule import ScheduleId, ScheduleRevision, TargetRe
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.infrastructure.local_executor import LocalExecutor, PythonTargetRegistry
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
+from pyschedulekit.testing import add_request_with_parent
 from pyschedulekit.testing import MutableClock
 
 
@@ -40,7 +41,7 @@ def test_pending_request_from_previous_process_is_dispatched_and_executed() -> N
     )
 
     with factory() as uow:
-        uow.requests.add(request)
+        add_request_with_parent(uow=uow, request=request)
         uow.commit()
 
     execution_service = ExecutionService(uow_factory=factory)

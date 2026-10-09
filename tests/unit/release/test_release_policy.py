@@ -1,7 +1,6 @@
 """Tests for the public release publication policy."""
 
 import pytest
-
 from scripts.release_policy import should_publish_to_pypi
 
 

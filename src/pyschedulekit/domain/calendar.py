@@ -50,9 +50,7 @@ class BusinessCalendar:
 
     calendar_ref: CalendarRef
     revision: CalendarRevision = field(default_factory=CalendarRevision)
-    working_weekdays: frozenset[int] = field(
-        default_factory=lambda: frozenset({0, 1, 2, 3, 4})
-    )
+    working_weekdays: frozenset[int] = field(default_factory=lambda: frozenset({0, 1, 2, 3, 4}))
     holidays: frozenset[date] = field(default_factory=frozenset)
     extra_working_days: frozenset[date] = field(default_factory=frozenset)
 
@@ -65,9 +63,7 @@ class BusinessCalendar:
 
         overlap = self.holidays & self.extra_working_days
         if overlap:
-            raise ValueError(
-                "BusinessCalendar holidays and extra working days must be disjoint."
-            )
+            raise ValueError("BusinessCalendar holidays and extra working days must be disjoint.")
 
     @property
     def snapshot_ref(self) -> CalendarSnapshotRef:

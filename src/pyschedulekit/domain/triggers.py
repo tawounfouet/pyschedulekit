@@ -16,6 +16,7 @@ from pyschedulekit.domain.time import (
     NonexistentLocalTimeError,
     Timezone,
 )
+from pyschedulekit.domain.trigger import CalendarAwareTrigger, Trigger
 
 
 class InvalidIntervalTriggerError(ValueError):
@@ -38,6 +39,14 @@ class BusinessDaySearchLimitError(RuntimeError):
     """Raised when bounded business-day lookup cannot find a future occurrence."""
 
 
+class InvalidCompositeTriggerError(ValueError):
+    """Raised when a composite Trigger configuration is invalid."""
+
+
+class CompositeTriggerContractError(RuntimeError):
+    """Raised when a child Trigger violates the common temporal contract."""
+
+
 class CronDialect(StrEnum):
     """Supported Cron day-of-month/day-of-week interpretation."""
 
@@ -57,6 +66,56 @@ class CronNonexistentTimePolicy(StrEnum):
 
     SKIP = "skip"
     RAISE = "raise"
+
+
+@dataclass(frozen=True, slots=True, init=False)
+class AnyOfTrigger:
+    """Union of two or more pure temporal Triggers.
+
+    Each lookup asks every child for its first candidate strictly after the
+    same reference and returns the earliest candidate. When several children
+    produce the same Instant, that Instant is emitted only once because the
+    next lookup is strictly after the returned value.
+
+    Calendar-aware children are deliberately excluded from this foundation
+    contract. They require composite calendar-resolution semantics that are
+    introduced separately from this pure temporal union.
+    """
+
+    triggers: tuple[Trigger, ...]
+
+    def __init__(self, *triggers: Trigger) -> None:
+        if len(triggers) < 2:
+            raise InvalidCompositeTriggerError("AnyOfTrigger requires at least two child Triggers.")
+        for index, trigger in enumerate(triggers):
+            if isinstance(trigger, CalendarAwareTrigger):
+                raise InvalidCompositeTriggerError(
+                    f"AnyOfTrigger child at index {index} must be purely temporal."
+                )
+            if not isinstance(trigger, Trigger):
+                raise InvalidCompositeTriggerError(
+                    f"AnyOfTrigger child at index {index} must implement Trigger."
+                )
+
+        object.__setattr__(self, "triggers", tuple(triggers))
+
+    def next_after(self, reference: Instant) -> Instant | None:
+        """Return the earliest child occurrence strictly after reference."""
+
+        candidates: list[Instant] = []
+        for index, trigger in enumerate(self.triggers):
+            candidate = trigger.next_after(reference)
+            if candidate is None:
+                continue
+            if not isinstance(candidate, Instant) or candidate <= reference:
+                raise CompositeTriggerContractError(
+                    "AnyOfTrigger child at index "
+                    f"{index} returned a candidate that is not an Instant strictly "
+                    "after the reference."
+                )
+            candidates.append(candidate)
+
+        return min(candidates, default=None)
 
 
 @dataclass(frozen=True, slots=True)

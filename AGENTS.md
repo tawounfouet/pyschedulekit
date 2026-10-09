@@ -110,8 +110,10 @@ The 0.2.x PostgreSQL / Async Executor / ExecutorRegistry sequence is complete. T
 0.3.x calendar sequence is also complete: CAL-00 Calendar Foundations ✅ → CAL-01 Schedule
 Calendar Binding ✅ → CAL-02 Calendar-aware Occurrence Planning ✅ → CAL-03 Business-Day
 Trigger Semantics ✅ → CAL-04 Persistence / Migration Parity ✅ → CAL-05 Calendar Provider
-Adapters ✅. The next pre-1.0 roadmap axis must be selected explicitly before implementation. Calendars must remain deterministic and
-versioned; do not couple domain calendar rules to a holiday
-library, database, HTTP service, or global mutable provider.
+Adapters ✅. The 0.4.x composite-trigger axis is now active: CMP-00 establishes the
+domain-internal pure temporal union contract; public API and persistence support remain
+deferred to later CMP lots. Calendars must remain deterministic and versioned; do not couple
+domain calendar rules to a holiday library, database, HTTP service, or global mutable
+provider.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

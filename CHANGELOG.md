@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CMP-00 Composite Trigger Contract: the domain-internal immutable `AnyOfTrigger`
+  selects the earliest candidate from two or more pure temporal children, deduplicates shared
+  Instants through strict progression, preserves exhaustion semantics, and fails closed when
+  a child violates the common Trigger contract. Public API and persistence support remain
+  deliberately deferred.
+
 - Added CAL-05 Calendar Provider Adapters: public `FileCalendarProvider` and `SqliteCalendarProvider`, a shared strict/versioned BusinessCalendar JSON codec, immutable file snapshots, isolated revision-aware SQLite storage, explicit duplicate replacement, future-schema fail-closed behavior, and Scheduler E2E qualification including coexistence with `SqliteUnitOfWorkFactory` in one database file.
 
 - Added CAL-04 Persistence / Migration Parity: Schedule-definition codec v3, independently versioned Trigger envelopes, v1/v2 legacy reads, fail-closed future-version handling, semantic migration conformance, and live SQLite/PostgreSQL upgrade-on-write qualification for legacy calendar-bound BusinessDayTrigger rows.

@@ -43,8 +43,7 @@ from pyschedulekit import (
 ### Automatic registration
 
 ```python
-async def refresh_cache() -> None:
-    ...
+async def refresh_cache() -> None: ...
 
 scheduler = Scheduler()
 scheduler.add_schedule(
@@ -154,8 +153,7 @@ requesting cancellation. Timeout remains the bounded escape path.
 Distributed claim generation crosses the same executor boundary:
 
 ```python
-async def target(fencing_token: int) -> None:
-    ...
+async def target(fencing_token: int) -> None: ...
 ```
 
 The value is injected only when the callable declares the parameter.

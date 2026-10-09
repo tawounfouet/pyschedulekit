@@ -50,9 +50,7 @@ def _assert_installed_distribution() -> None:
     except ValueError:
         return
 
-    raise AssertionError(
-        f"Dogfood imported PyScheduleKit from the source checkout: {package_path}"
-    )
+    raise AssertionError(f"Dogfood imported PyScheduleKit from the source checkout: {package_path}")
 
 
 def main() -> None:

@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CAL-00 calendar foundations: `CalendarRef`, `CalendarRevision`, `CalendarSnapshotRef`, immutable `BusinessCalendar`, `CalendarProvider`, and a thread-safe version-aware `InMemoryCalendarProvider` without yet changing Schedule persistence or trigger semantics.
+
 - Added `ExecutorRegistry` as an instance-owned, thread-safe extension point for explicit custom executors, with dynamic RoutingExecutor resolution, exact-identity unregister, Scheduler isolation, and no global/import-time plugin discovery.
 
 - Added `AsyncioExecutor` and `AsyncPythonTargetRegistry` for trusted `async def` workloads, including automatic Scheduler detection, timeout/cancellation/fencing integration, durable retry reuse, and `python_async` target references without changing the synchronous Executor protocol.

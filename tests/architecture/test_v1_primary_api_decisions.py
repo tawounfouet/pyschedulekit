@@ -15,9 +15,7 @@ def test_v1_01b_root_and_api_only_sets_partition_primary_api() -> None:
     assert tuple(sorted(API_ONLY_V1_PUBLIC_NAMES)) == API_ONLY_V1_PUBLIC_NAMES
 
     assert set(ROOT_V1_PUBLIC_NAMES).isdisjoint(API_ONLY_V1_PUBLIC_NAMES)
-    assert set(ROOT_V1_PUBLIC_NAMES) | set(API_ONLY_V1_PUBLIC_NAMES) == set(
-        STABLE_PUBLIC_NAMES
-    )
+    assert set(ROOT_V1_PUBLIC_NAMES) | set(API_ONLY_V1_PUBLIC_NAMES) == set(STABLE_PUBLIC_NAMES)
 
 
 def test_v1_01b_root_keeps_primary_user_intent_concepts() -> None:

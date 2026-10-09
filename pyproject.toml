@@ -72,6 +72,10 @@ markers = [
 [tool.coverage.run]
 branch = true
 source = ["pyschedulekit"]
+omit = [
+  "src/pyschedulekit/infrastructure/postgres.py",
+  "src/pyschedulekit/infrastructure/postgres_schema.py",
+]
 
 [tool.coverage.report]
 fail_under = 85

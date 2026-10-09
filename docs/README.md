@@ -73,7 +73,8 @@ POST-05 Benchmarks                    ✅
 POST-06 Chaos / Fault Injection       ✅
         ↓
 0.2.x Execution & Storage Ecosystem   🚧 current
-  PG-00 PostgreSQL Foundation         🚧 current
+  PG-00 PostgreSQL Foundation         ✅
+  PG-01 Core Repositories             🚧 current
         ↓
 ...
         ↓
@@ -127,4 +128,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-00.
+**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-01.

@@ -111,7 +111,7 @@ The relational invariants include:
 
 ## Delivery lots
 
-### PG-00 — Contract & CI Foundation ✅ current
+### PG-00 — Contract & CI Foundation ✅
 
 - optional Psycopg dependency;
 - live PostgreSQL CI service;
@@ -124,7 +124,7 @@ The relational invariants include:
 
 No public PostgreSQL factory yet.
 
-### PG-01 — Core Repositories
+### PG-01 — Core Repositories 🚧 current
 
 Implement:
 
@@ -243,4 +243,4 @@ Those guarantees belong to the later PG lots and must not be implied early.
 
 ---
 
-**Current phase:** 0.2.x — PostgreSQL / PG-00.
+**Current phase:** 0.2.x — PostgreSQL / PG-01.

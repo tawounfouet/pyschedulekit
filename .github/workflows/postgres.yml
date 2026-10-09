@@ -5,16 +5,22 @@ on:
     branches:
       - main
     paths:
-      - "src/pyschedulekit/infrastructure/postgres_*.py"
+      - "src/pyschedulekit/infrastructure/postgres*.py"
       - "tests/integration/postgres/**"
       - "tests/architecture/test_postgres_optional_dependency.py"
+      - "tests/architecture/test_postgres_public_boundary.py"
+      - "tests/architecture/test_postgres_coverage_policy.py"
+      - ".coveragerc-postgres"
       - ".github/workflows/postgres.yml"
       - "pyproject.toml"
   pull_request:
     paths:
-      - "src/pyschedulekit/infrastructure/postgres_*.py"
+      - "src/pyschedulekit/infrastructure/postgres*.py"
       - "tests/integration/postgres/**"
       - "tests/architecture/test_postgres_optional_dependency.py"
+      - "tests/architecture/test_postgres_public_boundary.py"
+      - "tests/architecture/test_postgres_coverage_policy.py"
+      - ".coveragerc-postgres"
       - ".github/workflows/postgres.yml"
       - "pyproject.toml"
   workflow_dispatch:
@@ -63,4 +69,12 @@ jobs:
 
       - name: Run PostgreSQL foundation qualification
         run: |
-          pytest -q tests/integration/postgres tests/architecture/test_postgres_optional_dependency.py
+          pytest -q \
+            tests/integration/postgres \
+            tests/architecture/test_postgres_optional_dependency.py \
+            tests/architecture/test_postgres_public_boundary.py \
+            tests/architecture/test_postgres_coverage_policy.py \
+            --cov=pyschedulekit.infrastructure.postgres \
+            --cov=pyschedulekit.infrastructure.postgres_schema \
+            --cov-config=.coveragerc-postgres \
+            --cov-report=term-missing

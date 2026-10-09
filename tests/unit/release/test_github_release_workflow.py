@@ -14,7 +14,7 @@ def _workflow_text() -> str:
 def test_t_github_release_001_tagged_candidate_generates_build_provenance() -> None:
     workflow = _workflow_text()
     qualify_section = workflow.split("  qualify-release-candidate:", 1)[1].split(
-        "  publish-testpypi:",
+        "  publish-pypi:",
         1,
     )[0]
 

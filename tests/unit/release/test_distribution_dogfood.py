@@ -11,7 +11,7 @@ def test_distribution_clean_install_runs_consumer_dogfood() -> None:
 
     assert "Dogfood installed package as external consumer" in workflow
     assert 'PYSCHEDULEKIT_DOGFOOD_REQUIRE_INSTALLED: "1"' in workflow
-    assert 'cd /tmp' in workflow
+    assert "cd /tmp" in workflow
     assert 'python "$GITHUB_WORKSPACE/dogfood/consumer_app.py"' in workflow
 
 

@@ -278,7 +278,7 @@ Proposed sequence:
 CAL-00 Calendar Foundations            ✅
 CAL-01 Schedule Calendar Binding       ✅
 CAL-02 Calendar-aware Occurrence Planning  ✅
-CAL-03 Business-Day Trigger Semantics        🚧 current
+CAL-03 Business-Day Trigger Semantics        ✅
 CAL-04 Persistence / Migration Parity         ⏭ next
 CAL-05 Calendar Provider Adapters
 ```
@@ -287,4 +287,4 @@ The exact order after CAL-02 may be refined as occurrence semantics are qualifie
 
 ---
 
-**Status:** CAL-03 — Business-Day Trigger Semantics in qualification. Next: CAL-04.
+**Status:** CAL-03 — Business-Day Trigger Semantics complete. Next: CAL-04.

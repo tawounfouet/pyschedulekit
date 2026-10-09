@@ -45,7 +45,6 @@ from pyschedulekit import (
 ```python
 async def refresh_cache() -> None: ...
 
-
 scheduler = Scheduler()
 scheduler.add_schedule(
     target=refresh_cache,

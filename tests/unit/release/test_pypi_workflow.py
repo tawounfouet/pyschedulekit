@@ -21,7 +21,7 @@ def test_t_pypi_001_publish_job_requires_successful_qualification() -> None:
     assert "qualify-release-candidate" in publish_section
     assert "github.event_name == 'push'" in publish_section
     assert "startsWith(github.ref, 'refs/tags/v')" in publish_section
-    assert "needs.qualify-release-candidate.outputs.publish-pypi == 'true'" in publish_section
+    assert "needs.qualify-release-candidate.outputs.public-pypi-eligible == 'true'" in publish_section
 
 
 def test_t_pypi_002_publish_job_uses_production_environment_and_oidc() -> None:
@@ -83,6 +83,6 @@ def test_t_pypi_006_qualification_exposes_publication_policy_output() -> None:
         1,
     )[0]
 
-    assert "publish-pypi: ${{ steps.publication-policy.outputs.value }}" in qualify_section
+    assert "public-pypi-eligible: ${{ steps.publication-policy.outputs.value }}" in qualify_section
     assert "python -m scripts.release_policy" in qualify_section
     assert 'echo "value=$value" >> "$GITHUB_OUTPUT"' in qualify_section

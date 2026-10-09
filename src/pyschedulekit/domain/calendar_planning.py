@@ -9,7 +9,7 @@ from pyschedulekit.domain.calendar import (
     CalendarSnapshotRef,
 )
 from pyschedulekit.domain.time import Instant, Timezone
-from pyschedulekit.domain.trigger import Trigger
+from pyschedulekit.domain.trigger import CalendarAwareTrigger, Trigger
 
 
 class CalendarBindingError(ValueError):
@@ -48,7 +48,7 @@ class CalendarOccurrencePlanner:
     def next_after(
         self,
         *,
-        trigger: Trigger,
+        trigger: Trigger | CalendarAwareTrigger,
         reference: Instant,
         timezone: Timezone,
         binding: CalendarSnapshotRef | None,
@@ -57,8 +57,19 @@ class CalendarOccurrencePlanner:
         """Return the first Trigger candidate accepted by the bound calendar."""
 
         resolved = self._validate_binding(binding=binding, calendar=calendar)
-        cursor = reference
 
+        if isinstance(trigger, CalendarAwareTrigger):
+            if resolved is None:
+                raise CalendarBindingError(
+                    "A calendar-aware Trigger requires a Schedule calendar binding."
+                )
+            return trigger.next_after_with_calendar(
+                reference,
+                timezone=timezone,
+                calendar=resolved,
+            )
+
+        cursor = reference
         for _ in range(self.max_candidates):
             candidate = trigger.next_after(cursor)
             if candidate is None:

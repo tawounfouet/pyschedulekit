@@ -101,7 +101,7 @@ POST-06 Chaos / Fault Injection         ✅
 0.3.x CAL-00 Calendar Foundations         ✅
 0.3.x CAL-01 Schedule Calendar Binding    ✅
 0.3.x CAL-02 Calendar-aware Planning      ✅
-0.3.x CAL-03 Business-Day Trigger Semantics 🚧 current
+0.3.x CAL-03 Business-Day Trigger Semantics ✅
 0.3.x CAL-04 Persistence / Migration Parity  ⏭ next
 ```
 
@@ -115,7 +115,7 @@ POST-06 Chaos / Fault Injection         ✅
 - **PG-03 qualifié** : contrat partagé InMemory/SQLite/PostgreSQL, 130 tests PostgreSQL live, couverture PostgreSQL 87,88% avec floor 85%.
 - **PG-04 qualifié** : 138 tests PostgreSQL live, Scheduler/run_pending, retry, outbox, reconciliation, crash recovery et contention multi-worker; couverture PostgreSQL 88,59%.
 - **PostgreSQL** : qualifié jusqu'à PG-05, public via `pyschedulekit.postgres`, support matrix 16/17/18, couverture live 88,86%.
-- **Étape active** : CAL-03 qualifie le premier trigger intrinsèquement métier : premier/dernier/N-ième jour ouvré mensuel, toujours basé sur une révision exacte du calendrier.
+- **Étape active** : CAL-03 est qualifié ; CAL-04 doit maintenant verrouiller la parité de persistence/migration des calendriers et triggers métier avant les adapters provider externes.
 
 ---
 

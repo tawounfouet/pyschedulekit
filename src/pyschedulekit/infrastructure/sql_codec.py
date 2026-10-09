@@ -308,9 +308,7 @@ def _decode_trigger_config(
             hour=cast(int, config["hour"]),
             minute=cast(int, config["minute"]),
             ambiguous_time=CronAmbiguousTimePolicy(cast(str, config["ambiguous_time"])),
-            nonexistent_time=CronNonexistentTimePolicy(
-                cast(str, config["nonexistent_time"])
-            ),
+            nonexistent_time=CronNonexistentTimePolicy(cast(str, config["nonexistent_time"])),
         )
 
     if kind == "date":
@@ -340,6 +338,7 @@ def migrate_schedule_definition_json(value: str) -> str:
     """Normalize any supported legacy Schedule definition into the current codec."""
 
     return encode_schedule_definition(decode_schedule_definition(value))
+
 
 def _encode_misfire(policy: MisfirePolicy) -> dict[str, Any]:
     return {

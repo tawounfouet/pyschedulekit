@@ -1,5 +1,6 @@
 """CAL-00 qualification for InMemoryCalendarProvider."""
 
+import sqlite3
 from datetime import date
 
 import pytest
@@ -209,3 +210,17 @@ def test_sqlite_provider_unknown_calendar_matches_static_provider_error(tmp_path
 def test_sqlite_provider_rejects_in_memory_database() -> None:
     with pytest.raises(PyScheduleKitConfigurationError, match="file-backed"):
         SqliteCalendarProvider(":memory:")
+
+
+
+def test_sqlite_provider_rejects_future_schema_version(tmp_path) -> None:
+    database = tmp_path / "calendars.db"
+    SqliteCalendarProvider(database)
+
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "UPDATE pyschedulekit_calendar_schema SET version = 2 WHERE singleton = 1"
+        )
+
+    with pytest.raises(PyScheduleKitConfigurationError, match="schema version"):
+        SqliteCalendarProvider(database)

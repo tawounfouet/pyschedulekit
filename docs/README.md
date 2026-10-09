@@ -32,6 +32,7 @@ docs/
 ├── README.md                  # this navigation hub
 ├── ARCHITECTURE.md            # current technical reference
 ├── SDLC.md                    # current engineering lifecycle
+├── api/                       # stable public API reference
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
 ├── cookbook/                  # runnable real-world usage scenarios
@@ -61,8 +62,8 @@ Do not interpret red states inside the three snapshot documents as current repos
 LOT-00 ... LOT-34                     ✅ initial functional roadmap
 POST-00 Audit Remediation             ✅ complete
 POST-01 Documentation Cleanup         ✅
-POST-02 Real-world Examples/Cookbook  🚧 current
-POST-03 API Documentation             ⬜
+POST-02 Real-world Examples/Cookbook  ✅
+POST-03 API Documentation             🚧 current
 POST-04 Dogfooding                    ⬜
 POST-05 Benchmarks                    ⬜
 POST-06 Chaos / Fault Injection       ⬜
@@ -102,6 +103,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | verify whether an audit finding is still open | [POST-00 status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) |
 | inspect original design intent | [Specs](./specs/) |
 | inspect implementation history | [Implementation LOTs](./implementation/) |
+| inspect the stable public API | [API reference](./api/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 

@@ -47,6 +47,12 @@ from pyschedulekit.application.shutdown import (
     ShutdownMode as ShutdownMode,
     ShutdownResult as ShutdownResult,
 )
+from pyschedulekit.domain.calendar import (
+    BusinessCalendar as BusinessCalendar,
+    CalendarRef as CalendarRef,
+    CalendarRevision as CalendarRevision,
+    CalendarSnapshotRef as CalendarSnapshotRef,
+)
 from pyschedulekit.domain.claim import WorkerId as WorkerId
 from pyschedulekit.domain.concurrency import (
     ConcurrencyDecision as ConcurrencyDecision,
@@ -114,6 +120,9 @@ from pyschedulekit.infrastructure.asyncio_executor import (
     AsyncPythonTargetRegistry as AsyncPythonTargetRegistry,
 )
 from pyschedulekit.infrastructure.executor_registry import ExecutorRegistry as ExecutorRegistry
+from pyschedulekit.infrastructure.calendar import (
+    InMemoryCalendarProvider as InMemoryCalendarProvider,
+)
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor as HttpExecutor,
     HttpMethod as HttpMethod,
@@ -129,6 +138,7 @@ from pyschedulekit.infrastructure.observability import (
 )
 from pyschedulekit.infrastructure.routing_executor import RoutingExecutor as RoutingExecutor
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory as SqliteUnitOfWorkFactory
+from pyschedulekit.ports.calendar import CalendarProvider as CalendarProvider
 from pyschedulekit.ports.cancellation import (
     CancellationToken as CancellationToken,
     ExecutionCancelledError as ExecutionCancelledError,

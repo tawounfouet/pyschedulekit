@@ -273,34 +273,46 @@ class Scheduler:
             target=target,
             schedule_id=schedule_id,
         )
-
-        effective_timezone = self._effective_timezone(
-            trigger=trigger,
-            timezone=timezone,
+        local_registration = (
+            None
+            if isinstance(target, TargetRef)
+            else (target_ref.reference, target)
         )
-        effective_misfire = misfire if misfire is not None else MisfirePolicy.run_now()
-        effective_concurrency = (
-            concurrency if concurrency is not None else ConcurrencyPolicy.allow()
-        )
-        effective_retry = retry if retry is not None else RetryPolicy.none()
 
-        schedule = Schedule.create(
-            schedule_id=schedule_id,
-            definition=ScheduleDefinition(
-                target=target_ref,
+        committed = False
+        try:
+            effective_timezone = self._effective_timezone(
                 trigger=trigger,
-                timezone=effective_timezone,
-                misfire=effective_misfire,
-                concurrency=effective_concurrency,
-                retry=effective_retry,
-                timeout=timeout,
-            ),
-            reference=self._clock.now(),
-        )
+                timezone=timezone,
+            )
+            effective_misfire = misfire if misfire is not None else MisfirePolicy.run_now()
+            effective_concurrency = (
+                concurrency if concurrency is not None else ConcurrencyPolicy.allow()
+            )
+            effective_retry = retry if retry is not None else RetryPolicy.none()
 
-        with self._uow_factory() as uow:
-            uow.schedules.add(schedule)
-            uow.commit()
+            schedule = Schedule.create(
+                schedule_id=schedule_id,
+                definition=ScheduleDefinition(
+                    target=target_ref,
+                    trigger=trigger,
+                    timezone=effective_timezone,
+                    misfire=effective_misfire,
+                    concurrency=effective_concurrency,
+                    retry=effective_retry,
+                    timeout=timeout,
+                ),
+                reference=self._clock.now(),
+            )
+
+            with self._uow_factory() as uow:
+                uow.schedules.add(schedule)
+                uow.commit()
+                committed = True
+        finally:
+            if not committed and local_registration is not None:
+                reference, callable_target = local_registration
+                self._registry.unregister(reference, callable_target)
 
         self._runtime.wake()
         return schedule.id

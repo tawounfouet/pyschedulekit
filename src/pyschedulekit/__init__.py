@@ -39,6 +39,7 @@ from pyschedulekit.api import ExecutionSnapshot as ExecutionSnapshot
 from pyschedulekit.api import ExecutionState as ExecutionState
 from pyschedulekit.api import Executor as Executor
 from pyschedulekit.api import ExecutorOutcome as ExecutorOutcome
+from pyschedulekit.api import ExecutorRegistry as ExecutorRegistry
 from pyschedulekit.api import ExponentialBackoff as ExponentialBackoff
 from pyschedulekit.api import Failure as Failure
 from pyschedulekit.api import FailureCategory as FailureCategory

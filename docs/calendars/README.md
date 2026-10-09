@@ -305,7 +305,7 @@ CAL-00 Calendar Foundations            ✅
 CAL-01 Schedule Calendar Binding       ✅
 CAL-02 Calendar-aware Occurrence Planning  ✅
 CAL-03 Business-Day Trigger Semantics        ✅
-CAL-04 Persistence / Migration Parity         🚧 current
+CAL-04 Persistence / Migration Parity         ✅
 CAL-05 Calendar Provider Adapters              ⏭ next
 ```
 
@@ -313,4 +313,4 @@ The exact order after CAL-02 may be refined as occurrence semantics are qualifie
 
 ---
 
-**Status:** CAL-04 — Persistence / Migration Parity in qualification. Next: CAL-05.
+**Status:** CAL-04 — Persistence / Migration Parity complete. Next: CAL-05.

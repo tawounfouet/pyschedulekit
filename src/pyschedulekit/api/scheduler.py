@@ -323,6 +323,11 @@ class Scheduler:
     ) -> ScheduleId:
         """Create and persist one Schedule using the current Clock reference."""
 
+        if isinstance(trigger, CalendarAwareTrigger) and calendar is None:
+            raise PyScheduleKitConfigurationError(
+                "A calendar-aware Trigger requires a calendar binding."
+            )
+
         schedule_id = ScheduleId(id or uuid4().hex)
         target_ref = self._normalize_target(
             target=target,

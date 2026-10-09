@@ -7,6 +7,7 @@ on:
     paths:
       - "src/pyschedulekit/infrastructure/postgres*.py"
       - "tests/integration/postgres/**"
+      - "tests/integration/infrastructure/test_adapter_parity.py"
       - "tests/architecture/test_postgres_optional_dependency.py"
       - "tests/architecture/test_postgres_public_boundary.py"
       - "tests/architecture/test_postgres_coverage_policy.py"
@@ -71,6 +72,7 @@ jobs:
         run: |
           pytest -q \
             tests/integration/postgres \
+            tests/integration/infrastructure/test_adapter_parity.py \
             tests/architecture/test_postgres_optional_dependency.py \
             tests/architecture/test_postgres_public_boundary.py \
             tests/architecture/test_postgres_coverage_policy.py \

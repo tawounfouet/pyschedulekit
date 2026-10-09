@@ -23,7 +23,7 @@ def test_postgres_workflow_owns_adapter_coverage() -> None:
     config = (REPO_ROOT / ".coveragerc-postgres").read_text(encoding="utf-8")
     workflow = (REPO_ROOT / ".github" / "workflows" / "postgres.yml").read_text(encoding="utf-8")
 
-    assert "fail_under = 75" in config
+    assert "fail_under = 85" in config
     assert "pyschedulekit.infrastructure.postgres" in config
     assert "pyschedulekit.infrastructure.postgres_schema" in config
     assert "--cov=pyschedulekit.infrastructure.postgres" in workflow

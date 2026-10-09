@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added PostgreSQL PG-03 shared adapter-parity qualification: the same observable contract now targets InMemory, SQLite and live PostgreSQL for referential integrity, atomic graphs, staged state, rollback, duplicate translation, optimistic CAS, temporal queries, coordination, outbox and retention; PostgreSQL coverage is gated at 85% and PG-03 qualifies at 87.88% across 130 live-service tests.
+
 - Added PostgreSQL PG-02 internal coordination, outbox and retention repositories plus a full nine-repository UnitOfWork, still withheld from the stable public API pending parity and Scheduler E2E qualification.
 
 - Added PostgreSQL PG-01 internal core repositories for Schedule, ExecutionRequest, Execution and Attempt with staged UnitOfWork semantics, identity map, rollback, duplicate translation and optimistic compare-and-swap qualification.

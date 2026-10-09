@@ -21,7 +21,7 @@ from pyschedulekit.domain.schedule import (
 )
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
-from pyschedulekit.infrastructure.postgres import PostgresCoreUnitOfWorkFactory
+from pyschedulekit.infrastructure.postgres import PostgresUnitOfWorkFactory
 from pyschedulekit.ports.persistence import (
     DuplicateScheduleError,
     OptimisticConcurrencyError,
@@ -53,9 +53,9 @@ def _instant(*, hour: int = 10, minute: int = 0) -> Instant:
     return Instant(datetime(2026, 1, 1, hour, minute, tzinfo=UTC))
 
 
-def _factory() -> PostgresCoreUnitOfWorkFactory:
+def _factory() -> PostgresUnitOfWorkFactory:
     assert POSTGRES_DSN is not None
-    return PostgresCoreUnitOfWorkFactory(POSTGRES_DSN)
+    return PostgresUnitOfWorkFactory(POSTGRES_DSN)
 
 
 def _schedule(schedule_id: str = "schedule-1") -> Schedule:

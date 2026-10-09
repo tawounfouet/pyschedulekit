@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — 0.2.x PostgreSQL / PG-02
+## 4. État courant — 0.2.x PostgreSQL / PG-04
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -92,7 +92,9 @@ POST-05 Benchmarks                      ✅
 POST-06 Chaos / Fault Injection         ✅
 0.2.x PostgreSQL / PG-00                ✅
 0.2.x PostgreSQL / PG-01                ✅
-0.2.x PostgreSQL / PG-02                🚧 current
+0.2.x PostgreSQL / PG-02                ✅
+0.2.x PostgreSQL / PG-03                ✅
+0.2.x PostgreSQL / PG-04                🚧 current
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -102,7 +104,8 @@ POST-06 Chaos / Fault Injection         ✅
 - **Quality gates** : Ruff ✅ · mypy strict ✅ · pytest ✅ · coverage ≥85 ✅.
 - **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
 - **Findings B1–B12** : aucun finding ouvert.
-- **Étape active** : compléter claims/locks/leases/outbox/retention, puis ouvrir la parité adapter PG-03.
+- **PG-03 qualifié** : contrat partagé InMemory/SQLite/PostgreSQL, 130 tests PostgreSQL live, couverture PostgreSQL 87,88% avec floor 85%.
+- **Étape active** : qualifier Scheduler/run_pending, recovery/reconciliation/outbox et contention multi-worker sur PostgreSQL réel.
 
 ---
 
@@ -162,4 +165,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — PostgreSQL PG-02.*
+*Dernière mise à jour : 2026-10-09 — PostgreSQL PG-04.*

@@ -5,8 +5,8 @@ from importlib.metadata import version
 from pyschedulekit import __version__
 
 
-def test_package_exposes_initial_version() -> None:
-    assert __version__ == "0.1.0a3"
+def test_package_exposes_current_version() -> None:
+    assert __version__ == "0.1.0a4"
 
 
 def test_package_version_matches_distribution_metadata() -> None:

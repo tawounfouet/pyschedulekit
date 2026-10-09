@@ -64,4 +64,3 @@ def test_t_release_readiness_006_defaults_to_next_unpublished_alpha_tag() -> Non
 
     assert 'default: "v0.1.0a4"' in workflow
     assert 'default: "v0.1.0a3"' not in workflow
-

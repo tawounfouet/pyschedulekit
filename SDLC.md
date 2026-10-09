@@ -60,7 +60,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 ### 3.5 Release
 - **Outils** : `/release` · `@release-prep` · skill `release-prep` · `diff-summary`.
 - **Commande projet** : `python -m scripts.release_preflight` · `python -m scripts.verify_distribution dist` · `python scripts/smoke_installed_package.py`.
-- **Critère de sortie** : tag + GitHub Release alignés avec PyPI (voir bug **B4**).
+- **Critère de sortie** : tag, artefacts PyPI, GitHub Release et provenance alignés ; B4 est désormais historique/résolu.
 
 ### 3.6 Déploiement
 - **Outils** : `/commit` · skill `git-hygiene` · `check-ci` · plugin `env-protection`.
@@ -69,48 +69,55 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ### 3.7 Maintenance
 - **Outils** : `/docs` · `@docs-writer` · `find-todos` · skill `git-hygiene` · `/archive`.
-- **Commande projet** : `ruff format --check .` sur le repo entier (les artefacts d'agent type `session-ses_*.md` doivent être ignorés).
+- **Commande projet** : `ruff format --check .` sur le repo entier ; les transcripts bruts archivés sous `docs/audit/**/sessions/**` sont explicitement hors surface Ruff.
 - **Critère de sortie** : docs à jour, dette tracée et priorisée.
 
 ---
 
-## 4. Où en est le projet (2026-10-08)
+## 4. État courant après POST-00G / B7
+
+Le snapshot détaillé de l'audit du 2026-10-08 est conservé dans les documents racine.
+Le statut faisant foi des findings est
+[POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
 
 ```text
  1 Plan ──► 2 Build ──► 3 Test ──► 4 Review ──► 5 Release ──► 6 Deploy ──► 7 Maintain
-   ✅        ✅          ✅          ✅           ⚠️            ⏳           🟡
- specs     B1/B3/B12   4 tests      audit       a3 sur PyPI  3 commits   docs d'audit
- LOTs      committés   +457 pass   + sécurité  GH Rel KO    non push    non commitées
+   ✅        ✅          ✅          ✅           ✅            ✅           🚧
+ specs     fixes       493 tests   audit +      a3 PyPI +    main green   POST-00H
+ versionnés POST-00    + gate 85%  hardening    GH Release   3.11-3.13   consolidation
 ```
 
-- **Courant** : phase **6 (Déploiement)**, en transition vers **7 (Maintenance)**, avec un résidu **phase 5** (B4).
-- **Portes qualité** : `ruff check` ✅ · `ruff format --check` ❌ (artefact non suivi) · `mypy src` ✅ · `pytest` ✅ 457.
-- **Dernier tag** : `v0.1.0a3`.
+- **Version publique** : `0.1.0a3`.
+- **GitHub Release** : `v0.1.0a3`, prerelease immutable.
+- **Quality gates** : Ruff ✅ · mypy strict ✅ · pytest ✅ · coverage ≥85 ✅.
+- **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
+- **Findings B1–B12** : aucun finding ouvert.
+- **Étape active** : POST-00H, puis qualification finale de `0.1.0a4`.
 
 ---
 
-## 5. Backlog par phase
+## 5. Backlog de remédiation — disposition
 
-| Bug | Phase cible | État | Réf. |
-|---|---|---|---|
-| B1 — annulation vs retry | 2/3 | ✅ corrigé (`c0601e9`) | CODEBASE §5 |
-| B3 — CI format rouge | 2/6 | ✅ corrigé (`394c246`) | CODEBASE §5 |
-| B12 — `docs/specs/` non versionné | 7 | ✅ corrigé (`0d09e34`) | CODEBASE §5 |
-| B4 — GitHub Release manquante | 5 | ⬜ ouvert | RECOMMANDATIONS §Phase 0.2 |
-| B2 — `run_pending` casse la boucle | 2/3 | ⬜ ouvert | RECOMMANDATIONS §2.2 |
-| B7 — registre cible avant commit | 2 | ⬜ ouvert | RECOMMANDATIONS §2.3 |
-| B9 — `has_pending` ignore le staged | 2 | ⬜ ouvert | RECOMMANDATIONS §2.4 |
-| B5 — init schéma non atomique | 3 | ⬜ ouvert | RECOMMANDATIONS §3.2 |
-| B6 — verrou d'admission non libéré | 3 | ⬜ ouvert | RECOMMANDATIONS §3.3 |
-| B8 — FK manquantes en mémoire | 3 | ⬜ ouvert | RECOMMANDATIONS §3.4 |
-| B10 — fuite HTTPError | 4 | ⬜ ouvert | RECOMMANDATIONS §4.1 |
-| B11 — version README obsolète | 7 | ⬜ ouvert (dans `README.md` modifié) | CODEBASE §5 |
+| Finding | État | Preuve principale |
+|---|---|---|
+| B1 — cancellation vs retry | ✅ FIXED | `c0601e9` |
+| B2 — transition race / runtime | ✅ FIXED | PR #44 / `0a5455b` |
+| B3 — Ruff release preflight | ✅ FIXED | `394c246` |
+| B4 — GitHub Release | ✅ HISTORICAL / RESOLVED | `v0.1.0a3` publiée |
+| B5 — SQLite bootstrap | ✅ FIXED | PR #45 / `f310994` |
+| B6 — admission lock conflict | ✅ FIXED | PR #46 / `0fe4d8a` |
+| B7 — target registry before commit | ✅ FIXED | PR #51 / `1c3e31c` |
+| B8/B9 — persistence parity | ✅ FIXED | PR #48 / `cbf3904` |
+| B10 — HTTP cleanup / redirects | ✅ FIXED | PR #49 / `c1c85e3` |
+| B11 — README status | ✅ FIXED | README courant |
+| B12 — specs non versionnées | ✅ FIXED | `0d09e34` |
 
 ### Prochaine étape recommandée
-1. **7 — Maintenance** : assainir (`.gitignore` pour `temp/` et `session-ses_*.md`), puis committer les 6 livrables d'audit + `README.md` + `.gitignore` (`/commit`).
-2. **6 — Déploiement** : `git push` après porte qualité verte.
-3. **5 — Release** : corriger B4 (`actions/checkout` dans `create-github-release`) et rattraper la release `v0.1.0a3`.
-4. **2/3 — Build/Test** : enchaîner B2, puis B5/B6/B8 (voir [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md)).
+
+1. terminer POST-00H et merger la consolidation documentaire ;
+2. exécuter la qualification de release complète ;
+3. préparer/publier `0.1.0a4` ;
+4. seulement ensuite reprendre POST-01 → POST-06 et la Phase II.
 
 ---
 
@@ -123,7 +130,7 @@ pip install -e ".[dev]"          # une fois : hooks pre-commit en language: syst
 ruff check .                     # lint
 ruff format --check .            # format (ruff format . pour corriger)
 mypy src                         # typage strict (src uniquement)
-pytest -q --cov=pyschedulekit    # suite + couverture (457 tests, 86 %)
+pytest -q --cov=pyschedulekit    # suite + couverture ; fail_under = 85
 ```
 
 Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la racine (chemins relatifs des tests release) ; `rg`/`find-todos` pour la dette.
@@ -133,7 +140,8 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 ## 7. Voir aussi
 
 - [`INDEX.md`](./INDEX.md) — sommaire de toute la documentation.
-- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — plan de remédiation (Phases 0-5, correctifs prêts à l'emploi).
+- [`POST-00 Remediation Status`](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) — état courant et preuves.
+- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — plan de remédiation historique issu de l'audit.
 - [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) — faits vérifiés et bugs B1-B12.
 - [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) — verdict et notes /10.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — référence technique.
@@ -141,4 +149,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-08.*
+*Dernière mise à jour : 2026-10-09 — POST-00H.*

@@ -8,6 +8,9 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added a deterministic five-scenario chaos/fault-injection campaign covering executor retry recovery, outbox broker failure, runtime cycle supervision, admission-lock persistence conflicts, and stale-owner fencing.
+- Added a dedicated Chaos Qualification workflow that archives machine-readable campaign evidence after chaos-relevant merges to main.
+
 - Added a reproducible benchmark harness for interval, cron, in-memory/SQLite cycles, and 1k→10k idle-scheduler scaling; smoke correctness runs in PR CI while standard benchmark evidence is archived after benchmark-relevant merges to main.
 - Added installed-distribution dogfooding across wheel/sdist × Python 3.11/3.12/3.13, exercising cron, retry, SQLite durability and readiness outside the source checkout.
 - Added a stable public API reference backed by an architecture test that requires every manifest export and legacy compatibility name to remain documented.

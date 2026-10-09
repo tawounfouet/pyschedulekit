@@ -888,6 +888,12 @@ src/pyschedulekit/
 
 The directory structure grows only when implementation needs it; the project avoids empty architectural ceremony before working vertical slices.
 
+## Installed-package dogfooding
+
+Distribution Qualification executes a real consumer application against every clean-installed
+wheel/sdist on Python 3.11, 3.12 and 3.13. See
+[`docs/dogfood/README.md`](./docs/dogfood/README.md).
+
 ## API reference
 
 The stable exported surface is documented in

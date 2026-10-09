@@ -36,6 +36,7 @@ docs/
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
 ├── cookbook/                  # runnable real-world usage scenarios
+├── dogfood/                   # installed-distribution consumer qualification
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
 ├── release/                   # release engineering and rollback discipline
 └── specs/                     # domain / architecture / acceptance specifications
@@ -63,8 +64,8 @@ LOT-00 ... LOT-34                     ✅ initial functional roadmap
 POST-00 Audit Remediation             ✅ complete
 POST-01 Documentation Cleanup         ✅
 POST-02 Real-world Examples/Cookbook  ✅
-POST-03 API Documentation             🚧 current
-POST-04 Dogfooding                    ⬜
+POST-03 API Documentation             ✅
+POST-04 Dogfooding                    🚧 current
 POST-05 Benchmarks                    ⬜
 POST-06 Chaos / Fault Injection       ⬜
         ↓
@@ -105,6 +106,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect implementation history | [Implementation LOTs](./implementation/) |
 | inspect the stable public API | [API reference](./api/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
+| inspect installed-package dogfooding | [Dogfooding](./dogfood/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule

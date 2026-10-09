@@ -21,10 +21,7 @@ def test_postgres_factory_is_public_only_through_optional_namespace() -> None:
     assert "PostgresUnitOfWorkFactory" not in STABLE_PUBLIC_NAMES
     assert not hasattr(pyschedulekit, "PostgresUnitOfWorkFactory")
 
-    assert (
-        postgres_api.PostgresUnitOfWorkFactory
-        is InternalPostgresUnitOfWorkFactory
-    )
+    assert postgres_api.PostgresUnitOfWorkFactory is InternalPostgresUnitOfWorkFactory
     assert postgres_api.__all__ == [
         "PostgresUnitOfWorkFactory",
         "TransientPersistenceError",

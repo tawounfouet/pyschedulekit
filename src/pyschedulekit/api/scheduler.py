@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable, Mapping
 from threading import Lock
 from time import monotonic
@@ -60,6 +61,10 @@ from pyschedulekit.domain.time import Duration, Timezone
 from pyschedulekit.domain.trigger import Trigger
 from pyschedulekit.domain.triggers import CronTrigger
 from pyschedulekit.errors import PyScheduleKitConfigurationError
+from pyschedulekit.infrastructure.asyncio_executor import (
+    AsyncioExecutor,
+    AsyncPythonTargetRegistry,
+)
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor,
@@ -104,10 +109,15 @@ class Scheduler:
             uow_factory if uow_factory is not None else InMemoryUnitOfWorkFactory()
         )
         self._registry = registry if registry is not None else PythonTargetRegistry()
+        self._async_registry = AsyncPythonTargetRegistry()
         self._http_registry = http_registry if http_registry is not None else HttpTargetRegistry()
         configured_executors: dict[str, Executor] = {
             "python": LocalExecutor(
                 registry=self._registry,
+                clock=self._clock,
+            ),
+            "python_async": AsyncioExecutor(
+                registry=self._async_registry,
                 clock=self._clock,
             ),
             "http": HttpExecutor(
@@ -244,6 +254,16 @@ class Scheduler:
         self._registry.register(reference, target)
         return TargetRef.python(reference)
 
+    def register_async_target(
+        self,
+        reference: str,
+        target: Callable[..., object],
+    ) -> TargetRef:
+        """Register trusted async Python code and return its declarative TargetRef."""
+
+        self._async_registry.register(reference, target)
+        return TargetRef.async_python(reference)
+
     def register_http_target(
         self,
         reference: str,
@@ -274,7 +294,9 @@ class Scheduler:
             schedule_id=schedule_id,
         )
         local_registration = (
-            None if isinstance(target, TargetRef) else (target_ref.reference, target)
+            None
+            if isinstance(target, TargetRef)
+            else (target_ref.kind, target_ref.reference, target)
         )
 
         committed = False
@@ -309,8 +331,11 @@ class Scheduler:
                 committed = True
         finally:
             if not committed and local_registration is not None:
-                reference, callable_target = local_registration
-                self._registry.unregister(reference, callable_target)
+                kind, reference, callable_target = local_registration
+                if kind == "python_async":
+                    self._async_registry.unregister(reference, callable_target)
+                else:
+                    self._registry.unregister(reference, callable_target)
 
         self._runtime.wake()
         return schedule.id
@@ -638,5 +663,9 @@ class Scheduler:
             return target
 
         reference = f"local:{schedule_id.value}"
+        if inspect.iscoroutinefunction(target):
+            self._async_registry.register(reference, target)
+            return TargetRef.async_python(reference)
+
         self._registry.register(reference, target)
         return TargetRef.python(reference)

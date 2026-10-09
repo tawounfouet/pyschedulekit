@@ -51,6 +51,7 @@ def test_benchmark_smoke_profile_produces_structured_results(tmp_path: Path) -> 
     assert scaling["memory_idle_small_count"] == 100
     assert scaling["memory_idle_large_count"] == 1000
     assert scaling["memory_idle_large_to_small_ratio"] > 0
+    assert scaling["postgres_to_sqlite_cycle_ratio"] is None
 
     for result in results.values():
         assert result["operations"] > 0
@@ -75,3 +76,6 @@ def test_benchmark_workflow_records_standard_baseline_after_main_merge() -> None
     assert "${{ inputs.profile || 'standard' }}" in workflow
     assert "${{ inputs.python_version || '3.13' }}" in workflow
     assert "retention-days: 30" in workflow
+    assert "PYSCHEDULEKIT_BENCHMARK_POSTGRES_DSN" in workflow
+    assert 'python -m pip install -e ".[postgres]"' in workflow
+    assert "postgres:16-alpine" in workflow

@@ -1,99 +1,117 @@
-# INDEX — Documentation du projet
+# PyScheduleKit Documentation
 
-Point d'entrée de la documentation PyScheduleKit. Depuis l'audit du 2026-10-08, la
-documentation distingue explicitement **snapshot historique** et **état courant**.
+This directory is the canonical entry point for project documentation.
 
----
-
-## 1. Documents de référence
-
-| Document | Statut | Rôle | À lire quand… |
-|---|---|---|---|
-| [README.md](./README.md) | **CURRENT** | Vue produit, état public, capacités, API et développement | on découvre ou utilise le projet |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | **CURRENT** | Architecture, flux, invariants et limites actuelles | on modifie le code ou le design |
-| [AGENTS.md](./AGENTS.md) | **CURRENT** | Commandes, conventions et gotchas pour humains/agents | on travaille dans le dépôt |
-| [POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | **CURRENT** | Disposition B1–B12, preuves de correction, état POST-00 | on veut savoir ce qui est encore vrai aujourd'hui |
-| [CODEBASE_ANALYSIS.md](./CODEBASE_ANALYSIS.md) | **SNAPSHOT 2026-10-08** | Faits et findings B1–B12 observés pendant l'audit | on veut comprendre ce que l'audit a réellement trouvé |
-| [ANALYSE_CRITIQUE.md](./ANALYSE_CRITIQUE.md) | **SNAPSHOT 2026-10-08** | Opinion et scoring basés sur l'état audité | on veut comprendre le diagnostic critique initial |
-| [RECOMMANDATIONS.md](./RECOMMANDATIONS.md) | **SNAPSHOT / PLAN** | Plan de remédiation produit à partir de l'audit | on veut retrouver la logique des corrections |
-| [CHANGELOG.md](./CHANGELOG.md) | **HISTORY** | Historique des versions publiques | on cherche les changements par version |
-
-Règle de lecture :
+PyScheduleKit distinguishes two kinds of documents:
 
 ```text
-question sur ce qui était cassé le 8 octobre
-    → audit snapshot
+CURRENT
+    describes the repository as it behaves now
+    may evolve with implementation
 
-question sur ce qui est vrai maintenant
-    → README / ARCHITECTURE / AGENTS / POST-00 status
+SNAPSHOT / HISTORY
+    records what was observed or decided at a specific point in time
+    remains preserved for traceability
 ```
 
----
+## Current references
 
-## 2. Navigation par tâche
-
-| Je veux… | Aller à |
+| Document | Purpose |
 |---|---|
-| Lancer les quality gates / hooks | [AGENTS.md](./AGENTS.md) §Commands |
-| Comprendre un cycle complet `run_pending()` | [ARCHITECTURE.md](./ARCHITECTURE.md) §2.2 |
-| Comprendre cancellation / retry / timeout | [ARCHITECTURE.md](./ARCHITECTURE.md) §2.3 |
-| Voir les findings originaux B1–B12 | [CODEBASE_ANALYSIS.md](./CODEBASE_ANALYSIS.md) §5 |
-| Connaître leur statut actuel | [POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) §2 |
-| Comprendre pourquoi POST-00 a été lancé | [ANALYSE_CRITIQUE.md](./ANALYSE_CRITIQUE.md) |
-| Retrouver le plan de correction initial | [RECOMMANDATIONS.md](./RECOMMANDATIONS.md) |
-| Voir la parité Memory / SQLite | [POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) §4.2 |
-| Comprendre la surface stable vs expérimentale | [ARCHITECTURE.md](./ARCHITECTURE.md) §4 |
-| Gérer une release | `docs/release/` + [AGENTS.md](./AGENTS.md) |
-| Voir le pipeline de go-live réellement utilisé | [README.md](./README.md) §Project status |
-| Préparer `0.1.0a4` | [POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) §7–8 |
+| [Project README](../README.md) | Product overview, capabilities, development baseline |
+| [Architecture](./ARCHITECTURE.md) | Current system structure, flows, invariants and limitations |
+| [SDLC](./SDLC.md) | Current development, testing, review and maintenance workflow |
+| [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
+| [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
+| [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
+
+## Documentation areas
+
+```text
+docs/
+├── README.md                  # this navigation hub
+├── ARCHITECTURE.md            # current technical reference
+├── SDLC.md                    # current engineering lifecycle
+├── audit/
+│   └── 2026-10-08/            # dated OpenCode audit archive
+├── implementation/            # LOT-00 ... LOT-34 implementation records
+├── release/                   # release engineering and rollback discipline
+└── specs/                     # domain / architecture / acceptance specifications
+```
+
+## Audit archive — 2026-10-08
+
+The original audit is intentionally preserved under
+[`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md).
+
+| Snapshot | Purpose |
+|---|---|
+| [CODEBASE_ANALYSIS](./audit/2026-10-08/CODEBASE_ANALYSIS.md) | Verified facts and original B1–B12 findings |
+| [ANALYSE_CRITIQUE](./audit/2026-10-08/ANALYSE_CRITIQUE.md) | Critical assessment based on the audited state |
+| [RECOMMANDATIONS](./audit/2026-10-08/RECOMMANDATIONS.md) | Original remediation plan |
+| [POST-00 status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | What was subsequently fixed and how |
+| [Raw sessions](./audit/2026-10-08/sessions/) | Versioned audit transcripts, excluded from Ruff formatting |
+
+Do not interpret red states inside the three snapshot documents as current repository state.
+
+## Current project sequence
+
+```text
+LOT-00 ... LOT-34                     ✅ initial functional roadmap
+POST-00 Audit Remediation             ✅ complete
+POST-01 Documentation Cleanup         🚧 current
+POST-02 Real-world Examples/Cookbook  ⬜
+POST-03 API Documentation             ⬜
+POST-04 Dogfooding                    ⬜
+POST-05 Benchmarks                    ⬜
+POST-06 Chaos / Fault Injection       ⬜
+        ↓
+0.2.x Execution & Storage Ecosystem
+        ↓
+...
+        ↓
+1.0.0 stable public contract
+```
+
+## Publication policy
+
+The last currently published PyPI prerelease is `0.1.0a3`.
+
+Development versions after that may advance without a matching public package. The release
+workflow now enforces:
+
+```text
+0.x            → never publish to PyPI
+1.0.0a*        → never publish to PyPI
+1.0.0b*        → never publish to PyPI
+1.0.0rc*       → never publish to PyPI
+stable >=1.0.0 → eligible for PyPI publication
+```
+
+This keeps pre-1.0 work focused on framework maturity rather than release ceremony.
+
+## Quick navigation
+
+| I want to… | Read |
+|---|---|
+| understand the package quickly | [README](../README.md) |
+| understand `run_pending()` / runtime / persistence flows | [Architecture](./ARCHITECTURE.md) |
+| run or modify the engineering workflow | [SDLC](./SDLC.md) + [AGENTS](../AGENTS.md) |
+| understand why POST-00 existed | [Audit critique](./audit/2026-10-08/ANALYSE_CRITIQUE.md) |
+| verify whether an audit finding is still open | [POST-00 status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) |
+| inspect original design intent | [Specs](./specs/) |
+| inspect implementation history | [Implementation LOTs](./implementation/) |
+| understand release safety / fix-forward rules | [Release docs](./release/) |
+
+## Documentation rule
+
+When behavior changes:
+
+1. update executable tests first;
+2. update current documentation if the behavior is user- or maintainer-visible;
+3. never rewrite a dated snapshot to pretend an old finding never existed;
+4. prefer one canonical current document over multiple competing status pages.
 
 ---
 
-## 3. Carte rapide du code source
-
-| Package | Point d'entrée | Cœur du système |
-|---|---|---|
-| `src/pyschedulekit/api/` | `Scheduler` | façade publique + manifeste de stabilité |
-| `src/pyschedulekit/domain/` | time / triggers / schedule / execution | invariants métier et machines à états |
-| `src/pyschedulekit/application/` | `run_pending.py` | orchestration, runtime, recovery, claims, admission |
-| `src/pyschedulekit/ports/` | persistence / executor / time | frontières injectées |
-| `src/pyschedulekit/infrastructure/` | SQLite / Memory / executors | adaptateurs qualifiés par tests |
-| `src/pyschedulekit/testing/` | `MutableClock`, `FixedClock` | pilotage déterministe du temps |
-| `tests/integration/infrastructure/` | adapter parity | contrat observable partagé Memory / SQLite |
-| `tests/acceptance/` | qualification publique | exercice consommateur / package |
-| `scripts/` | release verification | build, preflight, smoke et qualification |
-
-Fichiers à connaître avant une modification structurante :
-
-- **`src/pyschedulekit/api/_manifest.py`** — contrat des exports publics.
-- **`src/pyschedulekit/_version.py`** — source unique de version.
-- **`src/pyschedulekit/domain/execution.py`** — transitions et invariants d'exécution.
-- **`src/pyschedulekit/infrastructure/sqlite_schema.py`** — intégrité durable SQLite.
-- **`src/pyschedulekit/infrastructure/memory.py`** — doit respecter le même contrat observable que SQLite.
-- **`.github/workflows/`** — workflows testés comme code ; actions SHA-pinnées.
-
----
-
-## 4. Repères courants
-
-État de référence après la clôture complète de POST-00 :
-
-- **Version publique :** `0.1.0a3`.
-- **Source candidate :** `0.1.0a4`, en préparation de Release Readiness.
-- **GitHub Release :** `v0.1.0a3`, prerelease immutable, wheel + sdist + checksum.
-- **Runtime dependencies :** 0.
-- **Python :** 3.11 / 3.12 / 3.13.
-- **Source type-checkée :** 65 fichiers Python, `mypy --strict` vert.
-- **Tests :** 493 passants sur Python 3.11 dans le run de consolidation.
-- **Couverture :** 86.61 %, avec seuil bloquant `fail_under = 85`.
-- **Qualité :** Ruff lint ✅ · Ruff format ✅ · mypy ✅ · pytest ✅.
-- **Distribution :** clean-install wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
-- **Findings B1–B12 :** aucun finding ouvert ; historique et preuves dans le registre POST-00.
-- **Release cible suivante :** `0.1.0a4` — stabilization & adversarial hardening.
-
-Les métriques présentes dans les documents d'audit racine restent celles du **snapshot
-2026-10-08** et ne doivent pas être confondues avec ces repères courants.
-
----
-
-*Dernière mise à jour : 2026-10-09 — POST-00H audit documentation consolidation.*
+**Last refreshed:** 2026-10-09 — POST-01 documentation cleanup.

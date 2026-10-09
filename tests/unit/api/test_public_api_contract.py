@@ -67,6 +67,7 @@ def test_t_public_api_004_scheduler_signature_parameter_contract() -> None:
     assert _parameter_names(Scheduler) == (
         "clock",
         "uow_factory",
+        "calendar_provider",
         "registry",
         "http_registry",
         "executors",

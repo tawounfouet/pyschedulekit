@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.E Protocol / Enum / Exception Freeze: exported Protocol members, 14 public
+  Enum name/value sets and public exception catch categories are now architecture-tested.
+  Error-named operational diagnostic records are explicitly preserved as non-exceptions.
+
 - Added V1-01.D Constructor / Method Signature Freeze with executable snapshots for 39
   consumer-authored constructors/factories and 53 public methods. Parameter names, calling
   modes, required/optional status and stable defaults are now CI-protected across the primary

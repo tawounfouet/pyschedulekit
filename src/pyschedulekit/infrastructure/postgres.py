@@ -1998,3 +1998,115 @@ class PostgresCoreUnitOfWorkFactory:
             row_factory=dict_row,
         )
         return PostgresCoreUnitOfWork(connection)
+
+
+class PostgresUnitOfWork:
+    """Full internal PostgreSQL UnitOfWork implementing every persistence repository."""
+
+    def __init__(self, connection: PostgresConnection) -> None:
+        self._connection = connection
+        self._active = False
+
+        self._schedules = PostgresScheduleRepository(connection)
+        self._requests = PostgresExecutionRequestRepository(connection)
+        self._executions = PostgresExecutionRepository(connection)
+        self._attempts = PostgresAttemptRepository(connection)
+        self._admission_locks = PostgresScheduleAdmissionLockRepository(connection)
+        self._materialization_leases = PostgresScheduleMaterializationLeaseRepository(connection)
+        self._claims = PostgresExecutionClaimRepository(connection)
+        self._outbox = PostgresOutboxRepository(connection)
+        self._retention = PostgresRetentionRepository(connection)
+
+        self.schedules: ScheduleRepository = self._schedules
+        self.requests: ExecutionRequestRepository = self._requests
+        self.executions: ExecutionRepository = self._executions
+        self.attempts: AttemptRepository = self._attempts
+        self.admission_locks: ScheduleAdmissionLockRepository = self._admission_locks
+        self.materialization_leases: ScheduleMaterializationLeaseRepository = (
+            self._materialization_leases
+        )
+        self.claims: ExecutionClaimRepository = self._claims
+        self.outbox: OutboxRepository = self._outbox
+        self.retention: RetentionRepository = self._retention
+
+    def __enter__(self) -> UnitOfWork:
+        if self._active:
+            raise RuntimeError("UnitOfWork is already active.")
+        self._active = True
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        del exc_type, exc, traceback
+        self.rollback()
+        self._active = False
+        self._connection.close()
+
+    def commit(self) -> None:
+        self._require_active()
+        repositories = (
+            self._schedules,
+            self._requests,
+            self._executions,
+            self._attempts,
+            self._admission_locks,
+            self._materialization_leases,
+            self._claims,
+            self._outbox,
+            self._retention,
+        )
+        try:
+            for repository in repositories:
+                repository._validate()
+            for repository in repositories:
+                repository._apply()
+            self._connection.commit()
+        except IntegrityError as exc:
+            self._connection.rollback()
+            _raise_integrity_error(exc)
+        except Exception:
+            self._connection.rollback()
+            raise
+
+        for repository in repositories:
+            repository._after_commit()
+
+    def rollback(self) -> None:
+        self._connection.rollback()
+        self._schedules._rollback()
+        self._requests._rollback()
+        self._executions._rollback()
+        self._attempts._rollback()
+        self._admission_locks._rollback()
+        self._materialization_leases._rollback()
+        self._claims._rollback()
+        self._outbox._rollback()
+        self._retention._rollback()
+
+    def _require_active(self) -> None:
+        if not self._active:
+            raise RuntimeError("UnitOfWork must be entered before commit().")
+
+
+class PostgresUnitOfWorkFactory:
+    """Internal full PostgreSQL factory; public exposure waits for PG-03/PG-04."""
+
+    def __init__(self, dsn: str) -> None:
+        if not dsn.strip():
+            raise ValueError("PostgreSQL DSN must not be empty.")
+        self._dsn = dsn
+
+        with psycopg.connect(self._dsn, autocommit=True) as connection:
+            initialize_postgres_schema(connection)
+
+    def __call__(self) -> UnitOfWork:
+        connection = psycopg.connect(
+            self._dsn,
+            autocommit=False,
+            row_factory=dict_row,
+        )
+        return PostgresUnitOfWork(connection)

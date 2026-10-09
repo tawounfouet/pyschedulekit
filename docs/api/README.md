@@ -210,6 +210,12 @@ The outbox boundary separates durable intent from external publication.
 - `ReconciliationActiveRuntimeError`
 - `ReconciliationIncompleteError`
 
+## Retention and cleanup
+
+- `RetentionPolicy` — explicit bounded cleanup policy for execution history and published
+  outbox state.
+- `CleanupResult` — reports what bounded cleanup removed.
+
 ## Runtime, shutdown and worker identity
 
 - `WorkerId`

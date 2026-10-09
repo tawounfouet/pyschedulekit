@@ -262,9 +262,7 @@ def test_v1_01e_enum_names_values_and_order_are_frozen() -> None:
         enum_type.__name__: tuple((member.name, member.value) for member in enum_type)
         for enum_type in ENUM_VALUES
     }
-    expected = {
-        enum_type.__name__: members for enum_type, members in ENUM_VALUES.items()
-    }
+    expected = {enum_type.__name__: members for enum_type, members in ENUM_VALUES.items()}
     assert actual == expected
 
 

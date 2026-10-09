@@ -159,4 +159,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — POST-01.*
+*Dernière mise à jour : 2026-10-09 — POST-02.*

@@ -146,9 +146,7 @@ class AsyncioExecutor:
         return PreparedAsyncPythonTarget(
             target=target,
             callable=callable_target,
-            accepts_cancellation_token=self._registry.accepts_cancellation_token(
-                target.reference
-            ),
+            accepts_cancellation_token=self._registry.accepts_cancellation_token(target.reference),
             accepts_fencing_token=self._registry.accepts_fencing_token(target.reference),
         )
 

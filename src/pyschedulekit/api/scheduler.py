@@ -60,7 +60,7 @@ from pyschedulekit.domain.schedule import (
     TargetRef,
 )
 from pyschedulekit.domain.time import Duration, Timezone
-from pyschedulekit.domain.trigger import Trigger
+from pyschedulekit.domain.trigger import CalendarAwareTrigger, Trigger
 from pyschedulekit.domain.triggers import CronTrigger
 from pyschedulekit.errors import PyScheduleKitConfigurationError
 from pyschedulekit.infrastructure.asyncio_executor import (
@@ -312,7 +312,7 @@ class Scheduler:
         self,
         *,
         target: TargetRef | Callable[..., object],
-        trigger: Trigger,
+        trigger: Trigger | CalendarAwareTrigger,
         id: str | None = None,
         timezone: Timezone | None = None,
         calendar: CalendarSnapshotRef | None = None,
@@ -683,7 +683,7 @@ class Scheduler:
     @staticmethod
     def _effective_timezone(
         *,
-        trigger: Trigger,
+        trigger: Trigger | CalendarAwareTrigger,
         timezone: Timezone | None,
     ) -> Timezone:
         if isinstance(trigger, CronTrigger):

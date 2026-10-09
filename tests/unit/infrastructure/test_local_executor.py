@@ -238,3 +238,40 @@ def test_local_executor_timeout_normalizes_requested_cancellation() -> None:
     outcome = outcomes[0]
     assert outcome.failure is not None
     assert outcome.failure.category is FailureCategory.CANCELLED
+
+
+def test_registry_unregister_removes_exact_callable_and_capabilities() -> None:
+    registry = PythonTargetRegistry()
+
+    def target(
+        cancellation_token: CancellationToken,
+        fencing_token: int,
+    ) -> None:
+        del cancellation_token, fencing_token
+
+    registry.register("refresh", target)
+
+    assert registry.accepts_cancellation_token("refresh")
+    assert registry.accepts_fencing_token("refresh")
+    assert registry.unregister("refresh", target)
+
+    with pytest.raises(TargetResolutionError, match="not registered"):
+        registry.resolve("refresh")
+
+    assert not registry.accepts_cancellation_token("refresh")
+    assert not registry.accepts_fencing_token("refresh")
+
+
+def test_registry_unregister_does_not_remove_a_different_callable() -> None:
+    registry = PythonTargetRegistry()
+
+    def registered() -> None:
+        return None
+
+    def other() -> None:
+        return None
+
+    registry.register("refresh", registered)
+
+    assert not registry.unregister("refresh", other)
+    assert registry.resolve("refresh") is registered

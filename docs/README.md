@@ -32,6 +32,7 @@ docs/
 ├── README.md                  # this navigation hub
 ├── ARCHITECTURE.md            # current technical reference
 ├── SDLC.md                    # current engineering lifecycle
+├── cookbook/                  # executable task-oriented recipes
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
@@ -59,8 +60,8 @@ Do not interpret red states inside the three snapshot documents as current repos
 ```text
 LOT-00 ... LOT-34                     ✅ initial functional roadmap
 POST-00 Audit Remediation             ✅ complete
-POST-01 Documentation Cleanup         🚧 current
-POST-02 Real-world Examples/Cookbook  ⬜
+POST-01 Documentation Cleanup         ✅
+POST-02 Real-world Examples/Cookbook  🚧 current
 POST-03 API Documentation             ⬜
 POST-04 Dogfooding                    ⬜
 POST-05 Benchmarks                    ⬜
@@ -97,6 +98,8 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | understand the package quickly | [README](../README.md) |
 | understand `run_pending()` / runtime / persistence flows | [Architecture](./ARCHITECTURE.md) |
 | run or modify the engineering workflow | [SDLC](./SDLC.md) + [AGENTS](../AGENTS.md) |
+| solve a concrete scheduling use case | [Real-world Cookbook](./cookbook/README.md) |
+| run the examples directly | [examples/README.md](../examples/README.md) |
 | understand why POST-00 existed | [Audit critique](./audit/2026-10-08/ANALYSE_CRITIQUE.md) |
 | verify whether an audit finding is still open | [POST-00 status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) |
 | inspect original design intent | [Specs](./specs/) |
@@ -114,4 +117,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — POST-01 documentation cleanup.
+**Last refreshed:** 2026-10-09 — POST-02 real-world cookbook.

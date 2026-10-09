@@ -6,13 +6,8 @@ on:
       release_tag:
         description: "Canonical release tag to rehearse. This workflow never creates it."
         required: true
-        default: "v0.1.0a3"
+        default: "v0.1.0a4"
         type: string
-      testpypi_trusted_publisher_ready:
-        description: "TestPyPI Trusted Publisher matches the release-candidate workflow identity."
-        required: false
-        default: true
-        type: boolean
       pypi_trusted_publisher_ready:
         description: "PyPI Trusted Publisher matches the release-candidate workflow identity."
         required: true
@@ -49,11 +44,9 @@ jobs:
       - name: Confirm external release controls
         shell: bash
         env:
-          TESTPYPI_READY: ${{ inputs.testpypi_trusted_publisher_ready }}
           PYPI_READY: ${{ inputs.pypi_trusted_publisher_ready }}
           IMMUTABLE_RELEASES_READY: ${{ inputs.immutable_releases_ready }}
         run: |
-          test "$TESTPYPI_READY" = "true"
           test "$PYPI_READY" = "true"
           test "$IMMUTABLE_RELEASES_READY" = "true"
 
@@ -82,7 +75,6 @@ jobs:
         run: |
           python -m scripts.release_preflight \
             --release-tag "${{ inputs.release_tag }}" \
-            --testpypi-trusted-publisher-ready \
             --pypi-trusted-publisher-ready \
             --immutable-releases-ready
 

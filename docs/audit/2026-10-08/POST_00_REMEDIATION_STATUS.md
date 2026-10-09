@@ -18,7 +18,7 @@
 - Current hardening target: `0.1.0a4`
 - POST-00 theme: post-release stabilization and adversarial hardening
 
-As of `main@fed749ec999b9ba279364e99b8f50e39d3c8d09f`, the combined CI and
+At the completed POST-00 baseline `main@678d1825720d1f3b8a5e46467f2784c599682461`, the combined CI and
 Distribution Qualification workflows are green on Python 3.11, 3.12 and 3.13.
 
 ## 2. Audit finding disposition
@@ -52,7 +52,7 @@ No B1–B12 finding remains open after POST-00G + the B7 closure.
 | 00.F | HTTP resource / redirect hardening | **DONE** | PR #49 / `c1c85e3` |
 | 00.G | CI / coverage hardening | **DONE** | PR #50 / `fed749e` |
 | B7 closure | Target-registry transaction safety | **DONE** | PR #51 / `1c3e31c` |
-| 00.H | Audit documentation consolidation | **IN PROGRESS** | this document + synchronized operational docs |
+| 00.H | Audit documentation consolidation | **DONE** | PR #52 / `678d182` — snapshots, current-state register, transcript archive |
 
 PR #47 was an intermediate persistence-contract proposal and was closed as superseded by
 the merged PR #48.
@@ -183,14 +183,16 @@ The published GitHub Release contains:
 
 ## 8. Next gate
 
-Once POST-00H is merged, the remaining sequence is deliberately small:
+POST-00H is merged. The remaining sequence is deliberately small:
 
 ```text
-POST-00H documentation consolidation
+0.1.0a4 release preparation
         ↓
-final release qualification
+Release Readiness on main
         ↓
-0.1.0a4
+v0.1.0a4 tag pipeline
+        ↓
+0.1.0a4 public
         ↓
 POST-01 / POST-02 / POST-03 / POST-04
         ↓

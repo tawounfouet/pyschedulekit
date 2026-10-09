@@ -76,9 +76,10 @@ Fichiers à connaître avant une modification structurante :
 
 ## 4. Repères courants
 
-État vérifié sur `main` après POST-00G et la fermeture de B7 :
+État de référence après la clôture complète de POST-00 :
 
 - **Version publique :** `0.1.0a3`.
+- **Source candidate :** `0.1.0a4`, en préparation de Release Readiness.
 - **GitHub Release :** `v0.1.0a3`, prerelease immutable, wheel + sdist + checksum.
 - **Runtime dependencies :** 0.
 - **Python :** 3.11 / 3.12 / 3.13.

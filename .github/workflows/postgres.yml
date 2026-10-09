@@ -1,4 +1,4 @@
-name: PostgreSQL Foundation
+name: PostgreSQL Qualification
 
 on:
   push:
@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   foundation:
-    name: PostgreSQL schema foundation
+    name: PostgreSQL adapter qualification
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -67,7 +67,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev,postgres]"
 
-      - name: Run PostgreSQL foundation qualification
+      - name: Run PostgreSQL adapter qualification
         run: |
           pytest -q \
             tests/integration/postgres \

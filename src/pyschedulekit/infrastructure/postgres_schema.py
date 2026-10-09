@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from psycopg import Connection
 
 SCHEMA_VERSION = 1
@@ -309,7 +311,7 @@ def initialize_postgres_schema(connection: Connection[tuple[object, ...]]) -> No
             raise RuntimeError("PyScheduleKit PostgreSQL schema has multiple version rows.")
 
         if rows:
-            version = int(rows[0][0])
+            version = cast(int, rows[0][0])
             if version != SCHEMA_VERSION:
                 raise RuntimeError(
                     f"Unsupported PyScheduleKit PostgreSQL schema version: {version!r}."
@@ -367,5 +369,5 @@ def _verify_postgres_schema(connection: Connection[tuple[object, ...]]) -> None:
         )
 
     row = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
-    if row is None or int(row[0]) != SCHEMA_VERSION:
+    if row is None or cast(int, row[0]) != SCHEMA_VERSION:
         raise RuntimeError("PyScheduleKit PostgreSQL schema version verification failed.")

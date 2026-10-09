@@ -64,6 +64,8 @@ Layered, domain-first (`domain` → `application` → `ports` → `infrastructur
 
 ## Specs and workflow
 
+- Documentation entry point: `docs/README.md`.
+- Current architecture: `docs/ARCHITECTURE.md`; current SDLC: `docs/SDLC.md`.
 - Development is slice-based: `docs/implementation/LOT-*.md` (35 done, LOT-00…LOT-34),
   domain rationale in `docs/specs/`, release engineering in `docs/release/`.
 - Project rule: *every supported guarantee must map to an executable test* — add the test
@@ -76,8 +78,9 @@ Layered, domain-first (`domain` → `application` → `ports` → `infrastructur
 ## Audit state
 
 The full audit performed on 2026-10-08 is intentionally preserved as a historical snapshot.
-Entry point: `INDEX.md`; original facts: `CODEBASE_ANALYSIS.md`; original remediation
-plan: `RECOMMANDATIONS.md`.
+Documentation entry point: `docs/README.md`. The dated audit snapshot lives under
+`docs/audit/2026-10-08/`, including `CODEBASE_ANALYSIS.md`,
+`ANALYSE_CRITIQUE.md`, and `RECOMMANDATIONS.md`.
 
 **Do not treat the red states written inside those snapshot documents as current facts.**
 The authoritative current disposition is:
@@ -98,6 +101,9 @@ Current POST-00 state:
 - CI and Distribution Qualification are mandatory on Python 3.11 / 3.12 / 3.13;
 - `v0.1.0a3` exists as an immutable GitHub prerelease with wheel, sdist and checksum.
 
-POST-00H is complete. The source candidate is `0.1.0a4`; the remaining gate is Release Readiness on `main`, followed by the immutable `v0.1.0a4` tag pipeline.
-Do not add PostgreSQL, Async Executor, new trigger families, CLI or framework integrations
-to the `0.1.0a4` hardening scope.
+POST-00 is complete. The current development version is `0.1.0a4`.
+Pre-1.0 milestones are **not published to PyPI**; the release workflow enforces public
+publication only for stable semantic versions >= `1.0.0`.
+
+Current sequence: POST-01 documentation cleanup → examples/cookbook → API docs →
+dogfooding/benchmarks/chaos, then the 0.2.x execution/storage roadmap.

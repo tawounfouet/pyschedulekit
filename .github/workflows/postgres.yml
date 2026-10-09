@@ -64,4 +64,4 @@ jobs:
 
       - name: Run PostgreSQL foundation qualification
         run: |
-          pytest -q tests/integration/postgres tests/architecture/test_postgres_optional_dependency.py tests/architecture/test_postgres_public_boundary.py
+          pytest -q             tests/integration/postgres             tests/architecture/test_postgres_optional_dependency.py             tests/architecture/test_postgres_public_boundary.py             --cov=pyschedulekit.infrastructure.postgres             --cov=pyschedulekit.infrastructure.postgres_schema             --cov-config=.coveragerc-postgres             --cov-report=term-missing

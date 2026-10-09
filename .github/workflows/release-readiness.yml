@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Canonical release tag to rehearse. This workflow never creates it."
+        description: "Next public stable tag to rehearse. This workflow never creates it."
         required: true
-        default: "v0.1.0a4"
+        default: "v1.0.0"
         type: string
       pypi_trusted_publisher_ready:
         description: "PyPI Trusted Publisher matches the release-candidate workflow identity."

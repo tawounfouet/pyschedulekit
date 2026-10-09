@@ -65,9 +65,11 @@ interval iterations   100,000
 cron iterations       2,000
 memory schedules      250
 SQLite schedules      50
+idle scale            1,000 → 10,000 schedules
 ```
 
-Each benchmark reports median, min, max and operations/second.
+Each benchmark reports median, min, max and operations/second. The report also includes the
+idle in-memory large/small schedule-count scaling ratio.
 
 ## Benchmarks
 
@@ -101,6 +103,21 @@ Uses the same due-work concept with `SqliteUnitOfWorkFactory`.
 
 Database creation and schedule setup happen before the timer starts. The measured region is
 one due `run_pending()` cycle.
+
+### run_pending_memory_idle_<count>
+
+Builds future, non-due in-memory schedules, crosses startup barriers once, then measures
+steady-state idle `run_pending()` scans without target execution.
+
+The smoke profile compares 100 vs 1,000 schedules. The standard profile compares 1,000 vs
+10,000 schedules and records:
+
+```text
+large idle median / small idle median
+```
+
+This ratio is evidence for T-PERF-002. It is **reported, not used as a hard CI threshold**.
+
 
 ## Measurement rules
 
@@ -160,9 +177,19 @@ complexity baseline  → did algorithmic scaling become catastrophically worse?
 manual evidence      → what did representative operations measure on this environment?
 ```
 
-## Manual workflow
+## Workflow
 
-Use:
+Automatic baseline:
+
+```text
+benchmark-relevant merge to main
+        ↓
+standard profile / Python 3.13
+        ↓
+JSON + Markdown artifacts (30 days)
+```
+
+Manual run:
 
 ```text
 Actions → Performance Benchmarks → Run workflow

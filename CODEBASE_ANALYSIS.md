@@ -1,5 +1,10 @@
 # Analyse de la codebase — PyScheduleKit
 
+> **AUDIT SNAPSHOT — 2026-10-08.** Ce document conserve volontairement les faits,
+> métriques et findings tels qu'ils ont été observés pendant l'audit. Il n'est pas
+> réécrit après chaque correction. Pour l'état courant et la disposition B1–B12, voir
+> [POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
+
 > Analyse réalisée le 2026-10-08. Périmètre : `src/pyschedulekit` (64 fichiers Python, 13 740 LOC), `scripts/`, `tests/`, `.github/workflows/`, `docs/` ; la sécurité, les bugs confirmés et la dette technique.
 
 ---

@@ -73,15 +73,31 @@ Layered, domain-first (`domain` → `application` → `ports` → `infrastructur
 - Release tooling (only when touching releases): `python -m scripts.verify_distribution dist`,
   `python scripts/smoke_installed_package.py`, `python -m scripts.release_preflight`.
 
-## Audit state (2026-10-08)
+## Audit state
 
-A full codebase audit sits at the repo root (in French). Entry point: `INDEX.md`;
-remediation plan: `RECOMMANDATIONS.md` (bugs **B1–B12**, phased fixes);
-verified facts: `CODEBASE_ANALYSIS.md`. Known red states until those fixes land:
+The full audit performed on 2026-10-08 is intentionally preserved as a historical snapshot.
+Entry point: `INDEX.md`; original facts: `CODEBASE_ANALYSIS.md`; original remediation
+plan: `RECOMMANDATIONS.md`.
 
-- `ruff format --check .` **fails** on `scripts/release_preflight.py:27` — CI is red
-  on `main` (bug B3); `ruff format scripts/release_preflight.py` is the fix.
-- `docs/specs/` (26 files) is **not git-tracked**; run `ruff format docs/specs` before
-  the first `git add docs/specs` or CI will fail on them (bug B12).
-- The `v0.1.0a3` GitHub Release is missing (PyPI is published): the
-  `create-github-release` job lacks `actions/checkout` (bug B4).
+**Do not treat the red states written inside those snapshot documents as current facts.**
+The authoritative current disposition is:
+
+`docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`
+
+Current POST-00 state:
+
+- B1–B12 have no remaining open finding.
+- runtime transition races are regression-covered;
+- SQLite bootstrap is qualified under concurrent initialization;
+- admission-lock conflict recovery is covered;
+- InMemory / SQLite persistence parity is enforced by shared tests;
+- HTTP error-resource cleanup and redirects are hardened;
+- failed implicit target registrations are compensated (B7);
+- `coverage.report.fail_under = 85` is enforced;
+- Ruff is pinned and GitHub Actions are SHA-pinned;
+- CI and Distribution Qualification are mandatory on Python 3.11 / 3.12 / 3.13;
+- `v0.1.0a3` exists as an immutable GitHub prerelease with wheel, sdist and checksum.
+
+The next release target is `0.1.0a4` after POST-00H and final release qualification.
+Do not add PostgreSQL, Async Executor, new trigger families, CLI or framework integrations
+to the `0.1.0a4` hardening scope.

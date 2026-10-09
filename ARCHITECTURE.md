@@ -52,7 +52,7 @@
 | Processus d'exécution | **chez le consommateur** (aucun serveur fourni) | Un ou N travailleurs ouvrant le même fichier SQLite |
 | CI qualité | GitHub Actions `ci.yml` (push/PR), matrice 3.11-3.13 | `ruff check → ruff format --check → mypy src → pytest --cov` |
 | Qualification | `distribution.yml` : wheel+sdist, clean-install, smoke hors arbre | Empêche de tester l'arbre source par accident |
-| Release | `release-candidate.yml` (tag `v*`) : qualify → TestPyPI → PyPI → GitHub Release | Job `create-github-release` sans checkout (B4, [CODEBASE_ANALYSIS §5](./CODEBASE_ANALYSIS.md)) |
+| Release | tag `v*` → qualification → PyPI Trusted Publishing → vérification → GitHub Release/provenance | `v0.1.0a3` est publié en prerelease immutable ; TestPyPI n'est pas obligatoire dans le chemin de go-live final |
 
 ---
 
@@ -82,8 +82,8 @@ Conventions de câblage réelles :
 
 - La façade `api/scheduler.py::Scheduler` compose tout : `Clock`, `UnitOfWorkFactory`, registres d'exécuteurs, coordinators de claims/admission/matérialisation, `Runtime` (`run_forever`), `CancellationController`. Ligne de vie : construire une fois, `run_pending`/`run_forever` appeler par la suite.
 - Chaque mutation d'agrégat domaine passe par des assertions d'invariants (`Execution._assert_invariants`, `domain/execution.py:598-628`) — un état illégal lève `ValueError` avant persistance.
-- **Deux adaptateurs de persistance à parité manuelle** (SQLite + InMemory) implémentant le même protocole `UnitOfWork` (`ports/persistence.py:213`) : identity map + write set + `validate(version) → apply`, rollback automatique à la sortie du contexte (`sqlite.py:1946-1975`).
-- Piège à connaître : `start_attempt`/`finish_attempt` lèvent `InvalidExecutionTransitionError(ValueError)` — **pas** une sous-classe de `PersistenceConflictError` ; le branchement d'erreur de `run_pending` ne couvre que cette dernière (B2).
+- **Deux adaptateurs de persistance qualifiés par un contrat observable partagé** (SQLite + InMemory) implémentent le même protocole `UnitOfWork` : identity map + write set + validation de version + rollback. Les tests de parité forcent désormais les mêmes sémantiques de référentiel, staged state, conflits et rollback.
+- `InvalidExecutionTransitionError` reste distinct de `PersistenceConflictError`, mais `run_pending` traite explicitement une transition devenue invalide par concurrence : claim non démarré libéré, erreur structurée `execution.transition`, cycle conservé.
 
 ### 2.2 Cycle de vie d'un cycle — `RunPendingService.run_pending()`
 
@@ -112,14 +112,15 @@ scheduler.run_pending(limit)
        + observer.record("…")  ──  aucun sleep : la boucle appartient à runtime
 ```
 
-`runtime.run_forever` (`application/runtime.py:103`) boucle : `run_pending` → `WakeupPlanner.next_delay(max_sleep)` → `EventLoopWaiter.wait(wake_event)` ; **aucune garde d'exception** autour de `run_pending` (B2).
+`runtime.run_forever` boucle : `run_pending` → `WakeupPlanner.next_delay(max_sleep)` → `EventLoopWaiter.wait(wake_event)`. Une boundary de supervision entoure chaque cycle : une exception isolée produit `runtime.cycle.error`, applique un backoff borné par `max_sleep`, puis le runtime poursuit tant qu'aucun stop n'est demandé.
 
 ### 2.3 Flux métier clés
 
 **(a) Occurrence → exécution (le flux nominal)**
 
 ```text
-Scheduler.add_schedule ─► UoW.schedules.add + commit ─► registre local:{id} (décrivé B7)
+Scheduler.add_schedule ─► registre local compensable ─► UoW.schedules.add + commit
+   └─ si création/commit échoue : unregister exact du callable ajouté
 clock avance ─► evaluate ─► ExecutionRequest(PENDING) ─► admit ─► QUEUED
 run_pending ─► claim(worker, generation) ─► start_attempt(RUNNING)
    ─► Executor.execute ─► Attempt terminal ─► Execution SUCCESS/FAILED/…
@@ -130,12 +131,16 @@ run_pending ─► claim(worker, generation) ─► start_attempt(RUNNING)
 
 ```text
 cancel_execution ─► domain: request_cancellation(RUNNING) + token posé (process-local)
-   ├─ exécuteur coopératif ─► outcome CANCELLED ─► cancel_attempt ─► CANCELLED  ✓
-   └─ timeout / non coopératif ─► outcome FAILURE
-          ─► RetryEvaluator ─► finish_attempt(retry_at) ─► RETRY_WAIT
-          ⚠ tant que _cancellation_requested_at n'est pas consulté, la relance
-            a lieu (B1) — correctif RECOMMANDATIONS §2.1
+   ├─ exécuteur coopératif ─► outcome CANCELLED ─► cancel_attempt ─► CANCELLED
+   └─ timeout / non coopératif
+          ├─ LocalExecutor normalise cancellation si le token est déjà annulé
+          └─ Execution.finish_attempt interdit RETRY_WAIT si cancellation demandée
+                 ↓
+              état terminal, aucune relance
 ```
+
+La protection existe à deux niveaux : normalisation infrastructure et backstop durable
+dans l'agrégat `Execution`.
 
 **(c) Multi-travailleurs — claims et fencing**
 
@@ -181,8 +186,8 @@ Points clés :
 - **Horodatages** : `Instant` domaine sérialisés en ISO-8601 UTC ; l'heure système n'est lue que par `SystemClock` (`infrastructure/time.py:14`), injectée partout ailleurs.
 - **Versionnement optimiste** : colonne `version` sur les entités + `PersistenceVersion` avant `apply` → `PersistenceConflictError` en cas d'écriture perdue ; `BEGIN IMMEDIATE` sur toute écriture SQLite (`sqlite.py:1951`).
 - **Snapshot & dénormalisation** : `policy_snapshot`/`target`/`occurrence_key` copiés dans `execution_requests`/`executions` — une exécution reste exécutable même si le schedule change ou disparaît (`ON DELETE RESTRICT` sur `schedules→requests`).
-- **Aucun champ sensible** : pas de secret, pas de donnée personnelle, pas d'env var lue (`os.getenv` interdit dans `domain/`, absent partout ailleurs). `.env` à la racine est orphelin (B12/§4 CODEBASE).
-- **Intégrité référentielle** : `PRAGMA foreign_keys = ON` (`sqlite_schema.py:270`) — **non répliquée** par l'adaptateur InMemory (B8).
+- **Aucun champ sensible** : pas de secret, pas de donnée personnelle, pas d'env var lue (`os.getenv` interdit dans `domain/`). Le `.env` local observé pendant l'audit n'est pas tracké et ne fait pas partie du contrat runtime.
+- **Intégrité référentielle** : SQLite active ses contraintes FK et l'adaptateur InMemory reproduit les mêmes effets observables via la contract suite de persistance.
 
 ---
 
@@ -204,7 +209,7 @@ Pas d'UI ni de CLI : l'interface est l'API publique.
 |---|---|
 | Temps | Jamais `datetime.now` dans `domain/` ni `application/` : toujours l'`Clock` injectée ; tests avec `MutableClock` |
 | Écritures | Une mutation = une UnitOfWork : `validate → apply → commit()`, rollback systématique en sortie de contexte |
-| Conflits | `PersistenceConflictError` = rejeu possible ; `InvalidExecutionTransitionError` = état illégal (à ne pas confondre, B2) |
+| Conflits | `PersistenceConflictError` = conflit de persistance ; `InvalidExecutionTransitionError` = état devenu invalide, traité séparément par `run_pending` |
 | Identité des exécutions | `OccurrenceKey(schedule_id, schedule_revision, scheduled_at)` = clé de déduplication des matérialisations |
 | Multi-workers | Toute écriture d'exécution porte la `generation` de claim (fencing) ; expiration = rejeu, jamais de reprise silencieuse |
 | Cibles exécutées | Registres **opt-in manuels** uniquement — jamais d'exécution d'un callable/URL non enregistré |
@@ -215,13 +220,29 @@ Pas d'UI ni de CLI : l'interface est l'API publique.
 
 ---
 
-## 6. Limites structurelles (résumé)
+## 6. Limites structurelles actuelles
 
-Ces choix sont détaillés et argumentés dans [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) :
+Les findings B1–B12 de l'audit ont été remédiés ; leur historique reste dans les documents
+snapshot et leur disposition dans
+[POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
 
-1. Garanties réparties en chaîne de suppositions sans propriétaire unique — le cas limite étant l'annulation vs retry (B1, §3.2).
-2. Deux persistance-jumeaux dont la parité n'est contrôlée par aucun test (B8/B9, §3.1).
-3. `run_forever` sans boundary d'exception : une erreur de cycle tue la boucle (B2, §3.3).
-4. État process-local (registre de cibles, token d'annulation) en vis-à-vis de l'état durable, sans coordination formelle (B1/B7, §3.2-3.4).
-5. Bootstrap de schéma mono-processus dans un produit pensé multi-workers (B5, §3.5).
-6. Filets de processus relâchés : CI/format/versionnement des specs/release incomplet (B3/B4/B12, §6 d'[ANALYSE_CRITIQUE](./ANALYSE_CRITIQUE.md)).
+Les limites encore structurelles sont différentes :
+
+1. **Cancellation inter-processus** — le token de coopération reste process-local. L'intention
+   d'annulation est durable, mais un callable déjà exécuté dans un autre processus ne reçoit
+   pas magiquement le token du processus appelant.
+2. **Arrêt forcé d'un callable Python** — le runtime synchrone utilise un worker thread pour
+   reprendre le contrôle au timeout ; Python ne fournit pas de terminaison sûre d'un thread
+   arbitraire. Les workloads doivent donc être idempotents et, si possible, coopératifs.
+3. **Persistance durable** — SQLite est le backend durable qualifié actuel. PostgreSQL n'est
+   pas encore implémenté ; le contrat de parité créé pendant POST-00 doit servir de porte
+   d'entrée au futur adapter.
+4. **Exécution asynchrone** — les callables `async def` sont encore explicitement rejetés par
+   le LocalExecutor synchrone.
+5. **Registres de cibles process-local** — Python/HTTP targets restent des objets de confiance
+   enregistrés dans le processus hôte ; seule leur référence déclarative est persistée.
+6. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
+   compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
+
+Ces limites appartiennent à la Phase II / trajectoire vers `1.0`, pas au périmètre de
+correction de `0.1.0a4`.

@@ -75,7 +75,7 @@ skip_covered = true
 target-version = "py311"
 line-length = 100
 src = ["src", "tests"]
-extend-exclude = ["session-ses_*.md"]
+extend-exclude = ["docs/audit/**/sessions/**"]
 
 [tool.ruff.lint]
 select = [

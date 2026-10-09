@@ -109,6 +109,10 @@ from pyschedulekit.errors import (
     PyScheduleKitStateError as PyScheduleKitStateError,
     PyScheduleKitTargetError as PyScheduleKitTargetError,
 )
+from pyschedulekit.infrastructure.asyncio_executor import (
+    AsyncioExecutor as AsyncioExecutor,
+    AsyncPythonTargetRegistry as AsyncPythonTargetRegistry,
+)
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor as HttpExecutor,
     HttpMethod as HttpMethod,

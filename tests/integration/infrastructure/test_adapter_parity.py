@@ -13,7 +13,6 @@ from pyschedulekit.domain.calendar import (
     BusinessCalendar,
     CalendarRef,
     CalendarRevision,
-    CalendarSnapshotRef,
 )
 from pyschedulekit.domain.claim import ClaimToken, ExecutionClaim, WorkerId
 from pyschedulekit.domain.execution import Execution

@@ -46,9 +46,7 @@ def test_postgres_bootstrap_creates_current_relational_surface() -> None:
 
     assert POSTGRES_DSN is not None
     with psycopg.connect(POSTGRES_DSN, autocommit=True) as connection:
-        version = connection.execute(
-            "SELECT version FROM pyschedulekit_schema"
-        ).fetchone()
+        version = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
         tables = {
             str(row[0])
             for row in connection.execute(
@@ -81,9 +79,7 @@ def test_postgres_bootstrap_is_idempotent() -> None:
 
     assert POSTGRES_DSN is not None
     with psycopg.connect(POSTGRES_DSN, autocommit=True) as connection:
-        rows = connection.execute(
-            "SELECT singleton, version FROM pyschedulekit_schema"
-        ).fetchall()
+        rows = connection.execute("SELECT singleton, version FROM pyschedulekit_schema").fetchall()
 
     assert rows == [(True, SCHEMA_VERSION)]
 
@@ -96,9 +92,7 @@ def test_postgres_bootstrap_is_concurrency_safe() -> None:
 
     assert POSTGRES_DSN is not None
     with psycopg.connect(POSTGRES_DSN, autocommit=True) as connection:
-        count = connection.execute(
-            "SELECT count(*) FROM pyschedulekit_schema"
-        ).fetchone()
+        count = connection.execute("SELECT count(*) FROM pyschedulekit_schema").fetchone()
 
     assert count == (1,)
 

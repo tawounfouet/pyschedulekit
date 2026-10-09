@@ -1,12 +1,13 @@
-"""Internal PostgreSQL core persistence adapter.
+"""Internal PostgreSQL persistence adapter.
 
-PG-01 intentionally implements only the four core repositories. It is not exported through
-the stable public API and must not be wired into Scheduler until PG-02/PG-03 complete the
-full UnitOfWork contract.
+PG-01 introduced the four core repositories. PG-02 adds coordination, outbox and retention
+repositories plus a full UnitOfWork. The adapter remains internal until PG-03 parity and
+PG-04 Scheduler/multi-worker qualification complete.
 """
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from types import TracebackType
 from typing import Any, NoReturn, cast
@@ -15,6 +16,17 @@ import psycopg
 from psycopg import Connection, Cursor, IntegrityError
 from psycopg.rows import dict_row
 
+from pyschedulekit.domain.admission_lock import (
+    AdmissionToken,
+    ScheduleAdmissionLock,
+    ScheduleAdmissionLockState,
+)
+from pyschedulekit.domain.claim import (
+    ClaimToken,
+    ExecutionClaim,
+    ExecutionClaimState,
+    WorkerId,
+)
 from pyschedulekit.domain.execution import (
     Attempt,
     AttemptId,
@@ -29,7 +41,13 @@ from pyschedulekit.domain.execution_request import (
     ExecutionRequestState,
     RequestId,
 )
+from pyschedulekit.domain.materialization_lease import (
+    MaterializationToken,
+    ScheduleMaterializationLease,
+    ScheduleMaterializationLeaseState,
+)
 from pyschedulekit.domain.occurrence import OccurrenceKey
+from pyschedulekit.domain.outbox import OutboxMessage, OutboxMessageId, OutboxState
 from pyschedulekit.domain.schedule import (
     PersistenceVersion,
     Schedule,
@@ -57,16 +75,27 @@ from pyschedulekit.infrastructure.sql_codec import (
 from pyschedulekit.ports.persistence import (
     AttemptRepository,
     DatabaseInvariantError,
+    DuplicateAdmissionLockError,
     DuplicateAttemptError,
+    DuplicateExecutionClaimError,
     DuplicateExecutionError,
     DuplicateExecutionRequestError,
+    DuplicateMaterializationLeaseError,
+    DuplicateOutboxMessageError,
     DuplicateScheduleError,
+    ExecutionClaimRepository,
     ExecutionRepository,
     ExecutionRequestRepository,
     OptimisticConcurrencyError,
+    OutboxRepository,
     PersistenceConflictError,
     ReferentialIntegrityError,
+    RetentionCleanupStats,
+    RetentionRepository,
+    ScheduleAdmissionLockRepository,
+    ScheduleMaterializationLeaseRepository,
     ScheduleRepository,
+    UnitOfWork,
     UntrackedEntityError,
     UntrackedScheduleError,
 )
@@ -109,6 +138,20 @@ def _raise_integrity_error(exc: IntegrityError) -> NoReturn:
             raise DuplicateAttemptError(
                 "Attempt identity or execution attempt number already exists."
             ) from exc
+        if table == "schedule_admission_locks":
+            raise DuplicateAdmissionLockError(
+                "Schedule admission lock identity or token already exists."
+            ) from exc
+        if table == "schedule_materialization_leases":
+            raise DuplicateMaterializationLeaseError(
+                "Schedule materialization lease identity or token already exists."
+            ) from exc
+        if table == "execution_claims":
+            raise DuplicateExecutionClaimError(
+                "Execution claim identity or token already exists."
+            ) from exc
+        if table == "outbox_messages":
+            raise DuplicateOutboxMessageError("Outbox message identity already exists.") from exc
 
     if sqlstate == "23503":
         raise ReferentialIntegrityError(
@@ -199,6 +242,76 @@ def _attempt_from_row(row: PostgresRow) -> Attempt:
         result=decode_attempt_result(
             None if row["result_json"] is None else str(row["result_json"])
         ),
+        version=cast(int, row["version"]),
+    )
+
+
+def _admission_lock_from_row(row: PostgresRow) -> ScheduleAdmissionLock:
+    return ScheduleAdmissionLock(
+        schedule_id=ScheduleId(str(row["schedule_id"])),
+        worker_id=WorkerId(str(row["worker_id"])),
+        token=AdmissionToken(str(row["token"])),
+        acquired_at=cast(Instant, _optional_instant(row["acquired_at"])),
+        expires_at=cast(Instant, _optional_instant(row["expires_at"])),
+        generation=cast(int, row["generation"]),
+        state=ScheduleAdmissionLockState(str(row["state"])),
+        released_at=_optional_instant(row["released_at"]),
+        version=cast(int, row["version"]),
+    )
+
+
+def _materialization_lease_from_row(row: PostgresRow) -> ScheduleMaterializationLease:
+    return ScheduleMaterializationLease(
+        schedule_id=ScheduleId(str(row["schedule_id"])),
+        worker_id=WorkerId(str(row["worker_id"])),
+        token=MaterializationToken(str(row["token"])),
+        acquired_at=cast(Instant, _optional_instant(row["acquired_at"])),
+        expires_at=cast(Instant, _optional_instant(row["expires_at"])),
+        generation=cast(int, row["generation"]),
+        state=ScheduleMaterializationLeaseState(str(row["state"])),
+        released_at=_optional_instant(row["released_at"]),
+        version=cast(int, row["version"]),
+    )
+
+
+def _claim_from_row(row: PostgresRow) -> ExecutionClaim:
+    return ExecutionClaim(
+        execution_id=ExecutionId(str(row["execution_id"])),
+        worker_id=WorkerId(str(row["worker_id"])),
+        token=ClaimToken(str(row["token"])),
+        claimed_at=cast(Instant, _optional_instant(row["claimed_at"])),
+        expires_at=cast(Instant, _optional_instant(row["expires_at"])),
+        generation=cast(int, row["generation"]),
+        state=ExecutionClaimState(str(row["state"])),
+        released_at=_optional_instant(row["released_at"]),
+        version=cast(int, row["version"]),
+    )
+
+
+def _encode_outbox_payload(payload: tuple[tuple[str, str], ...]) -> str:
+    return json.dumps(dict(payload), separators=(",", ":"), sort_keys=True)
+
+
+def _decode_outbox_payload(value: str) -> tuple[tuple[str, str], ...]:
+    decoded = json.loads(value)
+    if not isinstance(decoded, dict):
+        raise ValueError("Persisted outbox payload must be a JSON object.")
+    return tuple(sorted((str(key), str(item)) for key, item in decoded.items()))
+
+
+def _outbox_from_row(row: PostgresRow) -> OutboxMessage:
+    return OutboxMessage(
+        message_id=OutboxMessageId(str(row["id"])),
+        event_type=str(row["event_type"]),
+        aggregate_type=str(row["aggregate_type"]),
+        aggregate_id=str(row["aggregate_id"]),
+        payload=_decode_outbox_payload(str(row["payload_json"])),
+        created_at=cast(Instant, _optional_instant(row["created_at"])),
+        sequence=cast(int, row["sequence"]),
+        state=OutboxState(str(row["state"])),
+        published_at=_optional_instant(row["published_at"]),
+        publish_attempts=cast(int, row["publish_attempts"]),
+        last_error=None if row["last_error"] is None else str(row["last_error"]),
         version=cast(int, row["version"]),
     )
 

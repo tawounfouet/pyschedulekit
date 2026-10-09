@@ -233,8 +233,6 @@ class AsyncioExecutor:
                 await prepared.callable(**kwargs)
             except ExecutionCancelledError:
                 return self._cancelled_outcome()
-            except asyncio.CancelledError:
-                return self._cancelled_outcome()
             except Exception as exc:
                 return ExecutorOutcome(
                     failure=Failure(
@@ -250,7 +248,10 @@ class AsyncioExecutor:
             return ExecutorOutcome()
 
         if timeout is None:
-            return await call_target()
+            try:
+                return await call_target()
+            except asyncio.CancelledError:
+                return self._cancelled_outcome()
 
         try:
             return await asyncio.wait_for(
@@ -261,6 +262,8 @@ class AsyncioExecutor:
             if cancellation_token is not None and cancellation_token.is_cancelled:
                 return self._cancelled_outcome()
             return self._timeout_outcome()
+        except asyncio.CancelledError:
+            return self._cancelled_outcome()
 
     def _cancelled_outcome(self) -> ExecutorOutcome:
         return ExecutorOutcome(

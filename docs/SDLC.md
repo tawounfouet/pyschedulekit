@@ -1,6 +1,6 @@
 # SDLC — PyScheduleKit
 
-> Guide du cycle de vie de développement : les 7 phases, les outils OpenCode associés, et où en est le projet. Ce document complète [`INDEX.md`](./INDEX.md) (sommaire) et [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) (plan de remédiation).
+> Guide du cycle de vie de développement : les 7 phases, les outils OpenCode associés, et où en est le projet. Ce document complète [`INDEX.md`](./README.md) (sommaire) et [`RECOMMANDATIONS.md`](./audit/2026-10-08/RECOMMANDATIONS.md) (plan de remédiation).
 
 ---
 
@@ -55,7 +55,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ### 3.4 Review
 - **Outils** : `/review` · `/pr-review` · `@code-reviewer` · mode `security-audit` (`ctrl+s`) · mode `debug` (`ctrl+d`).
-- **Critère de sortie** : plus d'issue bloquante ; faits consignés dans [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) / [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md).
+- **Critère de sortie** : plus d'issue bloquante ; faits consignés dans [`CODEBASE_ANALYSIS.md`](./audit/2026-10-08/CODEBASE_ANALYSIS.md) / [`ANALYSE_CRITIQUE.md`](./audit/2026-10-08/ANALYSE_CRITIQUE.md).
 
 ### 3.5 Release
 - **Outils** : `/release` · `@release-prep` · skill `release-prep` · `diff-summary`.
@@ -78,7 +78,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 Le snapshot détaillé de l'audit du 2026-10-08 est conservé dans les documents racine.
 Le statut faisant foi des findings est
-[POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
+[POST-00 Remediation Status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
 
 ```text
  1 Plan ──► 2 Build ──► 3 Test ──► 4 Review ──► 5 Release ──► 6 Deploy ──► 7 Maintain
@@ -141,13 +141,13 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ## 7. Voir aussi
 
-- [`INDEX.md`](./INDEX.md) — sommaire de toute la documentation.
-- [`POST-00 Remediation Status`](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) — état courant et preuves.
-- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — plan de remédiation historique issu de l'audit.
-- [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) — faits vérifiés et bugs B1-B12.
-- [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) — verdict et notes /10.
+- [`INDEX.md`](./README.md) — sommaire de toute la documentation.
+- [`POST-00 Remediation Status`](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) — état courant et preuves.
+- [`RECOMMANDATIONS.md`](./audit/2026-10-08/RECOMMANDATIONS.md) — plan de remédiation historique issu de l'audit.
+- [`CODEBASE_ANALYSIS.md`](./audit/2026-10-08/CODEBASE_ANALYSIS.md) — faits vérifiés et bugs B1-B12.
+- [`ANALYSE_CRITIQUE.md`](./audit/2026-10-08/ANALYSE_CRITIQUE.md) — verdict et notes /10.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — référence technique.
-- [`AGENTS.md`](./AGENTS.md) — commandes et gotchas pour les agents.
+- [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 

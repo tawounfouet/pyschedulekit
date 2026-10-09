@@ -21,10 +21,9 @@ def test_t_release_readiness_001_workflow_is_manual_only() -> None:
 def test_t_release_readiness_002_requires_external_control_acknowledgements() -> None:
     workflow = _workflow_text()
 
-    assert "testpypi_trusted_publisher_ready:" in workflow
+    assert "testpypi_trusted_publisher_ready:" not in workflow
     assert "pypi_trusted_publisher_ready:" in workflow
     assert "immutable_releases_ready:" in workflow
-    assert 'test "$TESTPYPI_READY" = "true"' in workflow
     assert 'test "$PYPI_READY" = "true"' in workflow
     assert 'test "$IMMUTABLE_RELEASES_READY" = "true"' in workflow
 
@@ -58,3 +57,10 @@ def test_t_release_readiness_005_workflow_never_creates_or_pushes_tag() -> None:
     assert all(not line.startswith("git tag ") for line in commands)
     assert all(not line.startswith("git push ") for line in commands)
     assert "This workflow intentionally did not create or push a tag." in workflow
+
+def test_t_release_readiness_006_defaults_to_next_unpublished_alpha_tag() -> None:
+    workflow = _workflow_text()
+
+    assert 'default: "v0.1.0a4"' in workflow
+    assert 'default: "v0.1.0a3"' not in workflow
+

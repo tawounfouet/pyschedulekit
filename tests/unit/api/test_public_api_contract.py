@@ -133,4 +133,4 @@ def test_t_public_api_005_scheduler_never_returns_mutable_execution_aggregate() 
 
 
 def test_t_public_api_006_installed_version_matches_runtime_version() -> None:
-    assert version("pyschedulekit") == pyschedulekit.__version__ == "0.1.0a3"
+    assert version("pyschedulekit") == pyschedulekit.__version__ == "0.1.0a4"

@@ -6,6 +6,14 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ## [Unreleased]
 
+### Changed
+
+- Deferred all future PyPI publication until the first stable `1.0.0`; pre-1.0 and prerelease versions remain development-only milestones qualified by CI.
+- Added an executable release policy gate so only canonical stable semantic versions `>=1.0.0` can reach the PyPI publishing job.
+- Reorganized current documentation under `docs/`, with `docs/README.md` as the canonical navigation hub and dated audit snapshots under `docs/audit/2026-10-08/`.
+- Added repository-wide local Markdown link integrity qualification while excluding raw archived audit transcripts.
+
+
 ## [0.1.0a4] - 2026-10-09
 
 ### Fixed

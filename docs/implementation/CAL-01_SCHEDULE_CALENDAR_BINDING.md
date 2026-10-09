@@ -38,7 +38,14 @@ It records the exact revision selected by the caller.
 ## Persistence
 
 No new SQL column is required in CAL-01. The existing `schedules.definition_json` payload
-stores the optional binding. Legacy payloads without the key decode to `calendar=None`.
+stores the optional binding.
+
+The Schedule-definition codec advances from v1 to **v2** because the calendar reference is
+functional state. Current code reads legacy v1 definitions and writes v2 only. Future
+unsupported versions fail closed, preventing an older runtime from silently reading and
+rewriting a calendar-bound definition while dropping the binding.
+
+Legacy v1 payloads without the key decode to `calendar=None`.
 
 ## Explicit non-goal
 
@@ -54,9 +61,10 @@ Calendar-aware occurrence filtering starts in CAL-02.
 2. The exact `CalendarSnapshotRef` is visible through `ScheduleSnapshot`.
 3. Bound schedules round-trip without information loss on every qualified persistence
    adapter.
-4. Historical persisted schedules without a calendar remain readable.
-5. Rebinding through `Schedule.reschedule()` increments `ScheduleRevision`.
-6. CAL-01 does not alter occurrence timestamps.
+4. Historical persisted v1 schedules without a calendar remain readable.
+5. Schedule definitions are written as codec v2 and unsupported future versions fail closed.
+6. Rebinding through `Schedule.reschedule()` increments `ScheduleRevision`.
+7. CAL-01 does not alter occurrence timestamps.
 
 ## Next
 

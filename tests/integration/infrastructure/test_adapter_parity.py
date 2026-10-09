@@ -937,16 +937,19 @@ def test_legacy_v2_definition_is_upgraded_on_next_sql_write(
     tmp_path: Path,
 ) -> None:
     factory = _factory(adapter, tmp_path)
+    calendar = BusinessCalendar(
+        calendar_ref=CalendarRef("finance-days"),
+        revision=CalendarRevision(3),
+    )
     schedule = Schedule.create(
         schedule_id=ScheduleId("legacy-definition"),
         definition=ScheduleDefinition(
             target=TargetRef.python("jobs:legacy-definition"),
-            trigger=IntervalTrigger(
-                every=Duration.minutes(10),
-                anchor=_instant(),
-            ),
+            trigger=BusinessDayTrigger(ordinal=-1, hour=18),
+            calendar=calendar.snapshot_ref,
         ),
         reference=_instant(hour=9),
+        calendar=calendar,
     )
 
     with factory() as uow:
@@ -977,4 +980,8 @@ def test_legacy_v2_definition_is_upgraded_on_next_sql_write(
     )
     assert persisted["version"] == 3
     assert persisted["payload"]["trigger"]["schema_version"] == 1
-    assert persisted["payload"]["trigger"]["kind"] == "interval"
+    assert persisted["payload"]["trigger"]["kind"] == "business_day"
+    assert persisted["payload"]["calendar"] == {
+        "reference": "finance-days",
+        "revision": 3,
+    }

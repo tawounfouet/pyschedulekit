@@ -97,6 +97,7 @@ and missing revisions fail closed.
 | `DateTrigger` | one-shot absolute occurrence |
 | `IntervalTrigger` | anchored fixed-rate recurrence |
 | `CronTrigger` | calendar recurrence with explicit timezone semantics |
+| `BusinessDayTrigger` | Nth working day of each month at one Schedule-local civil time |
 | `CronDialect` | cron interpretation dialect |
 | `CronAmbiguousTimePolicy` | DST-fold behavior |
 | `CronNonexistentTimePolicy` | DST-gap behavior |

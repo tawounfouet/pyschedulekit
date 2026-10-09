@@ -22,8 +22,7 @@ def test_t_pypi_001_publish_job_requires_successful_qualification() -> None:
     assert "github.event_name == 'push'" in publish_section
     assert "startsWith(github.ref, 'refs/tags/v')" in publish_section
     assert (
-        "needs.qualify-release-candidate.outputs.public-pypi-eligible == 'true'"
-        in publish_section
+        "needs.qualify-release-candidate.outputs.public-pypi-eligible == 'true'" in publish_section
     )
 
 

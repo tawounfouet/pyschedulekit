@@ -6,6 +6,11 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ## [Unreleased]
 
+### Added
+
+- Added a runnable five-scenario cookbook covering interval scheduling, cron/timezones, retry/backoff, SQLite durability, and health/readiness.
+- Added acceptance tests that execute every cookbook script under CI.
+
 ### Changed
 
 - Deferred all future PyPI publication until the first stable `1.0.0`; pre-1.0 and prerelease versions remain development-only milestones qualified by CI.

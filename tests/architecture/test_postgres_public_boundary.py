@@ -40,8 +40,8 @@ def test_optional_postgres_public_surface_is_documented() -> None:
     assert "`TransientPersistenceError`" in api_text
     assert "pyschedulekit.postgres" in api_text
 
-    assert "PostgreSQL 16" in support_text
-    assert "PostgreSQL 17" in support_text
-    assert "PostgreSQL 18" in support_text
+    assert "| 16 | ✅ supported / CI-qualified |" in support_text
+    assert "| 17 | ✅ supported / CI-qualified |" in support_text
+    assert "| 18 | ✅ supported / CI-qualified |" in support_text
     assert "SCHEMA_VERSION = 1" in support_text
     assert "SQLite → PostgreSQL" in support_text

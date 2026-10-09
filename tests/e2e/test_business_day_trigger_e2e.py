@@ -79,3 +79,25 @@ def test_public_scheduler_rejects_unbound_business_day_trigger() -> None:
             trigger=BusinessDayTrigger(ordinal=1, hour=8),
             timezone=Timezone("Europe/Paris"),
         )
+
+
+def test_last_business_day_uses_month_end_working_date() -> None:
+    calendar = _calendar()
+    scheduler = Scheduler(
+        clock=MutableClock(_instant(2026, 1, 1)),
+        calendar_provider=InMemoryCalendarProvider([calendar]),
+    )
+
+    schedule_id = scheduler.add_schedule(
+        id="month-close",
+        target=lambda: None,
+        trigger=BusinessDayTrigger(ordinal=-1, hour=18),
+        calendar=calendar.snapshot_ref,
+    )
+
+    assert scheduler.inspect_schedule(schedule_id).next_run_time == _instant(
+        2026,
+        1,
+        30,
+        18,
+    )

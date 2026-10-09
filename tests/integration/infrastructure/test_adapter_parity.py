@@ -796,6 +796,7 @@ def test_unit_of_work_requires_context_and_rejects_reentry(
     with uow, pytest.raises(RuntimeError):
         uow.__enter__()
 
+
 @pytest.mark.parametrize("adapter", ADAPTERS)
 def test_calendar_snapshot_binding_round_trips_across_adapters(
     adapter: str,

@@ -169,6 +169,7 @@ GITHUB
 [ ] Immutable Releases enabled
 [ ] release-candidate workflow is present on the commit to tag
 [ ] provenance permissions/actions are present and SHA-pinned
+[ ] GitHub Release creation is configured as a stable release, not a prerelease
 
 READINESS
 [ ] Release Readiness passed on main for v1.0.0
@@ -225,6 +226,11 @@ This starts the Release Candidate Gate.
 
 Never move or replace the tag if a downstream job fails.
 
+> **Stable-release prerequisite:** the current release infrastructure was proven using
+> prerelease `0.1.0a3`. Before `v1.0.0`, the GitHub Release creation step must be
+> qualified in stable-release mode (`isPrerelease=false`). This is a GO/NO-GO item, not
+> something to discover after PyPI publication.
+
 ## Expected workflow order
 
 ```text
@@ -252,7 +258,7 @@ A release is complete only when all are true:
 [ ] exact qualified artifacts published to PyPI
 [ ] exact version can be installed from pypi.org
 [ ] installed-package smoke test passes outside the source tree
-[ ] GitHub prerelease created from the existing tag
+[ ] stable GitHub Release created from the existing tag
 [ ] wheel, sdist and release-candidate-sha256.txt attached
 [ ] published assets re-downloaded and checksum-verified
 [ ] GitHub attestations verify
@@ -353,10 +359,10 @@ Never hide an incident by replacing bytes under the same identity.
 
 ## Changelog discipline
 
-Before tagging, freeze release notes under a dated heading:
+Before tagging, freeze release notes under a dated heading using the actual release date:
 
 ```text
-## [1.0.0] - 2026-10-09
+## [1.0.0] - YYYY-MM-DD
 ```
 
 Future changes remain under:

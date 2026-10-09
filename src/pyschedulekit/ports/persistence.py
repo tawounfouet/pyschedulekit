@@ -21,6 +21,14 @@ class PersistenceConflictError(RuntimeError):
     """Base error for optimistic or uniqueness conflicts."""
 
 
+class TransientPersistenceError(PersistenceConflictError):
+    """Transaction aborted by a transient database concurrency condition.
+
+    Callers may retry the whole application operation in a fresh UnitOfWork after
+    reloading durable state. The persistence adapter never replays mutations implicitly.
+    """
+
+
 class OptimisticConcurrencyError(PersistenceConflictError):
     """Raised when committed state changed since an entity was loaded."""
 

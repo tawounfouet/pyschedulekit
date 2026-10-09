@@ -255,9 +255,10 @@ Les limites encore structurelles sont différentes :
    `ExecutorRegistry` propre à chaque Scheduler/composition root ; seule la référence
    déclarative est persistée, jamais l'objet exécutable.
 6. **Calendriers métier** — CAL-00 introduit `CalendarRef`, `CalendarRevision`,
-   `CalendarSnapshotRef`, `BusinessCalendar` et le port `CalendarProvider`. Ces objets
-   sont versionnés et déterministes, mais ne sont pas encore liés à `ScheduleDefinition`
-   ni aux triggers ; cette intégration commence en CAL-01.
+   `CalendarSnapshotRef`, `BusinessCalendar` et le port `CalendarProvider`. CAL-01 lie
+   désormais une référence de snapshot optionnelle à `ScheduleDefinition`, la persiste et
+   l'expose dans les snapshots opérationnels. Cette liaison reste déclarative : les triggers
+   ne consultent pas encore le calendrier ; cette planification commence en CAL-02.
 7. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
    compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
 

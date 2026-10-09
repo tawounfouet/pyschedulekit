@@ -70,6 +70,7 @@ def test_t_public_api_004_scheduler_signature_parameter_contract() -> None:
         "registry",
         "http_registry",
         "executors",
+        "executor_registry",
         "worker_id",
         "claim_ttl",
         "lease_heartbeat_interval",

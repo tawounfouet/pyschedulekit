@@ -8,6 +8,11 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.A Public API Inventory & Classification: machine-readable inventories for the
+  104 root/API candidates, root `__version__`, 2 PostgreSQL exports, 5 testing helpers and
+  11 experimental names; provisional namespace classifications; and architecture tests that
+  fail on accidental public-surface drift. No runtime behavior or package version changed.
+
 - Added the V1-00 readiness audit with an evidence-backed `v1.0.0` NO-GO, explicit public
   contract, persistence, platform/security and stable-release findings, plus the V1-01 →
   V1-05 closure roadmap. No runtime behavior, version, tag or publication changed.

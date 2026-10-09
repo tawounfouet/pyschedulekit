@@ -1,7 +1,11 @@
 # POST-05 — Performance Benchmarks
 
-POST-05 introduces a reproducible performance harness without turning noisy timing numbers
-into brittle CI gates.
+POST-05 introduces two complementary performance surfaces:
+
+- `benchmarks/run_baseline.py` — V1 complexity guardrails for T-PERF-001/T-PERF-002;
+- `benchmarks/run.py` — broader measurement evidence for cron, memory and SQLite workloads.
+
+Neither surface defines an absolute latency SLA.
 
 ## Goals
 
@@ -128,16 +132,33 @@ The report records:
 
 ## CI policy
 
-Normal pull-request CI only runs the `smoke` profile through
+Normal pytest runs the small `smoke` evidence profile through
 `tests/acceptance/test_benchmark_harness.py`.
 
-There is deliberately **no timing threshold** in CI.
+A separate `Performance Baseline` workflow may enforce the broad V1 **complexity-ratio**
+guardrails implemented by `run_baseline.py`:
 
-Shared runners vary in CPU scheduling, host contention, virtualization and thermal state.
-A percentage-based performance gate on those runners would create false regressions and
-reward benchmark gaming.
+- far/near IntervalTrigger ratio <= 50;
+- 10k/1k idle-cycle ratio <= 30.
 
-CI therefore checks **benchmark correctness**, not benchmark speed.
+These are catastrophe detectors, not latency SLAs. No rule says that a benchmark must finish
+within N milliseconds, because shared runners vary in CPU scheduling, host contention,
+virtualization and thermal state.
+
+Raw timing evidence remains review material rather than a direct product guarantee.
+
+## V1 complexity baseline
+
+Detailed T-PERF-001/T-PERF-002 methodology lives in
+[`docs/performance/README.md`](../performance/README.md).
+
+The automatic baseline and the manual evidence harness intentionally answer different
+questions:
+
+```text
+complexity baseline  → did algorithmic scaling become catastrophically worse?
+manual evidence      → what did representative operations measure on this environment?
+```
 
 ## Manual workflow
 

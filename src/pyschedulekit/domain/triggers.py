@@ -348,11 +348,11 @@ class CronTrigger:
             raise
 
 
-
 def _shift_month(year: int, month: int, offset: int) -> tuple[int, int]:
     zero_based = (year * 12 + (month - 1)) + offset
     shifted_year, shifted_month = divmod(zero_based, 12)
     return shifted_year, shifted_month + 1
+
 
 def _parse_cron_field(
     expression: str,

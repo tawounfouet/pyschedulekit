@@ -24,6 +24,7 @@ SNAPSHOT / HISTORY
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
+| [Installed-package dogfooding](./dogfooding/README.md) | External-consumer qualification against built distributions |
 
 ## Documentation areas
 
@@ -63,8 +64,8 @@ LOT-00 ... LOT-34                     ✅ initial functional roadmap
 POST-00 Audit Remediation             ✅ complete
 POST-01 Documentation Cleanup         ✅
 POST-02 Real-world Examples/Cookbook  ✅
-POST-03 API Documentation             🚧 current
-POST-04 Dogfooding                    ⬜
+POST-03 API Documentation             ✅
+POST-04 Dogfooding                    🚧 current
 POST-05 Benchmarks                    ⬜
 POST-06 Chaos / Fault Injection       ⬜
         ↓
@@ -104,6 +105,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect original design intent | [Specs](./specs/) |
 | inspect implementation history | [Implementation LOTs](./implementation/) |
 | inspect the stable public API | [API reference](./api/README.md) |
+| verify installed-package consumer behavior | [Dogfooding](./dogfooding/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
@@ -118,4 +120,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — POST-01 documentation cleanup.
+**Last refreshed:** 2026-10-09 — POST-04 installed-package dogfooding.

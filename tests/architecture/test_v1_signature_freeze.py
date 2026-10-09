@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import inspect
 from enum import Enum
-from typing import Any
-
 from pyschedulekit.api import (
     AnyOfTrigger,
     AsyncPythonTargetRegistry,
@@ -16,9 +14,6 @@ from pyschedulekit.api import (
     CalendarRevision,
     CalendarSnapshotRef,
     ConcurrencyPolicy,
-    CronAmbiguousTimePolicy,
-    CronDialect,
-    CronNonexistentTimePolicy,
     CronTrigger,
     DateTrigger,
     Duration,
@@ -28,7 +23,6 @@ from pyschedulekit.api import (
     FixedBackoff,
     GracePeriod,
     HttpExecutor,
-    HttpMethod,
     HttpRequestSpec,
     HttpTargetRegistry,
     InMemoryCalendarProvider,
@@ -37,7 +31,6 @@ from pyschedulekit.api import (
     IntervalTrigger,
     LocalExecutor,
     MisfirePolicy,
-    MisfirePolicyAction,
     NoBackoff,
     PythonTargetRegistry,
     RetentionPolicy,

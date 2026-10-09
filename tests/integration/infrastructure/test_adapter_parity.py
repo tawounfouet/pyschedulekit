@@ -789,6 +789,5 @@ def test_unit_of_work_requires_context_and_rejects_reentry(
     with pytest.raises(RuntimeError):
         uow.commit()
 
-    with uow:
-        with pytest.raises(RuntimeError):
-            uow.__enter__()
+    with uow, pytest.raises(RuntimeError):
+        uow.__enter__()

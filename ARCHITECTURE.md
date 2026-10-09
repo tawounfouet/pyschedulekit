@@ -209,7 +209,7 @@ Pas d'UI ni de CLI : l'interface est l'API publique.
 |---|---|
 | Temps | Jamais `datetime.now` dans `domain/` ni `application/` : toujours l'`Clock` injectée ; tests avec `MutableClock` |
 | Écritures | Une mutation = une UnitOfWork : `validate → apply → commit()`, rollback systématique en sortie de contexte |
-| Conflits | `PersistenceConflictError` = rejeu possible ; `InvalidExecutionTransitionError` = état illégal (à ne pas confondre, B2) |
+| Conflits | `PersistenceConflictError` = conflit de persistance ; `InvalidExecutionTransitionError` = état devenu invalide, traité séparément par `run_pending` |
 | Identité des exécutions | `OccurrenceKey(schedule_id, schedule_revision, scheduled_at)` = clé de déduplication des matérialisations |
 | Multi-workers | Toute écriture d'exécution porte la `generation` de claim (fencing) ; expiration = rejeu, jamais de reprise silencieuse |
 | Cibles exécutées | Registres **opt-in manuels** uniquement — jamais d'exécution d'un callable/URL non enregistré |

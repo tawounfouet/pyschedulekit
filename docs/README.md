@@ -89,7 +89,8 @@ POST-06 Chaos / Fault Injection       ✅
 0.3.x Advanced Scheduling               🚧 current
   CAL-00 Calendar Foundations             ✅
   CAL-01 Schedule Calendar Binding        ✅
-  CAL-02 Calendar-aware Planning          🚧 current
+  CAL-02 Calendar-aware Planning          ✅
+  CAL-03 Business-Day Trigger Semantics   ⏭ next
         ↓
 ...
         ↓

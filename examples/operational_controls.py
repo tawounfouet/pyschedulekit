@@ -1,10 +1,10 @@
 """Pause, resume, inspect, execute, and cancel one schedule."""
 
 from pyschedulekit import (
+    Duration,
     ExecutionState,
     Instant,
     IntervalTrigger,
-    Duration,
     ScheduleState,
     Scheduler,
 )

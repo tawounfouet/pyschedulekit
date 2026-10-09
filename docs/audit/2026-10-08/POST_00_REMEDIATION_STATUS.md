@@ -2,8 +2,8 @@
 
 > **Current-state companion to the 2026-10-08 audit**
 >
-> The root audit documents (`CODEBASE_ANALYSIS.md`, `ANALYSE_CRITIQUE.md`,
-> `RECOMMANDATIONS.md`) are preserved as an **audit snapshot**. They describe what was
+> The dated audit documents (`CODEBASE_ANALYSIS.md`, `ANALYSE_CRITIQUE.md`,
+> `RECOMMANDATIONS.md`) in this directory are preserved as an **audit snapshot**. They describe what was
 > observed on 2026-10-08 and are not rewritten to pretend those findings never existed.
 >
 > This document records what changed afterwards and is the authoritative remediation
@@ -15,7 +15,8 @@
 - GitHub release: `v0.1.0a3`, published as an immutable prerelease
 - Runtime dependencies: 0
 - Supported Python: 3.11 / 3.12 / 3.13
-- Current hardening target: `0.1.0a4`
+- Current development version after POST-00: `0.1.0a4`
+- Public publication policy: no new PyPI release before stable `1.0.0`
 - POST-00 theme: post-release stabilization and adversarial hardening
 
 At the completed POST-00 baseline `main@678d1825720d1f3b8a5e46467f2784c599682461`, the combined CI and
@@ -131,7 +132,8 @@ Accordingly:
 - `ANALYSE_CRITIQUE.md` remains the opinion based on that snapshot.
 - `RECOMMANDATIONS.md` remains the remediation plan produced from that snapshot.
 - this file is the authoritative disposition of the findings.
-- `README.md`, `AGENTS.md`, `ARCHITECTURE.md` and `INDEX.md` describe the current operational state.
+- `../../../README.md`, `../../../AGENTS.md`, `../../ARCHITECTURE.md`,
+  `../../SDLC.md` and `../../README.md` describe the current operational state.
 
 ## 6. Release-engineering reality
 
@@ -177,35 +179,41 @@ The published GitHub Release contains:
 [x] audit/current-state separation documented
 [x] no known open B1-B12 finding
 [x] Distribution Qualification green
-[ ] final 0.1.0a4 release qualification
-[ ] publish 0.1.0a4
+[x] pre-1.0 publication policy encoded in CI
+[n/a] publish 0.1.0a4 — intentionally deferred; next PyPI publication is stable >=1.0.0
 ```
 
 ## 8. Next gate
 
-POST-00H is merged. The remaining sequence is deliberately small:
+POST-00 is complete. Public release ceremony is no longer a prerequisite for framework
+progress before `1.0.0`.
 
 ```text
-0.1.0a4 release preparation
+POST-01 Documentation Cleanup
         ↓
-Release Readiness on main
+POST-02 Real-world Examples / Cookbook
         ↓
-v0.1.0a4 tag pipeline
+POST-03 API Documentation
         ↓
-0.1.0a4 public
+POST-04 Dogfooding
         ↓
-POST-01 / POST-02 / POST-03 / POST-04
+POST-05 Benchmarks
         ↓
-evidence from real use
+POST-06 Chaos / Fault Injection
         ↓
-0.2.x — Execution & Storage Ecosystem
+0.2.x Execution & Storage Ecosystem
+        ↓
+...
+        ↓
+1.0.0 stable contract + next PyPI publication
 ```
 
-No PostgreSQL, Async Executor, new trigger family, CLI, FastAPI adapter or Py*Kit
-integration belongs in `0.1.0a4`.
+The `0.1.0a4` source version is an internal development milestone, not a required public
+release. PostgreSQL, Async Executor and later roadmap work may proceed through normal
+branches/CI without publishing intermediate packages.
 
 ---
 
 **Last refreshed:** 2026-10-09  
 **Public reference release:** `0.1.0a3`  
-**Hardening target:** `0.1.0a4`
+**Current development version:** `0.1.0a4`

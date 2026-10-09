@@ -7,7 +7,7 @@ the completed calendar sequence.
 
 ```text
 CMP-00 Composite Trigger Contract                 COMPLETE
-CMP-01 AnyOf Occurrence Planning                  PLANNED
+CMP-01 AnyOf Occurrence Planning                  COMPLETE
 CMP-02 Checkpoints, Deduplication and Bounds      PLANNED
 CMP-03 Versioned Codec and Migration              PLANNED
 CMP-04 Persistence Adapter Parity                 PLANNED
@@ -43,9 +43,9 @@ Each CMP lot must preserve:
 - parity across InMemory, SQLite and PostgreSQL before stable public exposure;
 - zero runtime dependencies.
 
-CMP-00 intentionally remains domain-internal. Public API exposure follows only after codec,
+CMP-01 intentionally remains domain-internal. Public API exposure follows only after codec,
 migration and adapter-parity guarantees are executable.
 
 ---
 
-**Status:** CMP-00 complete; CMP-01 is the next planned composite-trigger lot.
+**Status:** CMP-00 and CMP-01 complete; CMP-02 is the next planned composite-trigger lot.

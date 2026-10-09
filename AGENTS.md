@@ -66,6 +66,8 @@ Layered, domain-first (`domain` → `application` → `ports` → `infrastructur
 
 - Documentation entry point: `docs/README.md`.
 - Current architecture: `docs/ARCHITECTURE.md`; current SDLC: `docs/SDLC.md`.
+- Task-oriented usage recipes: `docs/cookbook/README.md`; runnable sources: `examples/*.py`.
+  Every Python example is executed by `tests/acceptance/test_cookbook_examples.py`.
 - Development is slice-based: `docs/implementation/LOT-*.md` (35 done, LOT-00…LOT-34),
   domain rationale in `docs/specs/`, release engineering in `docs/release/`.
 - Project rule: *every supported guarantee must map to an executable test* — add the test
@@ -105,5 +107,5 @@ POST-00 is complete. The current development version is `0.1.0a4`.
 Pre-1.0 milestones are **not published to PyPI**; the release workflow enforces public
 publication only for stable semantic versions >= `1.0.0`.
 
-Current sequence: POST-01 documentation cleanup → examples/cookbook → API docs →
-dogfooding/benchmarks/chaos, then the 0.2.x execution/storage roadmap.
+Current sequence: POST-02 examples/cookbook → POST-03 API docs → POST-04 dogfooding →
+POST-05 benchmarks → POST-06 chaos, then the 0.2.x execution/storage roadmap.

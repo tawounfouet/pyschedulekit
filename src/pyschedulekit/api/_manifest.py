@@ -107,9 +107,7 @@ STABLE_PUBLIC_NAMES = (
     "WorkerId",
 )
 
-ROOT_METADATA_NAMES = (
-    "__version__",
-)
+ROOT_METADATA_NAMES = ("__version__",)
 
 POSTGRES_PUBLIC_NAMES = (
     "PostgresUnitOfWorkFactory",

@@ -144,7 +144,6 @@ def _claim(execution: Execution) -> ExecutionClaim:
         expires_at=_instant(minute=1),
     )
 
-
 @pytest.mark.parametrize("adapter", ADAPTERS)
 @pytest.mark.parametrize(
     "orphan_kind",

@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CMP-01 AnyOf Occurrence Planning qualification across Schedule initialization,
+  operational checkpoint advancement, duplicate-free chronological backlog reconstruction,
+  finite exhaustion, pure Occurrence projection and Schedule-level calendar filtering.
+
 - Added CMP-00 Composite Trigger Contract: the domain-internal immutable `AnyOfTrigger`
   selects the earliest candidate from two or more pure temporal children, deduplicates shared
   Instants through strict progression, preserves exhaustion semantics, and fails closed when

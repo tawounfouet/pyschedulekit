@@ -97,7 +97,8 @@ POST-06 Chaos / Fault Injection       ✅
         ↓
 0.4.x Composite Trigger Foundations  ⏳ in progress
   CMP-00 Composite Trigger Contract  ✅
-  CMP-01 ... CMP-05                  ⬜ planned
+  CMP-01 AnyOf Occurrence Planning   ✅
+  CMP-02 ... CMP-05                  ⬜ planned
         ↓
 1.0.0 stable public contract
 ```
@@ -153,4 +154,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CMP-00 Composite Trigger Contract complete.
+**Last refreshed:** 2026-10-09 — CMP-01 AnyOf Occurrence Planning complete.

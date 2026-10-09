@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant après POST-00G / B7
+## 4. État courant — POST-00 clos / 0.1.0a4 en préparation
 
 Le snapshot détaillé de l'audit du 2026-10-08 est conservé dans les documents racine.
 Le statut faisant foi des findings est
@@ -82,9 +82,9 @@ Le statut faisant foi des findings est
 
 ```text
  1 Plan ──► 2 Build ──► 3 Test ──► 4 Review ──► 5 Release ──► 6 Deploy ──► 7 Maintain
-   ✅        ✅          ✅          ✅           ✅            ✅           🚧
- specs     fixes       493 tests   audit +      a3 PyPI +    main green   POST-00H
- versionnés POST-00    + gate 85%  hardening    GH Release   3.11-3.13   consolidation
+   ✅        ✅          ✅          ✅           ✅            ✅           ✅
+ specs     fixes       quality     audit +      a3 PyPI +    main green   POST-00
+ versionnés POST-00    gate 85%    hardening    GH Release   3.11-3.13   consolidé
 ```
 
 - **Version publique** : `0.1.0a3`.
@@ -92,7 +92,8 @@ Le statut faisant foi des findings est
 - **Quality gates** : Ruff ✅ · mypy strict ✅ · pytest ✅ · coverage ≥85 ✅.
 - **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
 - **Findings B1–B12** : aucun finding ouvert.
-- **Étape active** : POST-00H, puis qualification finale de `0.1.0a4`.
+- **Source candidate** : `0.1.0a4`.
+- **Étape active** : merge de la préparation release, puis Release Readiness sur `main` et tag `v0.1.0a4`.
 
 ---
 
@@ -114,10 +115,11 @@ Le statut faisant foi des findings est
 
 ### Prochaine étape recommandée
 
-1. terminer POST-00H et merger la consolidation documentaire ;
-2. exécuter la qualification de release complète ;
-3. préparer/publier `0.1.0a4` ;
-4. seulement ensuite reprendre POST-01 → POST-06 et la Phase II.
+1. merger la préparation `0.1.0a4` ;
+2. exécuter Release Readiness sur `main` pour `v0.1.0a4` ;
+3. créer/pousser le tag uniquement après GO ;
+4. vérifier PyPI + GitHub Release/provenance ;
+5. seulement ensuite reprendre POST-01 → POST-06 et la Phase II.
 
 ---
 

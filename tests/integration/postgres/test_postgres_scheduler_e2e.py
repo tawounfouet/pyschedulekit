@@ -440,9 +440,7 @@ def test_pg04_scheduler_reports_postgres_materialization_contention() -> None:
     contender.register_target("local:postgres-materialization", lambda: None)
     result = contender.run_pending()
 
-    assert result.materialization_denied_schedule_ids == (
-        ScheduleId("postgres-materialization"),
-    )
+    assert result.materialization_denied_schedule_ids == (ScheduleId("postgres-materialization"),)
     assert result.materialized_request_ids == ()
     assert result.executions == ()
 

@@ -115,3 +115,9 @@ jobs:
         run: |
           cd /tmp
           python "$GITHUB_WORKSPACE/scripts/smoke_installed_package.py"
+
+      - name: Dogfood installed package as external consumer
+        shell: bash
+        run: |
+          cd /tmp
+          python "$GITHUB_WORKSPACE/dogfood/consumer_app.py"

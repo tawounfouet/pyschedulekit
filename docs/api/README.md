@@ -85,6 +85,32 @@ configured `CalendarProvider` and filters Date/Interval/Cron candidates by the S
 local calendar date before they become occurrences. Catch-up/coalesce uses the same filter,
 and missing revisions fail closed.
 
+## CAL-03 BusinessDayTrigger
+
+`BusinessDayTrigger` is the first built-in calendar-aware Trigger.
+
+```python
+from pyschedulekit import BusinessDayTrigger
+
+first = BusinessDayTrigger(ordinal=1, hour=8)
+second = BusinessDayTrigger(ordinal=2, hour=9, minute=30)
+last = BusinessDayTrigger(ordinal=-1, hour=18)
+```
+
+It requires `Scheduler.add_schedule(calendar=...)`. The Schedule timezone defines the local
+civil hour and the exact bound calendar revision defines working dates.
+
+The trigger is monthly:
+
+- positive ordinals count working dates from month start;
+- negative ordinals count from month end;
+- holidays are excluded;
+- explicit extra working days are included;
+- DST ambiguity and gap handling remain explicit;
+- search is bounded and deterministic.
+
+The trigger does not fetch calendars or contain country-specific holiday data.
+
 ## Time and trigger model
 
 | Public name | Role |

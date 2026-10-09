@@ -888,6 +888,21 @@ src/pyschedulekit/
 
 The directory structure grows only when implementation needs it; the project avoids empty architectural ceremony before working vertical slices.
 
+## Cookbook
+
+Runnable, deterministic examples are maintained in
+[`docs/cookbook/README.md`](./docs/cookbook/README.md).
+
+```bash
+python examples/01_interval_quickstart.py
+python examples/02_cron_timezone.py
+python examples/03_retry_backoff.py
+python examples/04_sqlite_durability.py
+python examples/05_operational_health.py
+```
+
+Every cookbook example is executed by the test suite.
+
 ## Development
 
 Target baseline: **Python 3.11+**.

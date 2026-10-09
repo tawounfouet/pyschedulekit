@@ -33,7 +33,7 @@ def test_benchmark_smoke_profile_produces_structured_results(tmp_path: Path) -> 
 
     report = json.loads(json_output.read_text(encoding="utf-8"))
 
-    assert report["schema_version"] == 1
+    assert report["schema_version"] == 2
     assert report["profile"] == "smoke"
     assert report["pyschedulekit_version"]
 
@@ -42,8 +42,15 @@ def test_benchmark_smoke_profile_produces_structured_results(tmp_path: Path) -> 
         "cron_next_after",
         "interval_next_after",
         "run_pending_memory",
+        "run_pending_memory_idle_100",
+        "run_pending_memory_idle_1000",
         "run_pending_sqlite",
     }
+
+    scaling = report["scaling"]
+    assert scaling["memory_idle_small_count"] == 100
+    assert scaling["memory_idle_large_count"] == 1000
+    assert scaling["memory_idle_large_to_small_ratio"] > 0
 
     for result in results.values():
         assert result["operations"] > 0
@@ -55,4 +62,18 @@ def test_benchmark_smoke_profile_produces_structured_results(tmp_path: Path) -> 
 
     markdown = markdown_output.read_text(encoding="utf-8")
     assert "# PyScheduleKit Benchmark Report" in markdown
+    assert "## Scale evidence" in markdown
     assert "Benchmark numbers are evidence, not CI pass/fail thresholds." in markdown
+
+
+def test_benchmark_workflow_records_standard_baseline_after_main_merge() -> None:
+    workflow = (REPO_ROOT / ".github" / "workflows" / "benchmarks.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "push:" in workflow
+    assert "branches:" in workflow
+    assert "- main" in workflow
+    assert "${{ inputs.profile || 'standard' }}" in workflow
+    assert "${{ inputs.python_version || '3.13' }}" in workflow
+    assert "retention-days: 30" in workflow

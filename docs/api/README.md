@@ -67,6 +67,20 @@ promise at `1.0.0`.
 - `Scheduler.dispatch_outbox()` → `OutboxDispatchResult`
 - `Scheduler.cleanup()` → `CleanupResult`
 
+## Calendar model
+
+| Public name | Role |
+|---|---|
+| `CalendarRef` | stable logical identity of one business calendar |
+| `CalendarRevision` | positive immutable revision of calendar rules |
+| `CalendarSnapshotRef` | deterministic reference to one exact calendar revision |
+| `BusinessCalendar` | immutable working-week / holiday / exception rules |
+| `CalendarProvider` | port resolving latest or exact calendar revisions |
+| `InMemoryCalendarProvider` | thread-safe process-local provider implementation |
+
+CAL-00 exposes calendar foundations only. Schedules and triggers do **not** consume a
+calendar yet; Schedule binding begins in CAL-01.
+
 ## Time and trigger model
 
 | Public name | Role |

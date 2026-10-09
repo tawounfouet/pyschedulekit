@@ -87,7 +87,10 @@ Conventions de câblage réelles :
   instance-owned, explicite et consulté dynamiquement par `RoutingExecutor`; aucun registre
   global n'est muté à l'import.
 - Chaque mutation d'agrégat domaine passe par des assertions d'invariants (`Execution._assert_invariants`, `domain/execution.py:598-628`) — un état illégal lève `ValueError` avant persistance.
-- **Deux adaptateurs de persistance qualifiés par un contrat observable partagé** (SQLite + InMemory) implémentent le même protocole `UnitOfWork` : identity map + write set + validation de version + rollback. Les tests de parité forcent désormais les mêmes sémantiques de référentiel, staged state, conflits et rollback.
+- **Trois adaptateurs de persistance qualifiés par un contrat observable partagé**
+  (InMemory + SQLite + PostgreSQL) implémentent le même protocole `UnitOfWork` :
+  identity map + write set + validation de version + rollback. Les tests de parité forcent
+  les mêmes sémantiques de référentiel, staged state, conflits et rollback.
 - `InvalidExecutionTransitionError` reste distinct de `PersistenceConflictError`, mais `run_pending` traite explicitement une transition devenue invalide par concurrence : claim non démarré libéré, erreur structurée `execution.transition`, cycle conservé.
 
 ### 2.2 Cycle de vie d'un cycle — `RunPendingService.run_pending()`
@@ -251,7 +254,11 @@ Les limites encore structurelles sont différentes :
    confiance enregistrés dans le processus hôte. Les executors tiers passent par un
    `ExecutorRegistry` propre à chaque Scheduler/composition root ; seule la référence
    déclarative est persistée, jamais l'objet exécutable.
-6. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
+6. **Calendriers métier** — CAL-00 introduit `CalendarRef`, `CalendarRevision`,
+   `CalendarSnapshotRef`, `BusinessCalendar` et le port `CalendarProvider`. Ces objets
+   sont versionnés et déterministes, mais ne sont pas encore liés à `ScheduleDefinition`
+   ni aux triggers ; cette intégration commence en CAL-01.
+7. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
    compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
 
 Ces limites appartiennent à la trajectoire pré-1.0 / Phase II et seront traitées par lots dédiés. Leur traitement n'est plus lié à une publication intermédiaire `0.x`.

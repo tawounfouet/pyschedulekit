@@ -17,6 +17,7 @@ from time import perf_counter
 
 import pyschedulekit
 from pyschedulekit import (
+    AnyOfTrigger,
     CronTrigger,
     Duration,
     Instant,
@@ -33,6 +34,7 @@ from pyschedulekit.testing import MutableClock
 class BenchmarkProfile:
     repeats: int
     interval_iterations: int
+    any_of_iterations: int
     cron_iterations: int
     memory_schedules: int
     sqlite_schedules: int
@@ -55,6 +57,7 @@ PROFILES = {
     "smoke": BenchmarkProfile(
         repeats=2,
         interval_iterations=200,
+        any_of_iterations=200,
         cron_iterations=40,
         memory_schedules=5,
         sqlite_schedules=3,
@@ -64,6 +67,7 @@ PROFILES = {
     "standard": BenchmarkProfile(
         repeats=7,
         interval_iterations=100_000,
+        any_of_iterations=100_000,
         cron_iterations=2_000,
         memory_schedules=250,
         sqlite_schedules=50,
@@ -128,6 +132,28 @@ def _cron_sample(iterations: int) -> float:
     trigger = CronTrigger(
         "0 9 * * 1-5",
         timezone=Timezone("Europe/Paris"),
+    )
+
+    started = perf_counter()
+    current = reference
+    for _ in range(iterations):
+        occurrence = trigger.next_after(current)
+        assert occurrence is not None
+        current = occurrence
+    return perf_counter() - started
+
+
+def _any_of_sample(iterations: int) -> float:
+    reference = Instant(datetime(2026, 1, 1, tzinfo=UTC))
+    trigger = AnyOfTrigger(
+        IntervalTrigger(
+            every=Duration.seconds(30),
+            anchor=reference.add(Duration.seconds(30)),
+        ),
+        IntervalTrigger(
+            every=Duration.seconds(45),
+            anchor=reference.add(Duration.seconds(45)),
+        ),
     )
 
     started = perf_counter()
@@ -289,6 +315,12 @@ def run(profile_name: str) -> dict[str, object]:
             operations=profile.interval_iterations,
             repeats=profile.repeats,
             sample=lambda: _interval_sample(profile.interval_iterations),
+        ),
+        _measure(
+            name="any_of_next_after",
+            operations=profile.any_of_iterations,
+            repeats=profile.repeats,
+            sample=lambda: _any_of_sample(profile.any_of_iterations),
         ),
         _measure(
             name="cron_next_after",

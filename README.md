@@ -87,6 +87,9 @@ POST-00 is complete. The source version is `0.1.0a4`, but pre-1.0 milestones are
 The last public prerelease remains `0.1.0a3`. Current audit-remediation status is recorded
 in `docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`.
 
+The 0.3.x calendar and 0.4.x composite-trigger sequences are complete. `AnyOfTrigger` is
+now a stable public primitive for a bounded, duplicate-free union of pure temporal rules.
+
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 
 The implementation follows a domain-first roadmap:
@@ -187,6 +190,24 @@ CronTrigger(
 ```
 
 Cron evaluates civil calendar time rather than elapsed duration. DST gaps are skipped by default, ambiguous local times select the first fold by default, and both behaviors can be made strict/explicit.
+
+## Composite trigger
+
+The public `AnyOfTrigger` combines two or more pure temporal rules and returns their next
+earliest occurrence:
+
+```python
+from pyschedulekit import AnyOfTrigger, Duration, IntervalTrigger
+
+trigger = AnyOfTrigger(
+    IntervalTrigger(every=Duration.minutes(10), anchor=first_ten_minute),
+    IntervalTrigger(every=Duration.minutes(15), anchor=first_fifteen_minute),
+)
+```
+
+Shared occurrence Instants are emitted once, nested unions are flattened, and fan-out is
+bounded at 64 children. Calendar-aware children and intersection semantics are deliberately
+outside this contract.
 
 ## Schedule aggregate
 
@@ -890,9 +911,10 @@ The directory structure grows only when implementation needs it; the project avo
 
 ## Performance benchmarks
 
-A reproducible benchmark harness measures trigger lookup and `run_pending()` behavior for
-in-memory and SQLite workloads. Normal CI validates the harness but does not enforce timing
-thresholds. See [`docs/benchmarks/README.md`](./docs/benchmarks/README.md).
+A reproducible benchmark harness measures interval, cron and composite trigger lookup plus
+`run_pending()` behavior for in-memory and SQLite workloads. Normal CI validates the harness
+but does not enforce timing thresholds. See
+[`docs/benchmarks/README.md`](./docs/benchmarks/README.md).
 
 ## Installed-package dogfooding
 
@@ -917,6 +939,7 @@ python examples/02_cron_timezone.py
 python examples/03_retry_backoff.py
 python examples/04_sqlite_durability.py
 python examples/05_operational_health.py
+python examples/06_composite_any_of.py
 ```
 
 Every cookbook example is executed by the test suite.

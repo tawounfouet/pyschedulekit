@@ -95,13 +95,13 @@ POST-06 Chaos / Fault Injection       ✅
   CAL-04 Persistence / Migration Parity    ✅
   CAL-05 Calendar Provider Adapters          ✅
         ↓
-0.4.x Composite Trigger Foundations  ⏳ in progress
+0.4.x Composite Trigger Foundations  ✅ complete
   CMP-00 Composite Trigger Contract  ✅
   CMP-01 AnyOf Occurrence Planning   ✅
   CMP-02 Checkpoints/Dedup/Bounds    ✅
   CMP-03 Versioned Codec/Migration   ✅
   CMP-04 Persistence Adapter Parity  ✅
-  CMP-05 Public Graduation           ⬜ planned
+  CMP-05 Public Graduation           ✅
         ↓
 1.0.0 stable public contract
 ```
@@ -157,4 +157,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CMP-04 Persistence Adapter Parity complete.
+**Last refreshed:** 2026-10-09 — CMP-05 Public Graduation complete; 0.4.x sequence closed.

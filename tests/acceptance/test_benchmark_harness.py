@@ -39,6 +39,7 @@ def test_benchmark_smoke_profile_produces_structured_results(tmp_path: Path) -> 
 
     results = {result["name"]: result for result in report["results"]}
     assert set(results) == {
+        "any_of_next_after",
         "cron_next_after",
         "interval_next_after",
         "run_pending_memory",

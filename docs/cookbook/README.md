@@ -15,6 +15,7 @@ python examples/02_cron_timezone.py
 python examples/03_retry_backoff.py
 python examples/04_sqlite_durability.py
 python examples/05_operational_health.py
+python examples/06_composite_any_of.py
 ```
 
 They are also executed by
@@ -129,6 +130,24 @@ liveness/readiness endpoint
 └── readiness()   → safe to accept scheduling work
 ```
 
+## 6. Composite AnyOf
+
+**Scenario:** run one schedule every 10 minutes or every 15 minutes, without executing twice
+when both cadences meet at minute 30.
+
+[Source](../../examples/06_composite_any_of.py)
+
+```python
+AnyOfTrigger(
+    IntervalTrigger(every=Duration.minutes(10), anchor=first_ten_minute),
+    IntervalTrigger(every=Duration.minutes(15), anchor=first_fifteen_minute),
+)
+```
+
+Use a composite when one logical job has several pure temporal activation rules. Shared
+Instants are deduplicated, nesting is flattened and the resulting definition remains
+durable. Calendar-aware children are intentionally unsupported.
+
 ## Choosing a pattern
 
 | Need | Start with |
@@ -138,6 +157,7 @@ liveness/readiness endpoint
 | transient dependency failures | [Retry/backoff](../../examples/03_retry_backoff.py) |
 | durable local persistence | [SQLite durability](../../examples/04_sqlite_durability.py) |
 | operational probes | [Health/readiness](../../examples/05_operational_health.py) |
+| one schedule matching either of several rules | [Composite AnyOf](../../examples/06_composite_any_of.py) |
 
 ## Cookbook constraints
 

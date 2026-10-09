@@ -32,6 +32,7 @@ STABLE_PUBLIC_NAMES = (
     "ExecutionState",
     "Executor",
     "ExecutorOutcome",
+    "ExecutorRegistry",
     "ExponentialBackoff",
     "Failure",
     "FailureCategory",

@@ -120,6 +120,8 @@ class ScheduleDefinition:
     timeout: Duration | None = None
 
     def __post_init__(self) -> None:
+        if isinstance(self.trigger, CalendarAwareTrigger) and self.calendar is None:
+            raise ValueError("A calendar-aware Trigger requires a Schedule calendar binding.")
         if self.timeout is not None and self.timeout.total_seconds <= 0:
             raise ValueError("Schedule timeout must be greater than zero.")
 

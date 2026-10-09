@@ -124,7 +124,9 @@ Python 3.14/warning/security gates and stable-release workflow behavior remain t
 `docs/v1/V1-00_READINESS_AUDIT.md`. V1-01.A Public API Inventory & Classification is complete:
 `api/_manifest.py` now records the exact root/API, PostgreSQL, testing and experimental
 surfaces plus their provisional V1 classifications, enforced by an architecture test.
-V1-01.B Root/API Stable Candidate Review is next. Do not bump the version, create `v1.0.0`,
-or expand the public feature surface during V1-01.
+V1-01.B Root/API Stable Candidate Review is complete: all 104 primary candidates remain
+stable candidates in `pyschedulekit.api`, with 63 selected for the future compact root and
+41 reserved for the advanced API-only surface. V1-01.C Secondary Namespace Policy is next.
+Do not bump the version, create `v1.0.0`, or expand the public feature surface during V1-01.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

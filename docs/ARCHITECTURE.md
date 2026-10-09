@@ -239,8 +239,10 @@ Les limites encore structurelles sont différentes :
    utilise READ COMMITTED, un schéma versionné fail-closed et une matrice CI 16/17/18.
    L'import public est `pyschedulekit.postgres.PostgresUnitOfWorkFactory`; le root package
    reste dependency-free.
-4. **Exécution asynchrone** — les callables `async def` sont encore explicitement rejetés par
-   le LocalExecutor synchrone.
+4. **Exécution asynchrone** — les callables `async def` utilisent le target kind
+   `python_async` et `AsyncioExecutor`. Le Scheduler et le port Executor restent synchrones;
+   chaque exécution async possède une event loop dans un worker thread dédié. Il n'existe pas
+   encore d'AsyncScheduler ni de persistance async.
 5. **Registres de cibles process-local** — Python/HTTP targets restent des objets de confiance
    enregistrés dans le processus hôte ; seule leur référence déclarative est persistée.
 6. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,

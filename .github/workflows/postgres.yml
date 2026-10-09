@@ -5,14 +5,15 @@ on:
     branches:
       - main
     paths:
-      - "src/pyschedulekit/infrastructure/postgres_*.py"
+      - "src/pyschedulekit/infrastructure/postgres*.py"
       - "tests/integration/postgres/**"
       - "tests/architecture/test_postgres_optional_dependency.py"
+      - "tests/architecture/test_postgres_public_boundary.py"
       - ".github/workflows/postgres.yml"
       - "pyproject.toml"
   pull_request:
     paths:
-      - "src/pyschedulekit/infrastructure/postgres_*.py"
+      - "src/pyschedulekit/infrastructure/postgres*.py"
       - "tests/integration/postgres/**"
       - "tests/architecture/test_postgres_optional_dependency.py"
       - ".github/workflows/postgres.yml"
@@ -63,4 +64,4 @@ jobs:
 
       - name: Run PostgreSQL foundation qualification
         run: |
-          pytest -q tests/integration/postgres tests/architecture/test_postgres_optional_dependency.py
+          pytest -q tests/integration/postgres tests/architecture/test_postgres_optional_dependency.py tests/architecture/test_postgres_public_boundary.py

@@ -10,13 +10,12 @@ import argparse
 import json
 import platform
 import sys
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
 from time import perf_counter_ns
-from typing import Callable
-
 from pyschedulekit import Duration, Instant, IntervalTrigger, Scheduler, TargetRef
 
 

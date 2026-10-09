@@ -1,6 +1,6 @@
 # SDLC — PyScheduleKit
 
-> Guide du cycle de vie de développement : les 7 phases, les outils OpenCode associés, et où en est le projet. Ce document complète [`INDEX.md`](./README.md) (sommaire) et [`RECOMMANDATIONS.md`](./audit/2026-10-08/RECOMMANDATIONS.md) (plan de remédiation).
+> Guide du cycle de vie de développement : les 7 phases, les outils OpenCode associés, et où en est le projet. Ce document complète [`docs/README.md`](./README.md) (sommaire) et [`RECOMMANDATIONS.md`](./audit/2026-10-08/RECOMMANDATIONS.md) (plan de remédiation).
 
 ---
 
@@ -150,7 +150,7 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ## 7. Voir aussi
 
-- [`INDEX.md`](./README.md) — sommaire de toute la documentation.
+- [`docs/README.md`](./README.md) — sommaire de toute la documentation.
 - [`POST-00 Remediation Status`](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) — état courant et preuves.
 - [`RECOMMANDATIONS.md`](./audit/2026-10-08/RECOMMANDATIONS.md) — plan de remédiation historique issu de l'audit.
 - [`CODEBASE_ANALYSIS.md`](./audit/2026-10-08/CODEBASE_ANALYSIS.md) — faits vérifiés et bugs B1-B12.

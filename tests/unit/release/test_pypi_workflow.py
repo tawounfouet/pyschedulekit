@@ -85,4 +85,3 @@ def test_t_pypi_006_qualification_exposes_publication_policy_output() -> None:
     assert "publish-pypi: ${{ steps.publication-policy.outputs.value }}" in qualify_section
     assert "python -m scripts.release_policy" in qualify_section
     assert 'echo "value=$value" >> "$GITHUB_OUTPUT"' in qualify_section
-

@@ -12,9 +12,7 @@ from pyschedulekit.postgres import (
     TransientPersistenceError,
 )
 
-uow_factory = PostgresUnitOfWorkFactory(
-    "postgresql://scheduler@db.example.com/pyschedulekit"
-)
+uow_factory = PostgresUnitOfWorkFactory("postgresql://scheduler@db.example.com/pyschedulekit")
 ```
 
 Install the adapter with:

@@ -77,6 +77,4 @@ class InMemoryCalendarProvider:
         """Return a deterministic snapshot of every registered revision."""
 
         with self._lock:
-            return tuple(
-                sorted(calendar.snapshot_ref for calendar in self._calendars.values())
-            )
+            return tuple(sorted(calendar.snapshot_ref for calendar in self._calendars.values()))

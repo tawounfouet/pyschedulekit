@@ -12,7 +12,6 @@ from scripts.release_preflight import (
 
 def _ready() -> ExternalReadiness:
     return ExternalReadiness(
-        testpypi_trusted_publisher=True,
         pypi_trusted_publisher=True,
         immutable_releases=True,
     )
@@ -80,7 +79,6 @@ def test_t_release_preflight_004_rejects_missing_external_acknowledgement(
     changelog.write_text("## [0.1.0a1] - 2026-10-08\n", encoding="utf-8")
 
     values = {
-        "testpypi_trusted_publisher": True,
         "pypi_trusted_publisher": True,
         "immutable_releases": True,
     }

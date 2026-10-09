@@ -1165,8 +1165,8 @@ class PostgresCoreUnitOfWorkFactory:
             raise ValueError("PostgreSQL DSN must not be empty.")
         self._dsn = dsn
 
-        with psycopg.connect(self._dsn, autocommit=True, row_factory=dict_row) as connection:
-            initialize_postgres_schema(cast(PostgresConnection, connection))
+        with psycopg.connect(self._dsn, autocommit=True) as connection:
+            initialize_postgres_schema(connection)
 
     def __call__(self) -> PostgresCoreUnitOfWork:
         connection = psycopg.connect(
@@ -1174,4 +1174,4 @@ class PostgresCoreUnitOfWorkFactory:
             autocommit=False,
             row_factory=dict_row,
         )
-        return PostgresCoreUnitOfWork(cast(PostgresConnection, connection))
+        return PostgresCoreUnitOfWork(connection)

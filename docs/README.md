@@ -100,7 +100,8 @@ POST-06 Chaos / Fault Injection       ✅
   CMP-01 AnyOf Occurrence Planning   ✅
   CMP-02 Checkpoints/Dedup/Bounds    ✅
   CMP-03 Versioned Codec/Migration   ✅
-  CMP-04 ... CMP-05                  ⬜ planned
+  CMP-04 Persistence Adapter Parity  ✅
+  CMP-05 Public Graduation           ⬜ planned
         ↓
 1.0.0 stable public contract
 ```
@@ -156,4 +157,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CMP-03 Versioned Codec and Migration complete.
+**Last refreshed:** 2026-10-09 — CMP-04 Persistence Adapter Parity complete.

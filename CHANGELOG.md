@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CMP-04 composite persistence parity across InMemory, SQLite and PostgreSQL, including
+  definition/checkpoint reopen-and-advance qualification and canonical upgrade-on-write for
+  valid nested SQL payloads.
+
 - Added CMP-03 versioned `AnyOfTrigger` SQL-definition encoding with independently versioned
   child envelopes, canonical nested-union flattening, semantic migration qualification, and
   fail-closed child-count, shape, version, calendar-boundary and nesting-depth validation.

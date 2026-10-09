@@ -33,7 +33,12 @@ from pyschedulekit.domain.schedule import (
     TargetRef,
 )
 from pyschedulekit.domain.time import Duration, Instant
-from pyschedulekit.domain.triggers import BusinessDayTrigger, IntervalTrigger
+from pyschedulekit.domain.triggers import (
+    AnyOfTrigger,
+    BusinessDayTrigger,
+    DateTrigger,
+    IntervalTrigger,
+)
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.postgres import PostgresUnitOfWorkFactory
 from pyschedulekit.infrastructure.sql_codec import encode_schedule_definition
@@ -929,6 +934,104 @@ def test_business_day_trigger_round_trips_across_adapters(
     assert loaded is not None
     assert loaded.definition == schedule.definition
     assert loaded.next_run_time == schedule.next_run_time
+
+
+@pytest.mark.parametrize("adapter", ADAPTERS)
+def test_any_of_trigger_and_checkpoint_round_trip_across_adapters(
+    adapter: str,
+    tmp_path: Path,
+) -> None:
+    factory = _factory(adapter, tmp_path)
+    schedule = Schedule.create(
+        schedule_id=ScheduleId("composite-trigger"),
+        definition=ScheduleDefinition(
+            target=TargetRef.python("jobs:composite"),
+            trigger=AnyOfTrigger(
+                IntervalTrigger(every=Duration.minutes(10), anchor=_instant()),
+                IntervalTrigger(every=Duration.minutes(15), anchor=_instant()),
+            ),
+        ),
+        reference=_instant(hour=9),
+    )
+
+    with factory() as uow:
+        uow.schedules.add(schedule)
+        uow.commit()
+
+    with factory() as uow:
+        loaded = uow.schedules.get(schedule.id)
+        assert loaded is not None
+        assert loaded.definition == schedule.definition
+        assert loaded.next_run_time == _instant()
+        loaded.advance_next_run_after(reference=_instant())
+        uow.schedules.save(loaded)
+        uow.commit()
+
+    with factory() as uow:
+        reopened = uow.schedules.get(schedule.id)
+
+    assert reopened is not None
+    assert reopened.definition == schedule.definition
+    assert reopened.next_run_time == _instant(minute=10)
+
+
+@pytest.mark.parametrize("adapter", SQL_ADAPTERS)
+def test_nested_any_of_definition_is_flattened_on_next_sql_write(
+    adapter: str,
+    tmp_path: Path,
+) -> None:
+    factory = _factory(adapter, tmp_path)
+    schedule = Schedule.create(
+        schedule_id=ScheduleId("nested-composite-definition"),
+        definition=ScheduleDefinition(
+            target=TargetRef.python("jobs:nested-composite"),
+            trigger=AnyOfTrigger(
+                DateTrigger(at=_instant(hour=10)),
+                DateTrigger(at=_instant(hour=11)),
+                DateTrigger(at=_instant(hour=12)),
+            ),
+        ),
+        reference=_instant(hour=9),
+    )
+
+    with factory() as uow:
+        uow.schedules.add(schedule)
+        uow.commit()
+
+    encoded = json.loads(encode_schedule_definition(schedule.definition))
+    children = encoded["payload"]["trigger"]["config"]["children"]
+    encoded["payload"]["trigger"]["config"]["children"] = [
+        {
+            "kind": "any_of",
+            "schema_version": 1,
+            "config": {"children": children[:2]},
+        },
+        children[2],
+    ]
+    _replace_definition_json(
+        adapter,
+        tmp_path,
+        schedule_id=schedule.id.value,
+        definition_json=json.dumps(encoded),
+    )
+
+    with factory() as uow:
+        loaded = uow.schedules.get(schedule.id)
+        assert loaded is not None
+        assert loaded.definition == schedule.definition
+        loaded.pause()
+        uow.schedules.save(loaded)
+        uow.commit()
+
+    persisted = json.loads(
+        _read_definition_json(
+            adapter,
+            tmp_path,
+            schedule_id=schedule.id.value,
+        )
+    )
+    persisted_children = persisted["payload"]["trigger"]["config"]["children"]
+    assert [child["kind"] for child in persisted_children] == ["date", "date", "date"]
 
 
 @pytest.mark.parametrize("adapter", SQL_ADAPTERS)

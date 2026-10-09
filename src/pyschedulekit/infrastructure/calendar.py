@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Iterable
+from contextlib import closing
 from pathlib import Path
 from threading import RLock
 
@@ -168,7 +169,7 @@ class SqliteCalendarProvider:
 
         definition_json = encode_business_calendar(calendar)
         try:
-            with self._connect() as connection:
+            with closing(self._connect()) as connection:
                 if replace:
                     connection.execute(
                         """
@@ -199,6 +200,7 @@ class SqliteCalendarProvider:
                             definition_json,
                         ),
                     )
+                connection.commit()
         except sqlite3.IntegrityError as exc:
             raise PyScheduleKitConfigurationError(
                 "BusinessCalendar revision is already registered: "
@@ -217,7 +219,7 @@ class SqliteCalendarProvider:
         """Resolve the latest or requested exact persisted revision."""
 
         try:
-            with self._connect() as connection:
+            with closing(self._connect()) as connection:
                 if revision is None:
                     row = connection.execute(
                         """
@@ -262,7 +264,7 @@ class SqliteCalendarProvider:
     @property
     def references(self) -> tuple[CalendarSnapshotRef, ...]:
         try:
-            with self._connect() as connection:
+            with closing(self._connect()) as connection:
                 rows = connection.execute(
                     """
                     SELECT reference, revision
@@ -288,7 +290,7 @@ class SqliteCalendarProvider:
 
     def _initialize_schema(self) -> None:
         try:
-            with self._connect() as connection:
+            with closing(self._connect()) as connection:
                 connection.execute(
                     """
                     CREATE TABLE IF NOT EXISTS pyschedulekit_calendar_schema (
@@ -324,6 +326,7 @@ class SqliteCalendarProvider:
                     )
                     """
                 )
+                connection.commit()
         except PyScheduleKitConfigurationError:
             raise
         except sqlite3.Error as exc:

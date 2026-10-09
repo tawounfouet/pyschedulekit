@@ -8,7 +8,7 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
-- Added a reproducible benchmark harness and manual workflow for interval, cron, in-memory cycle, and SQLite cycle performance evidence without brittle timing gates in pull-request CI.
+- Added a reproducible benchmark harness for interval, cron, in-memory/SQLite cycles, and 1k→10k idle-scheduler scaling; smoke correctness runs in PR CI while standard benchmark evidence is archived after benchmark-relevant merges to main.
 - Added installed-distribution dogfooding across wheel/sdist × Python 3.11/3.12/3.13, exercising cron, retry, SQLite durability and readiness outside the source checkout.
 - Added a stable public API reference backed by an architecture test that requires every manifest export and legacy compatibility name to remain documented.
 - Added a runnable five-scenario cookbook covering interval scheduling, cron/timezones, retry/backoff, SQLite durability, and health/readiness.

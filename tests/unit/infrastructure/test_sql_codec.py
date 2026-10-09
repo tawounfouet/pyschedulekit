@@ -141,7 +141,7 @@ def test_legacy_v1_schedule_definition_without_calendar_remains_readable() -> No
             anchor=_instant(),
         ),
     )
-    encoded = json.loads(encode_schedule_definition(definition))
+    encoded = json.loads(_legacy_v2_json(definition))
     assert encoded["version"] == 2
     encoded["version"] = 1
     del encoded["payload"]["calendar"]

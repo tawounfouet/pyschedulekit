@@ -87,7 +87,9 @@ POST-06 Chaos / Fault Injection       ✅
   Executor Plugin Registry              ✅
         ↓
 0.3.x Advanced Scheduling               🚧 current
-  CAL-00 Calendar Foundations           🚧 current
+  CAL-00 Calendar Foundations             ✅
+  CAL-01 Schedule Calendar Binding        ✅
+  CAL-02 Calendar-aware Planning          ⏭ next
         ↓
 ...
         ↓
@@ -144,4 +146,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CAL-00 Calendar Foundations.
+**Last refreshed:** 2026-10-09 — CAL-01 Schedule Calendar Binding.

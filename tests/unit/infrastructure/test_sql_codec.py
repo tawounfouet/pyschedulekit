@@ -1,7 +1,13 @@
 """LOT-21 unit tests for SQL persistence codecs."""
 
+import json
 from datetime import UTC, datetime
 
+from pyschedulekit.domain.calendar import (
+    CalendarRef,
+    CalendarRevision,
+    CalendarSnapshotRef,
+)
 from pyschedulekit.domain.concurrency import (
     ConcurrencyOverflowPolicy,
     ConcurrencyPolicy,
@@ -86,3 +92,43 @@ def test_t_sql_codec_003_cron_trigger_round_trip() -> None:
     decoded = decode_schedule_definition(encode_schedule_definition(definition))
 
     assert decoded == definition
+
+
+def test_calendar_snapshot_definition_round_trip() -> None:
+    definition = ScheduleDefinition(
+        target=TargetRef.python("jobs:calendar"),
+        trigger=IntervalTrigger(
+            every=Duration.days(1),
+            anchor=_instant(),
+        ),
+        calendar=CalendarSnapshotRef(
+            calendar_ref=CalendarRef("fr-business-days"),
+            revision=CalendarRevision(4),
+        ),
+    )
+
+    decoded = decode_schedule_definition(encode_schedule_definition(definition))
+
+    assert decoded == definition
+    assert decoded.calendar == CalendarSnapshotRef(
+        calendar_ref=CalendarRef("fr-business-days"),
+        revision=CalendarRevision(4),
+    )
+
+
+def test_legacy_v1_schedule_definition_without_calendar_remains_readable() -> None:
+    definition = ScheduleDefinition(
+        target=TargetRef.python("jobs:legacy"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(15),
+            anchor=_instant(),
+        ),
+    )
+    encoded = json.loads(encode_schedule_definition(definition))
+    assert encoded["version"] == 1
+    del encoded["payload"]["calendar"]
+
+    decoded = decode_schedule_definition(json.dumps(encoded))
+
+    assert decoded == definition
+    assert decoded.calendar is None

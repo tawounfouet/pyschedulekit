@@ -43,7 +43,7 @@ promise at `1.0.0`.
 - `Scheduler.register_http_target()` — register a trusted `HttpRequestSpec`.
 - `Scheduler.register_executor()` — explicitly register one trusted `Executor` for a target kind.
 - `Scheduler.add_schedule()` — persist a schedule using a `Trigger`, optional timezone,
-  misfire, concurrency, retry and timeout policies.
+  exact `CalendarSnapshotRef`, misfire, concurrency, retry and timeout policies.
 
 ### Inspection and control
 
@@ -78,8 +78,9 @@ promise at `1.0.0`.
 | `CalendarProvider` | port resolving latest or exact calendar revisions |
 | `InMemoryCalendarProvider` | thread-safe process-local provider implementation |
 
-CAL-00 exposes calendar foundations only. Schedules and triggers do **not** consume a
-calendar yet; Schedule binding begins in CAL-01.
+CAL-01 binds an optional exact `CalendarSnapshotRef` into `ScheduleDefinition` and exposes
+it through `ScheduleSnapshot.calendar`. The binding is persisted but does **not** yet alter
+trigger occurrence calculation; calendar-aware occurrence planning begins in CAL-02.
 
 ## Time and trigger model
 

@@ -88,6 +88,7 @@ def test_t_public_api_004_scheduler_signature_parameter_contract() -> None:
         "trigger",
         "id",
         "timezone",
+        "calendar",
         "misfire",
         "concurrency",
         "retry",

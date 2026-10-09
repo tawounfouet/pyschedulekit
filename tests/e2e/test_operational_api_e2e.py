@@ -5,6 +5,9 @@ from datetime import UTC, datetime
 import pytest
 
 from pyschedulekit import (
+    CalendarRef,
+    CalendarRevision,
+    CalendarSnapshotRef,
     Duration,
     ExecutionNotFoundError,
     ExecutionState,
@@ -117,3 +120,25 @@ def test_t_operational_e2e_005_shutdown_makes_scheduler_not_ready() -> None:
     assert scheduler.health().healthy is True
     assert scheduler.readiness().ready is False
     assert scheduler.readiness().shutdown_requested is True
+
+
+def test_calendar_binding_is_visible_in_schedule_snapshot() -> None:
+    scheduler = Scheduler(clock=MutableClock(_instant()))
+    calendar = CalendarSnapshotRef(
+        calendar_ref=CalendarRef("fr-business-days"),
+        revision=CalendarRevision(3),
+    )
+
+    scheduler.add_schedule(
+        id="calendar-bound",
+        target=lambda: None,
+        trigger=IntervalTrigger(
+            every=Duration.minutes(10),
+            anchor=_instant(10),
+        ),
+        calendar=calendar,
+    )
+
+    snapshot = scheduler.inspect_schedule("calendar-bound")
+
+    assert snapshot.calendar == calendar

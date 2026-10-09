@@ -1,8 +1,12 @@
 # 0.3.x — Calendar Foundations
 
-CAL-00 introduces the temporal calendar abstractions that were specified from the beginning
+CAL-00 introduced the temporal calendar abstractions that were specified from the beginning
 but intentionally deferred until the core scheduler, persistence and execution ecosystem
 were mature.
+
+CAL-01 now binds a Schedule definition to an optional exact `CalendarSnapshotRef`. The
+binding is declarative, persisted and inspectable, but it does not yet alter occurrence
+planning. Calendar-aware occurrence semantics begin in CAL-02.
 
 ## Why calendars are separate from Cron
 
@@ -162,13 +166,30 @@ replayable calendar decision
 
 CAL-00 establishes this contract before any Schedule persists a calendar reference.
 
+## CAL-01 — Schedule Calendar Binding
+
+A Schedule may now carry one exact calendar snapshot through
+`Scheduler.add_schedule(calendar=...)`.
+
+The binding is part of the immutable `ScheduleDefinition`, is exposed by
+`ScheduleSnapshot.calendar`, and round-trips through InMemory, SQLite and PostgreSQL
+persistence. Historical definition JSON without a `calendar` key remains readable and
+decodes to `None`.
+
+Changing the bound snapshot through `Schedule.reschedule()` is a functional-definition
+change and therefore advances `ScheduleRevision`.
+
+### CAL-01 boundary
+
+CAL-01 deliberately does **not** resolve the calendar while calculating `next_run_time`.
+Date, Interval and Cron triggers keep their existing semantics. Calendar-aware occurrence
+planning starts in CAL-02.
+
 ## Non-goals
 
-CAL-00 does **not** yet:
+The calendar series still does **not** yet:
 
-- add `CalendarSnapshotRef` to `ScheduleDefinition`;
-- change the SQLite/PostgreSQL schema;
-- filter Cron/Interval/Date trigger occurrences through a calendar;
+- filter Cron/Interval/Date trigger occurrences through a business calendar;
 - implement "first/last working day" triggers;
 - ship country-specific holiday truth;
 - call external calendar APIs;
@@ -181,16 +202,16 @@ Those belong to later calendar lots.
 Proposed sequence:
 
 ```text
-CAL-00 Calendar Foundations            ← current
-CAL-01 Schedule Calendar Binding
-CAL-02 Calendar-aware Occurrence Planning
+CAL-00 Calendar Foundations            ✅
+CAL-01 Schedule Calendar Binding       ✅
+CAL-02 Calendar-aware Occurrence Planning  ⏭ next
 CAL-03 Business-Day Trigger Semantics
 CAL-04 Persistence / Migration Parity
 CAL-05 Calendar Provider Adapters
 ```
 
-The exact order after CAL-02 may be refined once Schedule binding is qualified.
+The exact order after CAL-02 may be refined as occurrence semantics are qualified.
 
 ---
 
-**Status:** CAL-00 — Calendar Foundations.
+**Status:** CAL-01 — Schedule Calendar Binding complete. Next: CAL-02.

@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CAL-01 Schedule Calendar Binding: `ScheduleDefinition` and `Scheduler.add_schedule()` can carry an exact optional `CalendarSnapshotRef`; the binding is visible through `ScheduleSnapshot`, round-trips across InMemory/SQLite/PostgreSQL, and remains backward-compatible with legacy schedule JSON while deliberately not changing trigger timing until CAL-02.
+
 - Added CAL-00 calendar foundations: `CalendarRef`, `CalendarRevision`, `CalendarSnapshotRef`, immutable `BusinessCalendar`, `CalendarProvider`, and a thread-safe version-aware `InMemoryCalendarProvider` without yet changing Schedule persistence or trigger semantics.
 
 - Added `ExecutorRegistry` as an instance-owned, thread-safe extension point for explicit custom executors, with dynamic RoutingExecutor resolution, exact-identity unregister, Scheduler isolation, and no global/import-time plugin discovery.

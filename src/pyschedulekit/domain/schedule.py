@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from pyschedulekit.domain.calendar import CalendarSnapshotRef
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
@@ -109,6 +110,7 @@ class ScheduleDefinition:
     target: TargetRef
     trigger: Trigger
     timezone: Timezone = field(default_factory=lambda: Timezone("UTC"))
+    calendar: CalendarSnapshotRef | None = None
     misfire: MisfirePolicy = field(default_factory=MisfirePolicy.run_now)
     concurrency: ConcurrencyPolicy = field(default_factory=ConcurrencyPolicy.allow)
     retry: RetryPolicy = field(default_factory=RetryPolicy.none)

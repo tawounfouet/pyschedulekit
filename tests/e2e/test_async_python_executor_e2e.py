@@ -9,7 +9,6 @@ import pytest
 
 from pyschedulekit import Duration, IntervalTrigger, Scheduler, TargetRef
 from pyschedulekit.domain.time import Instant
-from pyschedulekit.infrastructure.asyncio_executor import AsyncPythonTargetRegistry
 from pyschedulekit.ports.executor import TargetResolutionError
 from pyschedulekit.ports.persistence import DuplicateScheduleError
 from pyschedulekit.testing import MutableClock

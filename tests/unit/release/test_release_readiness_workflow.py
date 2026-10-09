@@ -58,6 +58,7 @@ def test_t_release_readiness_005_workflow_never_creates_or_pushes_tag() -> None:
     assert all(not line.startswith("git push ") for line in commands)
     assert "This workflow intentionally did not create or push a tag." in workflow
 
+
 def test_t_release_readiness_006_defaults_to_next_unpublished_alpha_tag() -> None:
     workflow = _workflow_text()
 

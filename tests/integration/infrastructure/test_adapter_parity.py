@@ -34,6 +34,7 @@ from pyschedulekit.ports.persistence import (
     DuplicateAdmissionLockError,
     DuplicateAttemptError,
     DuplicateExecutionClaimError,
+    DuplicateExecutionError,
     DuplicateExecutionRequestError,
     DuplicateMaterializationLeaseError,
     DuplicateOutboxMessageError,
@@ -520,7 +521,7 @@ def test_retention_cleanup_is_bounded_and_adapter_neutral(
         ("schedule", DuplicateScheduleError),
         ("request_id", DuplicateExecutionRequestError),
         ("request_occurrence", DuplicateExecutionRequestError),
-        ("execution", Exception),
+        ("execution", DuplicateExecutionError),
         ("attempt", DuplicateAttemptError),
         ("admission_lock", DuplicateAdmissionLockError),
         ("materialization_lease", DuplicateMaterializationLeaseError),
@@ -571,7 +572,7 @@ def test_double_staging_is_rejected_consistently(
                 uow.requests.add(duplicate_occurrence)
         elif entity_kind == "execution":
             uow.executions.add(execution)
-            with pytest.raises(Exception):
+            with pytest.raises(error_type):
                 uow.executions.add(execution)
         elif entity_kind == "attempt":
             uow.attempts.add(attempt)

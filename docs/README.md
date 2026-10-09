@@ -40,6 +40,7 @@ docs/
 ├── chaos/                     # deterministic fault-injection campaign
 ├── cookbook/                  # runnable real-world usage scenarios
 ├── dogfood/                   # installed-distribution consumer qualification
+├── executors/                 # explicit executor plugin registry
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
 ├── postgres/                  # 0.2.x PostgreSQL adapter roadmap
 ├── release/                   # release engineering and rollback discipline
@@ -81,7 +82,8 @@ POST-06 Chaos / Fault Injection       ✅
   PG-04 Scheduler/Multi-worker E2E     ✅
   PG-05 Production Hardening           ✅
         ↓
-  Async Python Executor                 🚧 current
+  Async Python Executor                 ✅
+  Executor Plugin Registry              🚧 current
         ↓
 ...
         ↓
@@ -118,6 +120,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect implementation history | [Implementation LOTs](./implementation/) |
 | inspect the stable public API | [API reference](./api/README.md) |
 | run trusted async Python workloads | [Async Python Executor](./async/README.md) |
+| register custom executor plugins | [Executor Plugin Registry](./executors/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | inspect installed-package dogfooding | [Dogfooding](./dogfood/README.md) |
 | run reproducible performance measurements | [Benchmarks](./benchmarks/README.md) |
@@ -136,4 +139,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — Async Python Executor.
+**Last refreshed:** 2026-10-09 — Executor Plugin Registry.

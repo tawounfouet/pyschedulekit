@@ -81,6 +81,22 @@ class PythonTargetRegistry:
         if "fencing_token" in signature.parameters:
             self._fenced_targets.add(reference)
 
+    def unregister(
+        self,
+        reference: str,
+        target: Callable[..., object],
+    ) -> bool:
+        """Remove one exact registration as a best-effort compensation."""
+
+        registered = self._targets.get(reference)
+        if registered is not target:
+            return False
+
+        del self._targets[reference]
+        self._cancellable_targets.discard(reference)
+        self._fenced_targets.discard(reference)
+        return True
+
     def resolve(self, reference: str) -> Callable[..., object]:
         try:
             return self._targets[reference]

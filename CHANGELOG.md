@@ -8,6 +8,11 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.D Constructor / Method Signature Freeze with executable snapshots for 39
+  consumer-authored constructors/factories and 53 public methods. Parameter names, calling
+  modes, required/optional status and stable defaults are now CI-protected across the primary
+  API, advanced adapters, PostgreSQL and testing helpers; runtime behavior is unchanged.
+
 - Added V1-01.C Secondary Namespace Policy: `pyschedulekit.postgres` is stable-optional,
   `pyschedulekit.testing` is stable-testing, `pyschedulekit.experimental` is explicitly
   outside SemVer, root `__version__` has stable presence, unlisted submodules are internal,

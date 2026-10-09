@@ -129,7 +129,9 @@ stable candidates in `pyschedulekit.api`, with 63 selected for the future compac
 41 reserved for the advanced API-only surface. V1-01.C Secondary Namespace Policy is complete:
 `postgres` is stable-optional, `testing` is stable-testing, `experimental` remains outside
 SemVer, `__version__` has stable presence, and the 11 legacy root redirects must be removed
-before `v1.0.0`. V1-01.D Constructor / Method Signature Freeze is next. Do not bump the
-version, create `v1.0.0`, or expand the public feature surface during V1-01.
+before `v1.0.0`. V1-01.D Constructor / Method Signature Freeze now records 39 consumer
+constructors/factories and 53 public methods with executable name/kind/default snapshots.
+V1-01.E Protocol / Enum / Exception Freeze is next. Do not bump the version, create
+`v1.0.0`, or expand the public feature surface during V1-01.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

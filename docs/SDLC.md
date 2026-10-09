@@ -110,7 +110,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
   V1-01.A Public API Inventory & Classification  ✅
   V1-01.B Root/API Stable Candidate Review       ✅
   V1-01.C Secondary Namespace Policy              ✅
-  V1-01.D Constructor / Method Signature Freeze    ⏭ NEXT
+  V1-01.D Constructor / Method Signature Freeze    ✅
+  V1-01.E Protocol / Enum / Exception Freeze       ⏭ NEXT
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -129,7 +130,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
 - **V1-01.A** : inventaire exécutable figé à 104 exports root/API, 2 PostgreSQL, 5 testing et 11 experimental/legacy ; classifications provisoires enregistrées dans le manifest.
 - **V1-01.B** : les 104 candidats primaires sont revus et partitionnés en 63 commodités root + 41 types avancés `pyschedulekit.api`-only, sans retrait de l’API avancée.
 - **V1-01.C** : `postgres` est stable-optional, `testing` stable-testing, `experimental` hors SemVer ; `__version__` reste stable en présence et les 11 redirects legacy doivent disparaître avant `1.0.0`.
-- **Étape active** : V1-01.D Constructor / Method Signature Freeze.
+- **V1-01.D** : baseline exécutable de 39 constructeurs/factories + 53 méthodes ; noms, modes d’appel et valeurs par défaut sont désormais surveillés par CI.
+- **Étape active** : V1-01.E Protocol / Enum / Exception Freeze.
 
 ---
 
@@ -155,11 +157,12 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
 2. V1-01.A — Public API Inventory & Classification ✅ ;
 3. V1-01.B — Root/API Stable Candidate Review ✅ ;
 4. V1-01.C — Secondary Namespace Policy ✅ ;
-5. V1-01.D — Constructor / Method Signature Freeze ⏭ ;
-6. V1-02 — Persistence Compatibility Contract ;
-7. V1-03 — Platform, Warning and Security Gates ;
-8. V1-04 — Consumer and Stable-Release Rehearsal ;
-9. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
+5. V1-01.D — Constructor / Method Signature Freeze ✅ ;
+6. V1-01.E — Protocol / Enum / Exception Freeze ⏭ ;
+7. V1-02 — Persistence Compatibility Contract ;
+8. V1-03 — Platform, Warning and Security Gates ;
+9. V1-04 — Consumer and Stable-Release Rehearsal ;
+10. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
 
 Aucune publication PyPI intermédiaire n'est autorisée pour franchir ces étapes. Le tag
 `v1.0.0` reste interdit avant un GO explicite en V1-05.
@@ -195,4 +198,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — V1-01.C Secondary Namespace Policy.*
+*Dernière mise à jour : 2026-10-09 — V1-01.D Constructor / Method Signature Freeze.*

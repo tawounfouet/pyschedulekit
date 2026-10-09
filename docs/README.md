@@ -76,7 +76,8 @@ POST-06 Chaos / Fault Injection       ✅
   PG-00 PostgreSQL Foundation         ✅
   PG-01 Core Repositories             ✅
   PG-02 Coordination/Outbox/Retention ✅
-  PG-03 Adapter Parity Contract        🚧 current
+  PG-03 Adapter Parity Contract        ✅
+  PG-04 Scheduler/Multi-worker E2E     🚧 current
         ↓
 ...
         ↓
@@ -130,4 +131,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-03.
+**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-04.

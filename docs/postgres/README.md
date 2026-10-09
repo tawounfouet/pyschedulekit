@@ -209,7 +209,8 @@ PostgreSQL owns a dedicated live-service coverage surface:
 
 ```text
 PG-01 baseline: 66.88%
-temporary floor: 60%
+PG-02 baseline: 78.45%
+current floor: 75%
 target by PG-03: >=85%
 ```
 

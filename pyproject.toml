@@ -39,6 +39,9 @@ dev = [
 postgres = [
   "psycopg[binary]>=3.3.6,<4",
 ]
+postgres-pool = [
+  "psycopg[binary,pool]>=3.3.6,<4",
+]
 release = [
   "build>=1.2",
   "twine>=6.0",

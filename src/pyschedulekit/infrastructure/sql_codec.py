@@ -45,14 +45,19 @@ from pyschedulekit.domain.triggers import (
 )
 
 _CODEC_VERSION = 1
+_SCHEDULE_DEFINITION_CODEC_VERSION = 2
 
 
-def _dump(payload: dict[str, Any]) -> str:
+def _dump_with_version(payload: dict[str, Any], *, version: int) -> str:
     return json.dumps(
-        {"version": _CODEC_VERSION, "payload": payload},
+        {"version": version, "payload": payload},
         separators=(",", ":"),
         sort_keys=True,
     )
+
+
+def _dump(payload: dict[str, Any]) -> str:
+    return _dump_with_version(payload, version=_CODEC_VERSION)
 
 
 def _load(value: str) -> dict[str, Any]:
@@ -63,7 +68,7 @@ def _load(value: str) -> dict[str, Any]:
 
 
 def encode_schedule_definition(definition: ScheduleDefinition) -> str:
-    return _dump(
+    return _dump_with_version(
         {
             "target": _encode_target(definition.target),
             "trigger": _encode_trigger(definition.trigger),
@@ -73,17 +78,30 @@ def encode_schedule_definition(definition: ScheduleDefinition) -> str:
             "concurrency": _encode_concurrency(definition.concurrency),
             "retry": _encode_retry(definition.retry),
             "timeout_seconds": _duration_seconds(definition.timeout),
-        }
+        },
+        version=_SCHEDULE_DEFINITION_CODEC_VERSION,
     )
 
 
 def decode_schedule_definition(value: str) -> ScheduleDefinition:
-    payload = _load(value)
+    decoded = cast(dict[str, Any], json.loads(value))
+    version = decoded.get("version")
+    if version not in (1, _SCHEDULE_DEFINITION_CODEC_VERSION):
+        raise ValueError("Unsupported Schedule definition codec version.")
+
+    payload = cast(dict[str, Any], decoded["payload"])
+    if version == 1 and "calendar" in payload:
+        raise ValueError("Schedule definition codec v1 must not contain a calendar binding.")
+
     return ScheduleDefinition(
         target=_decode_target(cast(dict[str, Any], payload["target"])),
         trigger=_decode_trigger(cast(dict[str, Any], payload["trigger"])),
         timezone=Timezone(cast(str, payload["timezone"])),
-        calendar=_decode_calendar_snapshot_ref(payload.get("calendar")),
+        calendar=(
+            _decode_calendar_snapshot_ref(payload.get("calendar"))
+            if version == _SCHEDULE_DEFINITION_CODEC_VERSION
+            else None
+        ),
         misfire=_decode_misfire(cast(dict[str, Any], payload["misfire"])),
         concurrency=_decode_concurrency(cast(dict[str, Any], payload["concurrency"])),
         retry=_decode_retry(cast(dict[str, Any], payload["retry"])),

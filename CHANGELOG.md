@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CAL-03 Business-Day Trigger Semantics with public `BusinessDayTrigger` support for positive/negative monthly working-day ordinals, Schedule-local civil time, exact versioned calendars, explicit DST policies, bounded search, declarative persistence, and Memory/SQLite/PostgreSQL parity qualification.
+
 - Added CAL-02 Calendar-aware Occurrence Planning: exact calendar revisions are resolved through `CalendarProvider`, Trigger candidates are filtered by the Schedule's local business date, `next_run_time` skips excluded dates, catch-up/coalesce ignore non-occurrences, legacy CAL-01 raw checkpoints self-heal, and candidate scanning is bounded/fail-closed.
 
 - Added CAL-01 Schedule Calendar Binding: `ScheduleDefinition` and `Scheduler.add_schedule()` can carry an exact optional `CalendarSnapshotRef`; the binding is visible through `ScheduleSnapshot`, round-trips across InMemory/SQLite/PostgreSQL, and remains backward-compatible with legacy schedule JSON while deliberately not changing trigger timing until CAL-02.

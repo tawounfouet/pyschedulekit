@@ -234,9 +234,9 @@ Les limites encore structurelles sont différentes :
 2. **Arrêt forcé d'un callable Python** — le runtime synchrone utilise un worker thread pour
    reprendre le contrôle au timeout ; Python ne fournit pas de terminaison sûre d'un thread
    arbitraire. Les workloads doivent donc être idempotents et, si possible, coopératifs.
-3. **Persistance durable** — SQLite est le backend durable qualifié actuel. PostgreSQL n'est
-   pas encore implémenté ; le contrat de parité créé pendant POST-00 doit servir de porte
-   d'entrée au futur adapter.
+3. **Persistance durable** — SQLite reste le backend durable pleinement qualifié. Le chantier
+   PostgreSQL 0.2.x est ouvert : PG-00 fournit schéma/bootstrap/CI, mais aucun
+   `PostgresUnitOfWorkFactory` public n'existe avant la parité repositories/E2E.
 4. **Exécution asynchrone** — les callables `async def` sont encore explicitement rejetés par
    le LocalExecutor synchrone.
 5. **Registres de cibles process-local** — Python/HTTP targets restent des objets de confiance

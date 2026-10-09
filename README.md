@@ -945,6 +945,7 @@ Current references:
 - [Architecture](./docs/ARCHITECTURE.md) — system view, lifecycle and invariants.
 - [SDLC](./docs/SDLC.md) — development, test and maintenance workflow.
 - [Chaos / fault injection](./docs/chaos/README.md) — deterministic recovery qualification across executor, outbox, runtime, persistence conflict and fencing failures.
+- [PostgreSQL 0.2.x](./docs/postgres/README.md) — optional adapter roadmap, schema/bootstrap foundation and parity gates.
 - [POST-00 remediation status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) —
   current disposition of the 2026-10-08 findings.
 - [Audit snapshot](./docs/audit/2026-10-08/README.md) — original analysis, critique,

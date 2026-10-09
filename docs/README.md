@@ -40,6 +40,7 @@ docs/
 ├── cookbook/                  # runnable real-world usage scenarios
 ├── dogfood/                   # installed-distribution consumer qualification
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
+├── postgres/                  # 0.2.x PostgreSQL adapter roadmap
 ├── release/                   # release engineering and rollback discipline
 └── specs/                     # domain / architecture / acceptance specifications
 ```
@@ -69,9 +70,10 @@ POST-02 Real-world Examples/Cookbook  ✅
 POST-03 API Documentation             ✅
 POST-04 Dogfooding                    ✅
 POST-05 Benchmarks                    ✅
-POST-06 Chaos / Fault Injection       🚧 current
+POST-06 Chaos / Fault Injection       ✅
         ↓
-0.2.x Execution & Storage Ecosystem
+0.2.x Execution & Storage Ecosystem   🚧 current
+  PG-00 PostgreSQL Foundation         🚧 current
         ↓
 ...
         ↓
@@ -111,6 +113,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect installed-package dogfooding | [Dogfooding](./dogfood/README.md) |
 | run reproducible performance measurements | [Benchmarks](./benchmarks/README.md) |
 | inspect deterministic fault-injection qualification | [Chaos](./chaos/README.md) |
+| follow PostgreSQL adapter delivery | [PostgreSQL 0.2.x](./postgres/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule
@@ -124,4 +127,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — POST-06 deterministic chaos qualification.
+**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-00.

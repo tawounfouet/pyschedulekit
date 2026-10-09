@@ -8,6 +8,11 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.C Secondary Namespace Policy: `pyschedulekit.postgres` is stable-optional,
+  `pyschedulekit.testing` is stable-testing, `pyschedulekit.experimental` is explicitly
+  outside SemVer, root `__version__` has stable presence, unlisted submodules are internal,
+  and the 11 pre-1.0 legacy root redirects are scheduled for removal before `v1.0.0`.
+
 - Added V1-01.B Root/API Stable Candidate Review: all 104 primary API names remain supported
   candidates in `pyschedulekit.api`, while the intended 1.x convenience root is narrowed to
   63 common scheduling concepts and 41 advanced extension/diagnostic types are designated

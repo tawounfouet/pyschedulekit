@@ -304,9 +304,7 @@ def initialize_postgres_schema(connection: Connection[tuple[object, ...]]) -> No
         )
         connection.execute(_METADATA_SQL)
 
-        rows = connection.execute(
-            "SELECT version FROM pyschedulekit_schema FOR UPDATE"
-        ).fetchall()
+        rows = connection.execute("SELECT version FROM pyschedulekit_schema FOR UPDATE").fetchall()
         if len(rows) > 1:
             raise RuntimeError("PyScheduleKit PostgreSQL schema has multiple version rows.")
 
@@ -314,8 +312,7 @@ def initialize_postgres_schema(connection: Connection[tuple[object, ...]]) -> No
             version = int(rows[0][0])
             if version != SCHEMA_VERSION:
                 raise RuntimeError(
-                    "Unsupported PyScheduleKit PostgreSQL schema version: "
-                    f"{version!r}."
+                    f"Unsupported PyScheduleKit PostgreSQL schema version: {version!r}."
                 )
         else:
             for statement in _SCHEMA_SQL:
@@ -369,8 +366,6 @@ def _verify_postgres_schema(connection: Connection[tuple[object, ...]]) -> None:
             f"{sorted(missing_temporal_columns)!r}."
         )
 
-    row = connection.execute(
-        "SELECT version FROM pyschedulekit_schema"
-    ).fetchone()
+    row = connection.execute("SELECT version FROM pyschedulekit_schema").fetchone()
     if row is None or int(row[0]) != SCHEMA_VERSION:
         raise RuntimeError("PyScheduleKit PostgreSQL schema version verification failed.")

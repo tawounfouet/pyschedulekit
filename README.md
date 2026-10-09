@@ -903,6 +903,21 @@ ruff format --check .
 mypy src
 ```
 
+## Examples
+
+The [real-world cookbook](./docs/cookbook/README.md) is backed by runnable programs under
+[`examples/`](./examples/README.md). The repository acceptance suite executes every Python
+example so usage documentation stays aligned with the public API.
+
+```bash
+python examples/one_shot_job.py
+python examples/recurring_interval.py
+python examples/business_cron.py
+python examples/retry_after_timeout.py
+python examples/sqlite_restart.py
+python examples/operational_controls.py
+```
+
 ## Documentation and audit
 
 The maintained documentation entry point is [`docs/README.md`](./docs/README.md).
@@ -922,7 +937,7 @@ Current quality gate from the repository root:
 ruff check .                 # passing
 ruff format --check .        # passing
 mypy src                     # passing
-pytest --cov=pyschedulekit   # 513 tests, coverage gate >= 85%
+pytest --cov=pyschedulekit   # coverage gate >= 85%; cookbook examples included
 ```
 
 No environment variables are required by the library: the domain forbids hidden

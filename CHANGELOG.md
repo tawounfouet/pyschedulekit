@@ -6,6 +6,26 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ## [Unreleased]
 
+## [0.1.0a4] - 2026-10-09
+
+### Fixed
+
+- Hardened `run_pending()` against concurrent execution-state transitions and added continuous-runtime failure supervision so isolated cycle failures no longer terminate the scheduler.
+- Made SQLite schema bootstrap idempotent and concurrency-safe under simultaneous initializers.
+- Released admission locks deterministically after persistence conflicts to avoid artificial TTL stalls.
+- Aligned InMemory and SQLite persistence semantics through shared adapter parity contracts, including referential integrity and staged-state visibility.
+- Hardened HTTP response cleanup and redirect handling with bounded same-host HTTP(S) redirects and deterministic failure cleanup.
+- Compensated implicit local target registrations when schedule creation fails, preventing orphan registry state after validation or persistence errors.
+
+### Changed
+
+- Enforced an 85% branch-aware coverage floor and pinned Ruff / GitHub Actions for reproducible CI.
+- Integrated public-package acceptance qualification into the maintained test surface.
+- Consolidated the 2026-10-08 OpenCode audit into a dated snapshot plus an authoritative B1-B12 remediation register.
+- Archived raw audit transcripts under `docs/audit/2026-10-08/sessions/` and removed them from the production Ruff surface.
+- Aligned release-readiness checks with the production pipeline: qualification → PyPI Trusted Publishing → PyPI verification → immutable GitHub prerelease.
+
+
 ## [0.1.0a3] - 2026-10-08
 
 ### Changed

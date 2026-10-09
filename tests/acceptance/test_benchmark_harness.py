@@ -67,9 +67,7 @@ def test_benchmark_smoke_profile_produces_structured_results(tmp_path: Path) -> 
 
 
 def test_benchmark_workflow_records_standard_baseline_after_main_merge() -> None:
-    workflow = (REPO_ROOT / ".github" / "workflows" / "benchmarks.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow = (REPO_ROOT / ".github" / "workflows" / "benchmarks.yml").read_text(encoding="utf-8")
 
     assert "push:" in workflow
     assert "branches:" in workflow

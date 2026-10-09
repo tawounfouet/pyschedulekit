@@ -107,6 +107,31 @@ STABLE_PUBLIC_NAMES = (
     "WorkerId",
 )
 
+ROOT_METADATA_NAMES = (
+    "__version__",
+)
+
+POSTGRES_PUBLIC_NAMES = (
+    "PostgresUnitOfWorkFactory",
+    "TransientPersistenceError",
+)
+
+TESTING_PUBLIC_NAMES = (
+    "FixedClock",
+    "MutableClock",
+    "TriggerContractSuite",
+    "TriggerContractViolation",
+    "add_request_with_parent",
+)
+
+PUBLIC_NAMESPACE_CLASSIFICATIONS = {
+    "pyschedulekit": "stable-candidate",
+    "pyschedulekit.api": "stable-candidate",
+    "pyschedulekit.postgres": "stable-candidate",
+    "pyschedulekit.testing": "supported-testing",
+    "pyschedulekit.experimental": "experimental",
+}
+
 LEGACY_ROOT_NAMES = (
     "AdmissionLockOwnershipError",
     "AdmissionToken",
@@ -120,3 +145,5 @@ LEGACY_ROOT_NAMES = (
     "ScheduleAdmissionLockHandle",
     "ScheduleAdmissionLockState",
 )
+
+EXPERIMENTAL_PUBLIC_NAMES = LEGACY_ROOT_NAMES

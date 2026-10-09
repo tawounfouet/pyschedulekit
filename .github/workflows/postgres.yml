@@ -71,7 +71,7 @@ jobs:
       - name: Install PostgreSQL development dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,postgres]"
+          python -m pip install -e ".[dev,postgres-pool]"
 
       - name: Run PostgreSQL adapter qualification
         run: |

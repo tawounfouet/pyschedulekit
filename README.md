@@ -888,6 +888,12 @@ src/pyschedulekit/
 
 The directory structure grows only when implementation needs it; the project avoids empty architectural ceremony before working vertical slices.
 
+## Performance benchmarks
+
+A reproducible benchmark harness measures trigger lookup and `run_pending()` behavior for
+in-memory and SQLite workloads. Normal CI validates the harness but does not enforce timing
+thresholds. See [`docs/benchmarks/README.md`](./docs/benchmarks/README.md).
+
 ## Installed-package dogfooding
 
 Distribution Qualification executes a real consumer application against every clean-installed

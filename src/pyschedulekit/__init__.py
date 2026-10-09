@@ -12,6 +12,11 @@ from pyschedulekit.api import AdmissionSnapshot as AdmissionSnapshot
 from pyschedulekit.api import AsyncioExecutor as AsyncioExecutor
 from pyschedulekit.api import AsyncPythonTargetRegistry as AsyncPythonTargetRegistry
 from pyschedulekit.api import AttemptId as AttemptId
+from pyschedulekit.api import BusinessCalendar as BusinessCalendar
+from pyschedulekit.api import CalendarProvider as CalendarProvider
+from pyschedulekit.api import CalendarRef as CalendarRef
+from pyschedulekit.api import CalendarRevision as CalendarRevision
+from pyschedulekit.api import CalendarSnapshotRef as CalendarSnapshotRef
 from pyschedulekit.api import CancellationToken as CancellationToken
 from pyschedulekit.api import CleanupResult as CleanupResult
 from pyschedulekit.api import Clock as Clock
@@ -49,6 +54,7 @@ from pyschedulekit.api import HttpExecutor as HttpExecutor
 from pyschedulekit.api import HttpMethod as HttpMethod
 from pyschedulekit.api import HttpRequestSpec as HttpRequestSpec
 from pyschedulekit.api import HttpTargetRegistry as HttpTargetRegistry
+from pyschedulekit.api import InMemoryCalendarProvider as InMemoryCalendarProvider
 from pyschedulekit.api import InMemoryObservationSink as InMemoryObservationSink
 from pyschedulekit.api import Instant as Instant
 from pyschedulekit.api import IntervalTrigger as IntervalTrigger

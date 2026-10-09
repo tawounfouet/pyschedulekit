@@ -135,6 +135,7 @@ def _claim(execution: Execution) -> ExecutionClaim:
         expires_at=_instant(minute=1),
     )
 
+
 @pytest.mark.parametrize("adapter", ADAPTERS)
 @pytest.mark.parametrize(
     "orphan_kind",
@@ -243,7 +244,6 @@ def test_staged_queries_observe_uncommitted_work(
         uow.executions.add(execution)
 
         assert uow.executions.next_runnable_at(now=_instant()) == _instant()
-
 
 
 @pytest.mark.parametrize("adapter", ADAPTERS)

@@ -2,8 +2,8 @@
 
 STABLE_PUBLIC_NAMES = (
     "AdmissionSnapshot",
-    "AsyncioExecutor",
     "AsyncPythonTargetRegistry",
+    "AsyncioExecutor",
     "AttemptId",
     "CancellationToken",
     "CleanupResult",

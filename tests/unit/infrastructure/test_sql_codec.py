@@ -132,4 +132,3 @@ def test_legacy_v1_schedule_definition_without_calendar_remains_readable() -> No
 
     assert decoded == definition
     assert decoded.calendar is None
-

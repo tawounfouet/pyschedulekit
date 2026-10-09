@@ -1200,7 +1200,6 @@ class PostgresAttemptRepository:
         self._dirty.clear()
 
 
-
 class PostgresScheduleAdmissionLockRepository:
     def __init__(self, connection: PostgresConnection) -> None:
         self._connection = connection

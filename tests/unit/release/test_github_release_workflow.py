@@ -2,7 +2,8 @@
 
 from pathlib import Path
 
-WORKFLOW = Path(".github/workflows/release-candidate.yml")
+REPO_ROOT = Path(__file__).resolve().parents[3]
+WORKFLOW = REPO_ROOT / ".github/workflows/release-candidate.yml"
 ATTEST_ACTION_SHA = "1e69f48acb82d1966a394da916b4c1698aa569d6"
 
 

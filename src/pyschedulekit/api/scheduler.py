@@ -67,10 +67,6 @@ from pyschedulekit.infrastructure.asyncio_executor import (
 )
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.executor_registry import ExecutorRegistry
-from pyschedulekit.infrastructure.executor_plugins import (
-    ExecutorPluginDescriptor,
-    ExecutorPluginRegistry,
-)
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor,
     HttpRequestSpec,
@@ -291,24 +287,6 @@ class Scheduler:
         """Register one explicit executor adapter for a new target kind."""
 
         self._executor_registry.register(target_kind, executor)
-
-    def discover_executor_plugins(self) -> tuple[ExecutorPluginDescriptor, ...]:
-        """List installed executor plugin metadata without importing plugin code."""
-
-        return self._executor_registry.discover_entry_points()
-
-    def activate_executor_plugin(
-        self,
-        target_kind: str,
-        *,
-        config: Mapping[str, object] | None = None,
-    ) -> Executor:
-        """Explicitly load one installed executor plugin and register its target kind."""
-
-        return self._executor_registry.activate_entry_point(
-            target_kind,
-            config=config,
-        )
 
     def register_http_target(
         self,

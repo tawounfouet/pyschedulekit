@@ -105,5 +105,6 @@ POST-00 is complete. The current development version is `0.1.0a4`.
 Pre-1.0 milestones are **not published to PyPI**; the release workflow enforces public
 publication only for stable semantic versions >= `1.0.0`.
 
-Current sequence: POST-01 documentation cleanup → examples/cookbook → API docs →
-dogfooding/benchmarks/chaos, then the 0.2.x execution/storage roadmap.
+POST-01 through POST-06 are complete. Current sequence: 0.2.x PostgreSQL PG-00 → PG-05,
+then Async Executor and executor plugin registry. PostgreSQL support is optional and must
+not break the base zero-runtime-dependency install.

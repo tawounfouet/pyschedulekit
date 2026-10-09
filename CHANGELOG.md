@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added PostgreSQL PG-00 foundation: optional Psycopg 3 support, native TIMESTAMPTZ schema, advisory-lock bootstrap, concurrent/idempotent schema qualification, and a live PostgreSQL CI service.
+
 - Added a deterministic five-scenario chaos/fault-injection campaign covering executor retry recovery, outbox broker failure, runtime cycle supervision, admission-lock persistence conflicts, and stale-owner fencing.
 - Added a dedicated Chaos Qualification workflow that archives machine-readable campaign evidence after chaos-relevant merges to main.
 

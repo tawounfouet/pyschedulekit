@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — POST-06 Chaos / Fault Injection
+## 4. État courant — 0.2.x PostgreSQL / PG-00
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -89,7 +89,8 @@ POST-02 Examples / Cookbook             ✅
 POST-03 API Documentation               ✅
 POST-04 Dogfooding                      ✅
 POST-05 Benchmarks                      ✅
-POST-06 Chaos / Fault Injection         🚧 current
+POST-06 Chaos / Fault Injection         ✅
+0.2.x PostgreSQL / PG-00                🚧 current
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -99,7 +100,7 @@ POST-06 Chaos / Fault Injection         🚧 current
 - **Quality gates** : Ruff ✅ · mypy strict ✅ · pytest ✅ · coverage ≥85 ✅.
 - **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
 - **Findings B1–B12** : aucun finding ouvert.
-- **Étape active** : qualifier les invariants de recovery sous fautes déterministes, puis ouvrir la roadmap 0.2.x.
+- **Étape active** : établir le contrat PostgreSQL, le schéma et la CI réelle avant d'implémenter les repositories.
 
 ---
 
@@ -121,10 +122,11 @@ POST-06 Chaos / Fault Injection         🚧 current
 
 ### Suite
 
-1. terminer POST-06 et merger la campagne de chaos déterministe ;
-2. ouvrir la roadmap 0.2.x — Execution & Storage Ecosystem ;
-3. commencer par PostgreSQL persistence, puis Async Executor et executor plugin registry ;
-4. poursuivre les versions pré-1.0 sans publication PyPI intermédiaire.
+1. PG-00 — fondation PostgreSQL / CI / bootstrap ;
+2. PG-01 — core repositories + UnitOfWork ;
+3. PG-02 — coordination / outbox / retention ;
+4. PG-03/PG-04 — parité et E2E multi-worker ;
+5. PG-05 — hardening, puis Async Executor et executor plugin registry.
 
 Aucune publication PyPI intermédiaire n'est nécessaire pour franchir ces étapes.
 
@@ -158,4 +160,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — POST-06.*
+*Dernière mise à jour : 2026-10-09 — PostgreSQL PG-00.*

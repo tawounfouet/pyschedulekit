@@ -119,7 +119,6 @@ def test_pg05_transient_database_abort_is_not_replayed_implicitly(
     assert connection.close_calls == 1
 
 
-
 def test_pg05_pool_style_provider_returns_connection_through_releaser() -> None:
     assert POSTGRES_DSN is not None
     acquired: list[psycopg.Connection[dict[str, Any]]] = []

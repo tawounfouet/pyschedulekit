@@ -79,10 +79,10 @@ Post-release hardening is tracked as POST-00:
 00.F  HTTP Resource / Redirect Hardening         ✅
 00.G  CI / Coverage Hardening                    ✅
 B7    Target Registry Transaction Safety         ✅
-00.H  Audit Documentation Consolidation          🚧
+00.H  Audit Documentation Consolidation          ✅
 ```
 
-The next release target is `0.1.0a4` after final qualification. Current audit-remediation
+POST-00 is complete. The source candidate is now `0.1.0a4`; `0.1.0a3` remains the latest public release until the final readiness/tag pipeline succeeds. Current audit-remediation
 status is recorded in
 `docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`.
 
@@ -870,7 +870,7 @@ PyScheduleKitError
 └── PyScheduleKitTargetError
 ```
 
-PyScheduleKit is now packaged as a PEP 561 typed library. Version `0.1.0a3` is sourced only from `pyschedulekit._version` and reused by package metadata.
+PyScheduleKit is packaged as a PEP 561 typed library. The current source candidate `0.1.0a4` is sourced only from `pyschedulekit._version` and reused by package metadata; the latest public release remains `0.1.0a3` until publication completes.
 
 ## Package shape
 

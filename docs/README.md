@@ -35,6 +35,7 @@ docs/
 ├── api/                       # stable public API reference
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
+├── benchmarks/                # reproducible performance methodology
 ├── cookbook/                  # runnable real-world usage scenarios
 ├── dogfood/                   # installed-distribution consumer qualification
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
@@ -65,8 +66,8 @@ POST-00 Audit Remediation             ✅ complete
 POST-01 Documentation Cleanup         ✅
 POST-02 Real-world Examples/Cookbook  ✅
 POST-03 API Documentation             ✅
-POST-04 Dogfooding                    🚧 current
-POST-05 Benchmarks                    ⬜
+POST-04 Dogfooding                    ✅
+POST-05 Benchmarks                    🚧 current
 POST-06 Chaos / Fault Injection       ⬜
         ↓
 0.2.x Execution & Storage Ecosystem
@@ -107,6 +108,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect the stable public API | [API reference](./api/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | inspect installed-package dogfooding | [Dogfooding](./dogfood/README.md) |
+| run reproducible performance measurements | [Benchmarks](./benchmarks/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule
@@ -120,4 +122,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — POST-01 documentation cleanup.
+**Last refreshed:** 2026-10-09 — POST-05 performance baselines.

@@ -12,6 +12,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 - Added an executable release policy gate so only canonical stable semantic versions `>=1.0.0` can reach the PyPI publishing job.
 - Reorganized current documentation under `docs/`, with `docs/README.md` as the canonical navigation hub and dated audit snapshots under `docs/audit/2026-10-08/`.
 - Added repository-wide local Markdown link integrity qualification while excluding raw archived audit transcripts.
+- Added six executable real-world cookbook scenarios covering one-shot, interval, cron/timezone, timeout+retry, SQLite restart durability, and operational schedule controls.
+- Added acceptance qualification that executes every Python file under `examples/` to keep recipes synchronized with the public API.
 
 
 ## [0.1.0a4] - 2026-10-09

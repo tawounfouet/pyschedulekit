@@ -16,6 +16,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from statistics import median
 from time import perf_counter_ns
+
 from pyschedulekit import Duration, Instant, IntervalTrigger, Scheduler, TargetRef
 
 

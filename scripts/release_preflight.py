@@ -20,8 +20,6 @@ class ExternalReadiness:
 
     pypi_trusted_publisher: bool
     immutable_releases: bool
-    testpypi_trusted_publisher: bool = True
-
     @property
     def ready(self) -> bool:
         return self.pypi_trusted_publisher and self.immutable_releases
@@ -76,7 +74,6 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--release-tag", required=True)
     parser.add_argument("--changelog", type=Path, default=Path("CHANGELOG.md"))
-    parser.add_argument("--testpypi-trusted-publisher-ready", action="store_true")
     parser.add_argument("--pypi-trusted-publisher-ready", action="store_true")
     parser.add_argument("--immutable-releases-ready", action="store_true")
     args = parser.parse_args()
@@ -85,7 +82,6 @@ def main() -> None:
         release_tag=args.release_tag,
         changelog=args.changelog,
         readiness=ExternalReadiness(
-            testpypi_trusted_publisher=args.testpypi_trusted_publisher_ready,
             pypi_trusted_publisher=args.pypi_trusted_publisher_ready,
             immutable_releases=args.immutable_releases_ready,
         ),
@@ -94,7 +90,6 @@ def main() -> None:
     print(f"Release tag: {args.release_tag}")
     print(f"Source package version: {version}")
     print("Changelog release heading: ready")
-    print("TestPyPI Trusted Publisher: acknowledged ready")
     print("PyPI Trusted Publisher: acknowledged ready")
     print("GitHub Immutable Releases: acknowledged ready")
     print("Release preflight passed. This command does not create or push a tag.")

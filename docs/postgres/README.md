@@ -173,7 +173,7 @@ must satisfy the same observable behavior.
 
 This is the gate before public exposure.
 
-### PG-04 — Scheduler / Multi-worker E2E 🚧 current
+### PG-04 — Scheduler / Multi-worker E2E ✅
 
 Qualify:
 
@@ -185,7 +185,7 @@ Qualify:
 - two workers sharing PostgreSQL;
 - admission / claim / materialization contention.
 
-### PG-05 — Production Hardening
+### PG-05 — Production Hardening 🚧 current
 
 Qualify and document:
 
@@ -198,7 +198,8 @@ Qualify and document:
 - PostgreSQL version support matrix;
 - benchmark comparison against SQLite.
 
-Only after PG-03/PG-04 should `PostgresUnitOfWorkFactory` enter the stable public manifest.
+PG-03/PG-04 clear the behavioral gate. `PostgresUnitOfWorkFactory` remains internal until
+PG-05 closes isolation, lock/retry, connection-lifecycle and migration hardening.
 
 ## Coverage policy
 
@@ -211,11 +212,13 @@ PostgreSQL owns a dedicated live-service coverage surface:
 PG-01 baseline: 66.88%
 PG-02 baseline: 78.45%
 PG-03 qualified: 87.88%
+PG-04 qualified: 88.59% / 138 live tests
 current floor: 85%
 ```
 
-PG-03 has reached the project-level 85% standard. The 85% PostgreSQL floor is now a
-permanent regression gate; public exposure still waits for PG-04 Scheduler/multi-worker E2E.
+PG-03 reached the project-level 85% standard and PG-04 qualified the public Scheduler plus
+multi-worker semantics on live PostgreSQL. The 85% floor remains permanent. Public factory
+exposure is deliberately deferred through PG-05 so production assumptions are documented and tested.
 
 ## PG-00 CI
 

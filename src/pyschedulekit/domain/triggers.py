@@ -84,9 +84,13 @@ class AnyOfTrigger:
 
     triggers: tuple[Trigger, ...]
 
+    _MAX_CHILDREN: ClassVar[int] = 64
+
     def __init__(self, *triggers: Trigger) -> None:
         if len(triggers) < 2:
             raise InvalidCompositeTriggerError("AnyOfTrigger requires at least two child Triggers.")
+
+        normalized: list[Trigger] = []
         for index, trigger in enumerate(triggers):
             if isinstance(trigger, CalendarAwareTrigger):
                 raise InvalidCompositeTriggerError(
@@ -96,8 +100,17 @@ class AnyOfTrigger:
                 raise InvalidCompositeTriggerError(
                     f"AnyOfTrigger child at index {index} must implement Trigger."
                 )
+            if isinstance(trigger, AnyOfTrigger):
+                normalized.extend(trigger.triggers)
+            else:
+                normalized.append(trigger)
 
-        object.__setattr__(self, "triggers", tuple(triggers))
+        if len(normalized) > self._MAX_CHILDREN:
+            raise InvalidCompositeTriggerError(
+                f"AnyOfTrigger supports at most {self._MAX_CHILDREN} flattened child Triggers."
+            )
+
+        object.__setattr__(self, "triggers", tuple(normalized))
 
     def next_after(self, reference: Instant) -> Instant | None:
         """Return the earliest child occurrence strictly after reference."""

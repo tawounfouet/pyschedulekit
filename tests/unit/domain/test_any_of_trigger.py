@@ -79,6 +79,32 @@ def test_any_of_selects_earliest_candidate_independent_of_child_order() -> None:
     assert AnyOfTrigger(early, late).next_after(_instant(9)) == _instant(10)
 
 
+def test_any_of_flattens_nested_unions_associatively() -> None:
+    first = DateTrigger(at=_instant(10))
+    second = DateTrigger(at=_instant(11))
+    third = DateTrigger(at=_instant(12))
+
+    trigger = AnyOfTrigger(AnyOfTrigger(first, second), third)
+
+    assert trigger.triggers == (first, second, third)
+    assert trigger.next_after(_instant(9)) == _instant(10)
+
+
+def test_any_of_bounds_flattened_child_fan_out() -> None:
+    maximum = tuple(DateTrigger(at=_instant(10)) for _ in range(64))
+
+    assert len(AnyOfTrigger(*maximum).triggers) == 64
+    with pytest.raises(InvalidCompositeTriggerError, match="at most 64"):
+        AnyOfTrigger(*maximum, DateTrigger(at=_instant(11)))
+
+
+def test_any_of_applies_child_bound_after_nested_union_is_flattened() -> None:
+    nested = AnyOfTrigger(*(DateTrigger(at=_instant(10)) for _ in range(64)))
+
+    with pytest.raises(InvalidCompositeTriggerError, match="at most 64"):
+        AnyOfTrigger(nested, DateTrigger(at=_instant(11)))
+
+
 def test_any_of_ignores_exhausted_children_until_all_are_exhausted() -> None:
     trigger = AnyOfTrigger(
         DateTrigger(at=_instant(10)),

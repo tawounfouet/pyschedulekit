@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CMP-02 composite hardening with associative nested-union flattening, a 64-child
+  post-flattening fan-out bound, duplicate-free SchedulerEngine materialization, and explicit
+  catch-up/coalescing recovery-limit qualification.
+
 - Added CMP-01 AnyOf Occurrence Planning qualification across Schedule initialization,
   operational checkpoint advancement, duplicate-free chronological backlog reconstruction,
   finite exhaustion, pure Occurrence projection and Schedule-level calendar filtering.

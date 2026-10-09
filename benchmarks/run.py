@@ -311,9 +311,7 @@ def render_markdown(report: dict[str, object]) -> str:
         assert isinstance(result, dict)
         rows.append(
             "| {name} | {operations} | {repeats} | {median_seconds:.6f} | "
-            "{min_seconds:.6f} | {max_seconds:.6f} | {operations_per_second:.2f} |".format(
-                **result
-            )
+            "{min_seconds:.6f} | {max_seconds:.6f} | {operations_per_second:.2f} |".format(**result)
         )
 
     scaling = report["scaling"]

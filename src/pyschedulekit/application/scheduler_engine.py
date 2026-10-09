@@ -218,10 +218,10 @@ class SchedulerEngine:
                 existing = uow.requests.get_by_occurrence(occurrence.key)
                 if existing is not None:
                     self._advance_schedule(
-                schedule,
-                occurrences=(occurrence,),
-                calendar=calendar,
-            )
+                        schedule,
+                        occurrences=(occurrence,),
+                        calendar=calendar,
+                    )
                     uow.schedules.save(schedule)
                     self._commit_with_materialization_lease(
                         uow=uow,
@@ -281,10 +281,10 @@ class SchedulerEngine:
                 created_at=evaluation_now,
             )
             self._advance_schedule(
-                        schedule,
-                        occurrences=(occurrence,),
-                        calendar=calendar,
-                    )
+                schedule,
+                occurrences=(occurrence,),
+                calendar=calendar,
+            )
             uow.schedules.save(schedule)
             self._commit_with_materialization_lease(
                 uow=uow,

@@ -20,6 +20,7 @@ class ExternalReadiness:
 
     pypi_trusted_publisher: bool
     immutable_releases: bool
+
     @property
     def ready(self) -> bool:
         return self.pypi_trusted_publisher and self.immutable_releases

@@ -24,12 +24,28 @@ The evidence and findings are recorded in the
 
 ```text
 V1-00  Readiness Audit                         COMPLETE
-V1-01  Public Contract Freeze                  PLANNED
+V1-01  Public Contract Freeze                  IN PROGRESS
 V1-02  Persistence Compatibility Contract      PLANNED
 V1-03  Platform, Warning and Security Gates    PLANNED
 V1-04  Consumer and Stable-Release Rehearsal   PLANNED
 V1-05  Final GO/NO-GO and 1.0.0 Activation     PLANNED
 ```
+
+## V1-01 breakdown
+
+```text
+V1-01.A  Public API Inventory & Classification       COMPLETE
+V1-01.B  Root/API Stable Candidate Review            NEXT
+V1-01.C  Secondary Namespace Policy                  PLANNED
+V1-01.D  Constructor / Method Signature Freeze       PLANNED
+V1-01.E  Protocol / Enum / Exception Freeze          PLANNED
+V1-01.F  Compatibility & Deprecation Policy          PLANNED
+V1-01.G  Executable Contract Snapshots               PLANNED
+V1-01.H  Final Public Contract Review                 PLANNED
+```
+
+[V1-01.A](./V1-01A_PUBLIC_API_INVENTORY.md) records the exact current namespace inventory
+without yet turning every candidate signature or semantic into a final 1.x promise.
 
 ## Operating rules
 
@@ -49,4 +65,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-00 complete. V1-01 Public Contract Freeze is the next implementation lot.
+**Status:** V1-01.A complete. V1-01.B Root/API Stable Candidate Review is next.

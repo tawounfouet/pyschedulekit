@@ -266,7 +266,13 @@ Les limites encore structurelles sont différentes :
    `ScheduleDefinition` v1/v2 restent lisibles, v3 est l'unique format écrit, et chaque
    Trigger possède désormais son propre `schema_version`. Les versions futures inconnues
    échouent fermées ; SQLite et PostgreSQL partagent le même codec et les mêmes garanties.
-8. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
+8. **Adapters de calendriers** — CAL-05 ajoute `FileCalendarProvider` et
+   `SqliteCalendarProvider` au port existant. Les deux reconstruisent des
+   `BusinessCalendar` immutables via un codec JSON strict et versionné. Le provider File
+   fige son snapshot à la construction ; le provider SQLite possède un schéma isolé pouvant
+   coexister dans le même fichier que la persistence runtime du Scheduler. Aucun provider
+   HTTP/SaaS n'est implicite.
+9. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
    compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
 
 Ces limites appartiennent à la trajectoire pré-1.0 / Phase II et seront traitées par lots dédiés. Leur traitement n'est plus lié à une publication intermédiaire `0.x`.

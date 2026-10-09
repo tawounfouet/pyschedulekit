@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import sys
 from collections.abc import Callable
@@ -35,6 +36,7 @@ class BenchmarkProfile:
     cron_iterations: int
     memory_schedules: int
     sqlite_schedules: int
+    postgres_schedules: int
     memory_idle_counts: tuple[int, int]
 
 
@@ -56,6 +58,7 @@ PROFILES = {
         cron_iterations=40,
         memory_schedules=5,
         sqlite_schedules=3,
+        postgres_schedules=3,
         memory_idle_counts=(100, 1_000),
     ),
     "standard": BenchmarkProfile(
@@ -64,6 +67,7 @@ PROFILES = {
         cron_iterations=2_000,
         memory_schedules=250,
         sqlite_schedules=50,
+        postgres_schedules=50,
         memory_idle_counts=(1_000, 10_000),
     ),
 }
@@ -190,6 +194,43 @@ def _sqlite_cycle_sample(schedule_count: int) -> float:
         return elapsed
 
 
+def _postgres_cycle_sample(schedule_count: int, dsn: str) -> float:
+    # PostgreSQL is optional for the base package, so imports stay lazy.
+    import psycopg
+
+    from pyschedulekit.infrastructure.postgres import PostgresUnitOfWorkFactory
+
+    with psycopg.connect(dsn, autocommit=True) as connection:
+        connection.execute("DROP SCHEMA public CASCADE")
+        connection.execute("CREATE SCHEMA public")
+
+    start = Instant(datetime(2026, 1, 1, 10, 0, tzinfo=UTC))
+    clock = MutableClock(start)
+    scheduler = Scheduler(
+        clock=clock,
+        uow_factory=PostgresUnitOfWorkFactory(dsn),
+        worker_id="benchmark-worker",
+    )
+
+    for index in range(schedule_count):
+        scheduler.add_schedule(
+            id=f"postgres-{index:05d}",
+            target=lambda: None,
+            trigger=IntervalTrigger(
+                every=Duration.hours(1),
+                anchor=start.add(Duration.minutes(1)),
+            ),
+        )
+
+    clock.advance(Duration.minutes(1))
+    started = perf_counter()
+    result = scheduler.run_pending(limit=schedule_count)
+    elapsed = perf_counter() - started
+
+    assert result.succeeded == schedule_count
+    return elapsed
+
+
 def _memory_idle_result(
     *,
     schedule_count: int,
@@ -236,6 +277,12 @@ def _memory_idle_result(
 
 def run(profile_name: str) -> dict[str, object]:
     profile = PROFILES[profile_name]
+    sqlite_result = _measure(
+        name="run_pending_sqlite",
+        operations=profile.sqlite_schedules,
+        repeats=profile.repeats,
+        sample=lambda: _sqlite_cycle_sample(profile.sqlite_schedules),
+    )
     results = [
         _measure(
             name="interval_next_after",
@@ -255,13 +302,22 @@ def run(profile_name: str) -> dict[str, object]:
             repeats=profile.repeats,
             sample=lambda: _memory_cycle_sample(profile.memory_schedules),
         ),
-        _measure(
-            name="run_pending_sqlite",
-            operations=profile.sqlite_schedules,
-            repeats=profile.repeats,
-            sample=lambda: _sqlite_cycle_sample(profile.sqlite_schedules),
-        ),
+        sqlite_result,
     ]
+
+    postgres_dsn = os.getenv("PYSCHEDULEKIT_BENCHMARK_POSTGRES_DSN")
+    postgres_result: BenchmarkResult | None = None
+    if postgres_dsn:
+        postgres_result = _measure(
+            name="run_pending_postgres",
+            operations=profile.postgres_schedules,
+            repeats=profile.repeats,
+            sample=lambda: _postgres_cycle_sample(
+                profile.postgres_schedules,
+                postgres_dsn,
+            ),
+        )
+        results.append(postgres_result)
 
     small_count, large_count = profile.memory_idle_counts
     small_idle = _memory_idle_result(
@@ -288,6 +344,11 @@ def run(profile_name: str) -> dict[str, object]:
                 large_idle.median_seconds / small_idle.median_seconds
                 if small_idle.median_seconds > 0
                 else float("inf")
+            ),
+            "postgres_to_sqlite_cycle_ratio": (
+                postgres_result.median_seconds / sqlite_result.median_seconds
+                if postgres_result is not None and sqlite_result.median_seconds > 0
+                else None
             ),
         },
         "results": [asdict(result) for result in results],
@@ -326,6 +387,16 @@ def render_markdown(report: dict[str, object]) -> str:
                 f"({scaling['memory_idle_large_count']}/"
                 f"{scaling['memory_idle_small_count']} schedules): "
                 f"`{float(scaling['memory_idle_large_to_small_ratio']):.2f}x`"
+            ),
+            *(
+                [
+                    (
+                        "- PostgreSQL / SQLite due-cycle median ratio: "
+                        f"`{float(scaling['postgres_to_sqlite_cycle_ratio']):.2f}x`"
+                    )
+                ]
+                if scaling.get("postgres_to_sqlite_cycle_ratio") is not None
+                else []
             ),
             "",
             "> Benchmark numbers are evidence, not CI pass/fail thresholds. Compare runs only",

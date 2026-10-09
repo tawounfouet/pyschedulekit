@@ -146,8 +146,30 @@ scheduler runtime.
 | `UnitOfWorkFactory` | persistence boundary used by `Scheduler` |
 | `SqliteUnitOfWorkFactory` | durable SQLite implementation |
 
-SQLite is the qualified durable adapter in the current source line. Future persistence
-adapters must satisfy the same observable contract.
+PostgreSQL is a stable **optional namespace** rather than a root export:
+
+```python
+from pyschedulekit.postgres import (
+    PostgresUnitOfWorkFactory,
+    TransientPersistenceError,
+)
+```
+
+Install it with `pip install "pyschedulekit[postgres]"`.
+
+The root package deliberately does not import PostgreSQL support so the base install keeps
+zero runtime dependencies. SQLite and PostgreSQL satisfy the same shared adapter contract.
+
+## Optional PostgreSQL namespace
+
+`pyschedulekit.postgres` exports:
+
+- `PostgresUnitOfWorkFactory` — durable PostgreSQL UnitOfWork factory.
+- `TransientPersistenceError` — retryable whole-transaction abort signal for deadlock or
+  serialization failure.
+
+Production assumptions, supported PostgreSQL majors and migration policy are documented in
+[PostgreSQL support and migration](../postgres/SUPPORT_AND_MIGRATION.md).
 
 ## Executors and targets
 

@@ -8,12 +8,14 @@ PG-04 Scheduler/multi-worker qualification complete.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime
 from types import TracebackType
-from typing import Any, NoReturn, cast
+from typing import Any, NoReturn, Protocol, TypeVar, cast
 
 import psycopg
-from psycopg import Connection, Cursor, IntegrityError
+from psycopg import Connection, Cursor, IntegrityError, IsolationLevel
+from psycopg.errors import DeadlockDetected, SerializationFailure
 from psycopg.rows import dict_row
 
 from pyschedulekit.domain.admission_lock import (
@@ -95,6 +97,7 @@ from pyschedulekit.ports.persistence import (
     ScheduleAdmissionLockRepository,
     ScheduleMaterializationLeaseRepository,
     ScheduleRepository,
+    TransientPersistenceError,
     UnitOfWork,
     UntrackedEntityError,
     UntrackedScheduleError,
@@ -102,6 +105,22 @@ from pyschedulekit.ports.persistence import (
 
 PostgresRow = dict[str, Any]
 PostgresConnection = Connection[PostgresRow]
+PostgresConnectionProvider = Callable[[], PostgresConnection]
+PostgresConnectionReleaser = Callable[[PostgresConnection], None]
+
+
+class _StringIdentity(Protocol):
+    @property
+    def value(self) -> str: ...
+
+
+IdentityT = TypeVar("IdentityT", bound=_StringIdentity)
+
+
+def _ordered_ids(values: set[IdentityT]) -> list[IdentityT]:
+    """Return staged identities in one deterministic database-lock order."""
+
+    return sorted(values, key=lambda item: item.value)
 
 
 def _optional_instant(value: object) -> Instant | None:
@@ -408,7 +427,7 @@ class PostgresScheduleRepository:
         return min(candidates) if candidates else None
 
     def _validate(self) -> None:
-        for schedule_id in self._new:
+        for schedule_id in _ordered_ids(self._new):
             row = self._connection.execute(
                 "SELECT 1 FROM schedules WHERE id = %s",
                 (schedule_id.value,),
@@ -416,7 +435,7 @@ class PostgresScheduleRepository:
             if row is not None:
                 raise DuplicateScheduleError(f"Schedule {schedule_id.value!r} already exists.")
 
-        for schedule_id in self._dirty:
+        for schedule_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT persistence_version FROM schedules WHERE id = %s",
                 (schedule_id.value,),
@@ -428,7 +447,7 @@ class PostgresScheduleRepository:
                 )
 
     def _apply(self) -> None:
-        for schedule_id in self._new:
+        for schedule_id in _ordered_ids(self._new):
             schedule = self._tracked[schedule_id]
             self._connection.execute(
                 """
@@ -447,7 +466,7 @@ class PostgresScheduleRepository:
                 ),
             )
 
-        for schedule_id in self._dirty:
+        for schedule_id in _ordered_ids(self._dirty):
             schedule = self._tracked[schedule_id]
             expected = self._expected_versions[schedule_id]
             cursor = self._connection.execute(
@@ -470,7 +489,7 @@ class PostgresScheduleRepository:
             _require_cas_update(cursor, entity=f"Schedule {schedule.id.value!r}")
 
     def _after_commit(self) -> None:
-        for schedule_id in self._new | self._dirty:
+        for schedule_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[schedule_id] = self._tracked[schedule_id].persistence_version
         self._new.clear()
         self._dirty.clear()
@@ -614,7 +633,7 @@ class PostgresExecutionRequestRepository:
         return candidates[:limit]
 
     def _validate(self) -> None:
-        for request_id in self._new:
+        for request_id in _ordered_ids(self._new):
             request = self._tracked[request_id]
             if (
                 self._connection.execute(
@@ -647,7 +666,7 @@ class PostgresExecutionRequestRepository:
                     "An ExecutionRequest for this OccurrenceKey already exists."
                 )
 
-        for request_id in self._dirty:
+        for request_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT version FROM execution_requests WHERE id = %s",
                 (request_id.value,),
@@ -658,7 +677,7 @@ class PostgresExecutionRequestRepository:
                 )
 
     def _apply(self) -> None:
-        for request_id in self._new:
+        for request_id in _ordered_ids(self._new):
             request = self._tracked[request_id]
             self._connection.execute(
                 """
@@ -685,7 +704,7 @@ class PostgresExecutionRequestRepository:
                 ),
             )
 
-        for request_id in self._dirty:
+        for request_id in _ordered_ids(self._dirty):
             request = self._tracked[request_id]
             expected = self._expected_versions[request_id]
             cursor = self._connection.execute(
@@ -716,7 +735,7 @@ class PostgresExecutionRequestRepository:
             _require_cas_update(cursor, entity=f"ExecutionRequest {request.id.value!r}")
 
     def _after_commit(self) -> None:
-        for request_id in self._new | self._dirty:
+        for request_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[request_id] = self._tracked[request_id].version
         self._new.clear()
         self._dirty.clear()
@@ -933,7 +952,7 @@ class PostgresExecutionRepository:
         return None if row is None else ScheduleId(str(row["schedule_id"]))
 
     def _validate(self) -> None:
-        for execution_id in self._new:
+        for execution_id in _ordered_ids(self._new):
             execution = self._tracked[execution_id]
             if (
                 self._connection.execute(
@@ -953,7 +972,7 @@ class PostgresExecutionRepository:
             ):
                 raise DuplicateExecutionError("An Execution for this RequestId already exists.")
 
-        for execution_id in self._dirty:
+        for execution_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT version FROM executions WHERE id = %s",
                 (execution_id.value,),
@@ -964,9 +983,9 @@ class PostgresExecutionRepository:
                 )
 
     def _apply(self) -> None:
-        for execution_id in self._new:
+        for execution_id in _ordered_ids(self._new):
             self._insert(self._tracked[execution_id])
-        for execution_id in self._dirty:
+        for execution_id in _ordered_ids(self._dirty):
             self._update(self._tracked[execution_id])
 
     def _insert(self, execution: Execution) -> None:
@@ -1028,7 +1047,7 @@ class PostgresExecutionRepository:
         )
 
     def _after_commit(self) -> None:
-        for execution_id in self._new | self._dirty:
+        for execution_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[execution_id] = self._tracked[execution_id].version
         self._new.clear()
         self._dirty.clear()
@@ -1106,7 +1125,7 @@ class PostgresAttemptRepository:
         return attempts
 
     def _validate(self) -> None:
-        for attempt_id in self._new:
+        for attempt_id in _ordered_ids(self._new):
             attempt = self._tracked[attempt_id]
             if (
                 self._connection.execute(
@@ -1133,7 +1152,7 @@ class PostgresAttemptRepository:
                     "An Attempt with this execution_id and number already exists."
                 )
 
-        for attempt_id in self._dirty:
+        for attempt_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT version FROM attempts WHERE id = %s",
                 (attempt_id.value,),
@@ -1144,7 +1163,7 @@ class PostgresAttemptRepository:
                 )
 
     def _apply(self) -> None:
-        for attempt_id in self._new:
+        for attempt_id in _ordered_ids(self._new):
             attempt = self._tracked[attempt_id]
             self._connection.execute(
                 """
@@ -1164,7 +1183,7 @@ class PostgresAttemptRepository:
                 ),
             )
 
-        for attempt_id in self._dirty:
+        for attempt_id in _ordered_ids(self._dirty):
             attempt = self._tracked[attempt_id]
             expected = self._expected_versions[attempt_id]
             cursor = self._connection.execute(
@@ -1188,7 +1207,7 @@ class PostgresAttemptRepository:
             _require_cas_update(cursor, entity=f"Attempt {attempt.id.value!r}")
 
     def _after_commit(self) -> None:
-        for attempt_id in self._new | self._dirty:
+        for attempt_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[attempt_id] = self._tracked[attempt_id].version
         self._new.clear()
         self._dirty.clear()
@@ -1245,7 +1264,7 @@ class PostgresScheduleAdmissionLockRepository:
         self._dirty.add(lock.schedule_id)
 
     def _validate(self) -> None:
-        for schedule_id in self._new:
+        for schedule_id in _ordered_ids(self._new):
             if (
                 self._connection.execute(
                     "SELECT 1 FROM schedule_admission_locks WHERE schedule_id = %s",
@@ -1256,7 +1275,7 @@ class PostgresScheduleAdmissionLockRepository:
                 raise DuplicateAdmissionLockError(
                     f"ScheduleAdmissionLock {schedule_id.value!r} already exists."
                 )
-        for schedule_id in self._dirty:
+        for schedule_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT version FROM schedule_admission_locks WHERE schedule_id = %s",
                 (schedule_id.value,),
@@ -1267,7 +1286,7 @@ class PostgresScheduleAdmissionLockRepository:
                 )
 
     def _apply(self) -> None:
-        for schedule_id in self._new:
+        for schedule_id in _ordered_ids(self._new):
             lock = self._tracked[schedule_id]
             self._connection.execute(
                 """
@@ -1289,7 +1308,7 @@ class PostgresScheduleAdmissionLockRepository:
                 ),
             )
 
-        for schedule_id in self._dirty:
+        for schedule_id in _ordered_ids(self._dirty):
             lock = self._tracked[schedule_id]
             expected = self._expected_versions[schedule_id]
             cursor = self._connection.execute(
@@ -1315,7 +1334,7 @@ class PostgresScheduleAdmissionLockRepository:
             _require_cas_update(cursor, entity=f"ScheduleAdmissionLock {lock.schedule_id.value!r}")
 
     def _after_commit(self) -> None:
-        for schedule_id in self._new | self._dirty:
+        for schedule_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[schedule_id] = self._tracked[schedule_id].version
         self._new.clear()
         self._dirty.clear()
@@ -1373,7 +1392,7 @@ class PostgresScheduleMaterializationLeaseRepository:
         self._dirty.add(lease.schedule_id)
 
     def _validate(self) -> None:
-        for schedule_id in self._new:
+        for schedule_id in _ordered_ids(self._new):
             if (
                 self._connection.execute(
                     "SELECT 1 FROM schedule_materialization_leases WHERE schedule_id = %s",
@@ -1384,7 +1403,7 @@ class PostgresScheduleMaterializationLeaseRepository:
                 raise DuplicateMaterializationLeaseError(
                     f"ScheduleMaterializationLease {schedule_id.value!r} already exists."
                 )
-        for schedule_id in self._dirty:
+        for schedule_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT version FROM schedule_materialization_leases WHERE schedule_id = %s",
                 (schedule_id.value,),
@@ -1395,7 +1414,7 @@ class PostgresScheduleMaterializationLeaseRepository:
                 )
 
     def _apply(self) -> None:
-        for schedule_id in self._new:
+        for schedule_id in _ordered_ids(self._new):
             lease = self._tracked[schedule_id]
             self._connection.execute(
                 """
@@ -1417,7 +1436,7 @@ class PostgresScheduleMaterializationLeaseRepository:
                 ),
             )
 
-        for schedule_id in self._dirty:
+        for schedule_id in _ordered_ids(self._dirty):
             lease = self._tracked[schedule_id]
             expected = self._expected_versions[schedule_id]
             cursor = self._connection.execute(
@@ -1446,7 +1465,7 @@ class PostgresScheduleMaterializationLeaseRepository:
             )
 
     def _after_commit(self) -> None:
-        for schedule_id in self._new | self._dirty:
+        for schedule_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[schedule_id] = self._tracked[schedule_id].version
         self._new.clear()
         self._dirty.clear()
@@ -1503,7 +1522,7 @@ class PostgresExecutionClaimRepository:
         self._dirty.add(claim.execution_id)
 
     def _validate(self) -> None:
-        for execution_id in self._new:
+        for execution_id in _ordered_ids(self._new):
             if (
                 self._connection.execute(
                     "SELECT 1 FROM execution_claims WHERE execution_id = %s",
@@ -1514,7 +1533,7 @@ class PostgresExecutionClaimRepository:
                 raise DuplicateExecutionClaimError(
                     f"ExecutionClaim {execution_id.value!r} already exists."
                 )
-        for execution_id in self._dirty:
+        for execution_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT version FROM execution_claims WHERE execution_id = %s",
                 (execution_id.value,),
@@ -1525,7 +1544,7 @@ class PostgresExecutionClaimRepository:
                 )
 
     def _apply(self) -> None:
-        for execution_id in self._new:
+        for execution_id in _ordered_ids(self._new):
             claim = self._tracked[execution_id]
             self._connection.execute(
                 """
@@ -1547,7 +1566,7 @@ class PostgresExecutionClaimRepository:
                 ),
             )
 
-        for execution_id in self._dirty:
+        for execution_id in _ordered_ids(self._dirty):
             claim = self._tracked[execution_id]
             expected = self._expected_versions[execution_id]
             cursor = self._connection.execute(
@@ -1573,7 +1592,7 @@ class PostgresExecutionClaimRepository:
             _require_cas_update(cursor, entity=f"ExecutionClaim {claim.execution_id.value!r}")
 
     def _after_commit(self) -> None:
-        for execution_id in self._new | self._dirty:
+        for execution_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[execution_id] = self._tracked[execution_id].version
         self._new.clear()
         self._dirty.clear()
@@ -1650,7 +1669,7 @@ class PostgresOutboxRepository:
         return result
 
     def _validate(self) -> None:
-        for message_id in self._new:
+        for message_id in _ordered_ids(self._new):
             if (
                 self._connection.execute(
                     "SELECT 1 FROM outbox_messages WHERE id = %s",
@@ -1661,7 +1680,7 @@ class PostgresOutboxRepository:
                 raise DuplicateOutboxMessageError(
                     f"OutboxMessage {message_id.value!r} already exists."
                 )
-        for message_id in self._dirty:
+        for message_id in _ordered_ids(self._dirty):
             row = self._connection.execute(
                 "SELECT version FROM outbox_messages WHERE id = %s",
                 (message_id.value,),
@@ -1672,7 +1691,7 @@ class PostgresOutboxRepository:
                 )
 
     def _apply(self) -> None:
-        for message_id in self._new:
+        for message_id in _ordered_ids(self._new):
             message = self._tracked[message_id]
             self._connection.execute(
                 """
@@ -1698,7 +1717,7 @@ class PostgresOutboxRepository:
                 ),
             )
 
-        for message_id in self._dirty:
+        for message_id in _ordered_ids(self._dirty):
             message = self._tracked[message_id]
             expected = self._expected_versions[message_id]
             cursor = self._connection.execute(
@@ -1729,7 +1748,7 @@ class PostgresOutboxRepository:
             _require_cas_update(cursor, entity=f"OutboxMessage {message.id.value!r}")
 
     def _after_commit(self) -> None:
-        for message_id in self._new | self._dirty:
+        for message_id in _ordered_ids(self._new | self._dirty):
             self._expected_versions[message_id] = self._tracked[message_id].version
         self._new.clear()
         self._dirty.clear()
@@ -1912,8 +1931,14 @@ class PostgresRetentionRepository:
 class PostgresUnitOfWork:
     """Full internal PostgreSQL UnitOfWork implementing every persistence repository."""
 
-    def __init__(self, connection: PostgresConnection) -> None:
+    def __init__(
+        self,
+        connection: PostgresConnection,
+        *,
+        release_connection: PostgresConnectionReleaser | None = None,
+    ) -> None:
         self._connection = connection
+        self._release_connection = release_connection or (lambda item: item.close())
         self._active = False
 
         self._schedules = PostgresScheduleRepository(connection)
@@ -1951,9 +1976,11 @@ class PostgresUnitOfWork:
         traceback: TracebackType | None,
     ) -> None:
         del exc_type, exc, traceback
-        self.rollback()
-        self._active = False
-        self._connection.close()
+        try:
+            self.rollback()
+        finally:
+            self._active = False
+            self._release_connection(self._connection)
 
     def commit(self) -> None:
         self._require_active()
@@ -1974,6 +2001,12 @@ class PostgresUnitOfWork:
             for repository in repositories:
                 repository._apply()
             self._connection.commit()
+        except (DeadlockDetected, SerializationFailure) as exc:
+            self._connection.rollback()
+            raise TransientPersistenceError(
+                "PostgreSQL aborted the transaction because of a transient concurrency "
+                "conflict. Retry the whole application operation in a fresh UnitOfWork."
+            ) from exc
         except IntegrityError as exc:
             self._connection.rollback()
             _raise_integrity_error(exc)
@@ -2002,20 +2035,42 @@ class PostgresUnitOfWork:
 
 
 class PostgresUnitOfWorkFactory:
-    """Internal full PostgreSQL factory; public exposure waits for PG-03/PG-04."""
+    """Internal PostgreSQL factory; public exposure waits for PG-05 hardening."""
 
-    def __init__(self, dsn: str) -> None:
+    def __init__(
+        self,
+        dsn: str,
+        *,
+        connection_provider: PostgresConnectionProvider | None = None,
+        connection_releaser: PostgresConnectionReleaser | None = None,
+    ) -> None:
         if not dsn.strip():
             raise ValueError("PostgreSQL DSN must not be empty.")
+        if connection_releaser is not None and connection_provider is None:
+            raise ValueError("connection_releaser requires connection_provider.")
+
         self._dsn = dsn
+        self._connection_provider = connection_provider
+        self._connection_releaser = connection_releaser
 
         with psycopg.connect(self._dsn, autocommit=True) as connection:
             initialize_postgres_schema(connection)
 
     def __call__(self) -> UnitOfWork:
-        connection = psycopg.connect(
-            self._dsn,
-            autocommit=False,
-            row_factory=dict_row,
+        connection = (
+            self._connection_provider()
+            if self._connection_provider is not None
+            else psycopg.connect(
+                self._dsn,
+                autocommit=False,
+                row_factory=dict_row,
+            )
         )
-        return PostgresUnitOfWork(connection)
+        connection.autocommit = False
+        connection.isolation_level = IsolationLevel.READ_COMMITTED
+        connection.row_factory = dict_row
+
+        return PostgresUnitOfWork(
+            connection,
+            release_connection=self._connection_releaser,
+        )

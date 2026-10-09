@@ -32,7 +32,7 @@
    │ UnitOfWorkFactory    │  │ Clock                  │  │ Executor       │
    │  ├ SQLite            │  │  SystemClock /         │  │  Local (py)    │
    │  ├ PostgreSQL 16-18  │  │  MutableClock (tests)  │  │  HTTP          │
-   │  └ InMemory          │  │                        │  │  Routing       │
+   │  └ InMemory          │  │                        │  │  AsyncIO       │
    │ Persistence/Outbox/  │  │ CancellationController │  │  Routing       │
    │ Observability ports  │  │ ObservationSink        │  └────────────────┘
    └───────┬──────────────┘  └────────────────────────┘
@@ -81,7 +81,11 @@ src/pyschedulekit/
 
 Conventions de câblage réelles :
 
-- La façade `api/scheduler.py::Scheduler` compose tout : `Clock`, `UnitOfWorkFactory`, registres d'exécuteurs, coordinators de claims/admission/matérialisation, `Runtime` (`run_forever`), `CancellationController`. Ligne de vie : construire une fois, `run_pending`/`run_forever` appeler par la suite.
+- La façade `api/scheduler.py::Scheduler` compose tout : `Clock`, `UnitOfWorkFactory`,
+  `ExecutorRegistry`, registres de cibles, coordinators de claims/admission/matérialisation,
+  `Runtime` (`run_forever`), `CancellationController`. Le registre d'exécuteurs est
+  instance-owned, explicite et consulté dynamiquement par `RoutingExecutor`; aucun registre
+  global n'est muté à l'import.
 - Chaque mutation d'agrégat domaine passe par des assertions d'invariants (`Execution._assert_invariants`, `domain/execution.py:598-628`) — un état illégal lève `ValueError` avant persistance.
 - **Deux adaptateurs de persistance qualifiés par un contrat observable partagé** (SQLite + InMemory) implémentent le même protocole `UnitOfWork` : identity map + write set + validation de version + rollback. Les tests de parité forcent désormais les mêmes sémantiques de référentiel, staged state, conflits et rollback.
 - `InvalidExecutionTransitionError` reste distinct de `PersistenceConflictError`, mais `run_pending` traite explicitement une transition devenue invalide par concurrence : claim non démarré libéré, erreur structurée `execution.transition`, cycle conservé.
@@ -243,8 +247,10 @@ Les limites encore structurelles sont différentes :
    `python_async` et `AsyncioExecutor`. Le Scheduler et le port Executor restent synchrones;
    chaque exécution async possède une event loop dans un worker thread dédié. Il n'existe pas
    encore d'AsyncScheduler ni de persistance async.
-5. **Registres de cibles process-local** — Python/HTTP targets restent des objets de confiance
-   enregistrés dans le processus hôte ; seule leur référence déclarative est persistée.
+5. **Registres process-local** — Python, async Python et HTTP targets restent des objets de
+   confiance enregistrés dans le processus hôte. Les executors tiers passent par un
+   `ExecutorRegistry` propre à chaque Scheduler/composition root ; seule la référence
+   déclarative est persistée, jamais l'objet exécutable.
 6. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
    compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
 

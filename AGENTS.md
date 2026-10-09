@@ -106,8 +106,8 @@ Pre-1.0 milestones are **not published to PyPI**; the release workflow enforces 
 publication only for stable semantic versions >= `1.0.0`.
 
 POST-01 through POST-06 and PostgreSQL PG-00 → PG-05 are complete.
-Async Python Executor is complete. Current sequence: executor plugin registry.
-The async milestone keeps `python_async` behind the existing synchronous Executor port;
-do not retroactively introduce async methods into that Protocol or asyncify persistence.
+Async Python Executor is complete. Current sequence: Executor Plugin Registry. Registries
+must remain instance-owned and explicitly populated; do not add import-time/global plugin
+mutation or automatic imports from persisted target kinds.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

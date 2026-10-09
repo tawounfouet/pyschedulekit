@@ -7,14 +7,13 @@ from dataclasses import dataclass
 
 from pyschedulekit.domain.schedule import TargetRef
 from pyschedulekit.domain.time import Duration
-from pyschedulekit.errors import PyScheduleKitConfigurationError
+from pyschedulekit.infrastructure.executor_registry import ExecutorRegistry
 from pyschedulekit.ports.cancellation import CancellationToken
 from pyschedulekit.ports.executor import (
     Executor,
     ExecutorOutcome,
     PreparedTarget,
     TargetResolutionError,
-    UnsupportedTargetError,
 )
 
 
@@ -30,33 +29,23 @@ class RoutedPreparedTarget:
 class RoutingExecutor:
     """Route each TargetRef kind to one explicitly configured Executor."""
 
-    def __init__(self, executors: Mapping[str, Executor]) -> None:
-        normalized: dict[str, Executor] = {}
-        for kind, executor in executors.items():
-            target_kind = kind.strip()
-            if not target_kind:
-                raise PyScheduleKitConfigurationError("Executor target kind must not be empty.")
-            if target_kind in normalized:
-                raise PyScheduleKitConfigurationError(
-                    f"Duplicate executor target kind: {target_kind!r}."
-                )
-            normalized[target_kind] = executor
+    def __init__(
+        self,
+        executors: Mapping[str, Executor] | ExecutorRegistry,
+    ) -> None:
+        self._registry = (
+            executors if isinstance(executors, ExecutorRegistry) else ExecutorRegistry(executors)
+        )
 
-        if not normalized:
-            raise PyScheduleKitConfigurationError("RoutingExecutor requires at least one executor.")
-
-        self._executors = normalized
+        if not self._registry.target_kinds:
+            raise ValueError("RoutingExecutor requires at least one executor.")
 
     @property
     def target_kinds(self) -> tuple[str, ...]:
-        return tuple(sorted(self._executors))
+        return self._registry.target_kinds
 
     def prepare(self, target: TargetRef) -> RoutedPreparedTarget:
-        executor = self._executors.get(target.kind)
-        if executor is None:
-            raise UnsupportedTargetError(
-                f"No executor is registered for target kind {target.kind!r}."
-            )
+        executor = self._registry.resolve(target.kind)
 
         prepared = executor.prepare(target)
         if prepared.target != target:

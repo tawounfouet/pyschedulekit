@@ -41,6 +41,7 @@ promise at `1.0.0`.
 - `Scheduler.register_target()` — register trusted local Python code and receive a
   declarative `TargetRef`.
 - `Scheduler.register_http_target()` — register a trusted `HttpRequestSpec`.
+- `Scheduler.register_executor()` — explicitly register one trusted `Executor` for a target kind.
 - `Scheduler.add_schedule()` — persist a schedule using a `Trigger`, optional timezone,
   misfire, concurrency, retry and timeout policies.
 
@@ -178,6 +179,8 @@ Production assumptions, supported PostgreSQL majors and migration policy are doc
 - `Executor`
 - `PreparedTarget`
 - `ExecutorOutcome`
+- `ExecutorRegistry` — instance-owned explicit registry mapping `TargetRef.kind` to an
+  `Executor`; no process-global or import-time plugin mutation.
 - `RoutingExecutor`
 
 ### Local Python
@@ -207,9 +210,22 @@ persistence methods or an `AsyncScheduler`.
 - `HttpRequestSpec`
 - `HttpMethod`
 
+Executor plugins are registered explicitly:
+
+```python
+scheduler.executor_registry.register("workflow", workflow_executor)
+```
+
+The registry is owned by one Scheduler/composition root, so separate Scheduler instances
+may use different plugins in the same process. Registration is thread-safe and dynamic:
+`RoutingExecutor` resolves the current registry at prepare time.
+
+PyScheduleKit does **not** auto-import executors from persisted strings or mutate a hidden
+global registry. Automatic package-entry-point discovery is intentionally deferred.
+
 Target registries contain **trusted process-local executable configuration**. Durable
 schedule state stores declarative references; executable Python objects are not serialized
-into SQLite.
+into persistence.
 
 ## Observability
 

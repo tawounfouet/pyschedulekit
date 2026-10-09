@@ -97,7 +97,7 @@ POST-06 Chaos / Fault Injection         ✅
 0.2.x PostgreSQL / PG-04                ✅
 0.2.x PostgreSQL / PG-05                ✅
 0.2.x Async Python Executor              ✅
-0.2.x Executor Plugin Registry            ⏭ next
+0.2.x Executor Plugin Registry           🚧 current
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -110,8 +110,7 @@ POST-06 Chaos / Fault Injection         ✅
 - **PG-03 qualifié** : contrat partagé InMemory/SQLite/PostgreSQL, 130 tests PostgreSQL live, couverture PostgreSQL 87,88% avec floor 85%.
 - **PG-04 qualifié** : 138 tests PostgreSQL live, Scheduler/run_pending, retry, outbox, reconciliation, crash recovery et contention multi-worker; couverture PostgreSQL 88,59%.
 - **PostgreSQL** : qualifié jusqu'à PG-05, public via `pyschedulekit.postgres`, support matrix 16/17/18, couverture live 88,86%.
-- **Async Python Executor** : qualifié derrière le port Executor synchrone, sans AsyncScheduler ni persistance async.
-- **Étape active suivante** : executor plugin registry.
+- **Étape active** : qualifier un registre Executor explicite, isolé par Scheduler et extensible dynamiquement sans registre global caché.
 
 ---
 
@@ -139,7 +138,7 @@ POST-06 Chaos / Fault Injection         ✅
 4. PG-03/PG-04 — parité et E2E multi-worker ;
 5. PG-05 — hardening ✅ ;
 6. Async Python Executor ✅ ;
-7. executor plugin registry ⏭.
+7. executor plugin registry 🚧.
 
 Aucune publication PyPI intermédiaire n'est nécessaire pour franchir ces étapes.
 
@@ -173,4 +172,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — Async Python Executor complete / Executor Plugin Registry next.*
+*Dernière mise à jour : 2026-10-09 — Executor Plugin Registry.*

@@ -149,4 +149,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CAL-04 Persistence / Migration Parity.
+**Last refreshed:** 2026-10-09 — CAL-05 Calendar Provider Adapters.

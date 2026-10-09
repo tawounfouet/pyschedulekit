@@ -274,9 +274,7 @@ class Scheduler:
             schedule_id=schedule_id,
         )
         local_registration = (
-            None
-            if isinstance(target, TargetRef)
-            else (target_ref.reference, target)
+            None if isinstance(target, TargetRef) else (target_ref.reference, target)
         )
 
         committed = False

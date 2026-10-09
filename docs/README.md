@@ -39,6 +39,7 @@ docs/
 ├── benchmarks/                # reproducible performance methodology
 ├── calendars/                 # versioned business-calendar foundations
 ├── chaos/                     # deterministic fault-injection campaign
+├── composites/                # 0.4.x composite-trigger roadmap
 ├── cookbook/                  # runnable real-world usage scenarios
 ├── dogfood/                   # installed-distribution consumer qualification
 ├── executors/                 # explicit executor plugin registry
@@ -94,7 +95,9 @@ POST-06 Chaos / Fault Injection       ✅
   CAL-04 Persistence / Migration Parity    ✅
   CAL-05 Calendar Provider Adapters          ✅
         ↓
-Next pre-1.0 roadmap axis: to be selected
+0.4.x Composite Trigger Foundations  ⏳ in progress
+  CMP-00 Composite Trigger Contract  ✅
+  CMP-01 ... CMP-05                  ⬜ planned
         ↓
 1.0.0 stable public contract
 ```
@@ -131,6 +134,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | run trusted async Python workloads | [Async Python Executor](./async/README.md) |
 | register custom executor plugins | [Executor Plugin Registry](./executors/README.md) |
 | model versioned business calendars | [Calendar Foundations](./calendars/README.md) |
+| follow composite-trigger delivery | [Composite Triggers 0.4.x](./composites/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | inspect installed-package dogfooding | [Dogfooding](./dogfood/README.md) |
 | run reproducible performance measurements | [Benchmarks](./benchmarks/README.md) |
@@ -149,4 +153,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CAL-05 Calendar Provider Adapters.
+**Last refreshed:** 2026-10-09 — CMP-00 Composite Trigger Contract complete.

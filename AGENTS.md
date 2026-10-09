@@ -106,9 +106,11 @@ Pre-1.0 milestones are **not published to PyPI**; the release workflow enforces 
 publication only for stable semantic versions >= `1.0.0`.
 
 POST-01 through POST-06 and PostgreSQL PG-00 → PG-05 are complete.
-The 0.2.x PostgreSQL / Async Executor / ExecutorRegistry sequence is complete. Current
-sequence: 0.3.x CAL-00 Calendar Foundations ✅ → CAL-01 Schedule Calendar Binding ✅ →
-CAL-02 Calendar-aware Occurrence Planning ✅ → CAL-03 Business-Day Trigger Semantics ✅ → CAL-04 Persistence / Migration Parity ✅ → CAL-05 Calendar Provider Adapters next. Calendars must remain deterministic and
+The 0.2.x PostgreSQL / Async Executor / ExecutorRegistry sequence is complete. The planned
+0.3.x calendar sequence is also complete: CAL-00 Calendar Foundations ✅ → CAL-01 Schedule
+Calendar Binding ✅ → CAL-02 Calendar-aware Occurrence Planning ✅ → CAL-03 Business-Day
+Trigger Semantics ✅ → CAL-04 Persistence / Migration Parity ✅ → CAL-05 Calendar Provider
+Adapters ✅. The next pre-1.0 roadmap axis must be selected explicitly before implementation. Calendars must remain deterministic and
 versioned; do not couple domain calendar rules to a holiday
 library, database, HTTP service, or global mutable provider.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,

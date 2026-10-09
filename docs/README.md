@@ -122,4 +122,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — POST-01 documentation cleanup.
+**Last refreshed:** 2026-10-09 — POST-05 performance baselines.

@@ -21,6 +21,7 @@ SNAPSHOT / HISTORY
 | [Project README](../README.md) | Product overview, capabilities, development baseline |
 | [Architecture](./ARCHITECTURE.md) | Current system structure, flows, invariants and limitations |
 | [SDLC](./SDLC.md) | Current development, testing, review and maintenance workflow |
+| [Real-world Cookbook](./cookbook/README.md) | Executable task-oriented scheduling recipes |
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |

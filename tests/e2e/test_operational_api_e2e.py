@@ -121,6 +121,7 @@ def test_t_operational_e2e_005_shutdown_makes_scheduler_not_ready() -> None:
     assert scheduler.readiness().ready is False
     assert scheduler.readiness().shutdown_requested is True
 
+
 def test_calendar_binding_is_visible_in_schedule_snapshot() -> None:
     scheduler = Scheduler(clock=MutableClock(_instant()))
     calendar = CalendarSnapshotRef(

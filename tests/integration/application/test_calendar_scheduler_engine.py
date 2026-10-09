@@ -77,9 +77,7 @@ def test_engine_materializes_friday_then_advances_checkpoint_to_monday() -> None
         calendar_provider=provider,
     ).evaluate(evaluation_now=_instant(2))
 
-    assert [request.occurrence_key.scheduled_at for request in result.requests] == [
-        _instant(2)
-    ]
+    assert [request.occurrence_key.scheduled_at for request in result.requests] == [_instant(2)]
     assert _load(factory, "weekday").next_run_time == _instant(5)
 
 

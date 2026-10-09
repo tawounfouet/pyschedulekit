@@ -8,6 +8,7 @@ PG-04 Scheduler/multi-worker qualification complete.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime
 from types import TracebackType
 from typing import Any, NoReturn, Protocol, TypeVar, cast
@@ -104,6 +105,8 @@ from pyschedulekit.ports.persistence import (
 
 PostgresRow = dict[str, Any]
 PostgresConnection = Connection[PostgresRow]
+PostgresConnectionProvider = Callable[[], PostgresConnection]
+PostgresConnectionReleaser = Callable[[PostgresConnection], None]
 
 
 class _StringIdentity(Protocol):
@@ -1928,8 +1931,14 @@ class PostgresRetentionRepository:
 class PostgresUnitOfWork:
     """Full internal PostgreSQL UnitOfWork implementing every persistence repository."""
 
-    def __init__(self, connection: PostgresConnection) -> None:
+    def __init__(
+        self,
+        connection: PostgresConnection,
+        *,
+        release_connection: PostgresConnectionReleaser | None = None,
+    ) -> None:
         self._connection = connection
+        self._release_connection = release_connection or (lambda item: item.close())
         self._active = False
 
         self._schedules = PostgresScheduleRepository(connection)
@@ -1967,9 +1976,11 @@ class PostgresUnitOfWork:
         traceback: TracebackType | None,
     ) -> None:
         del exc_type, exc, traceback
-        self.rollback()
-        self._active = False
-        self._connection.close()
+        try:
+            self.rollback()
+        finally:
+            self._active = False
+            self._release_connection(self._connection)
 
     def commit(self) -> None:
         self._require_active()
@@ -2026,19 +2037,40 @@ class PostgresUnitOfWork:
 class PostgresUnitOfWorkFactory:
     """Internal PostgreSQL factory; public exposure waits for PG-05 hardening."""
 
-    def __init__(self, dsn: str) -> None:
+    def __init__(
+        self,
+        dsn: str,
+        *,
+        connection_provider: PostgresConnectionProvider | None = None,
+        connection_releaser: PostgresConnectionReleaser | None = None,
+    ) -> None:
         if not dsn.strip():
             raise ValueError("PostgreSQL DSN must not be empty.")
+        if connection_releaser is not None and connection_provider is None:
+            raise ValueError("connection_releaser requires connection_provider.")
+
         self._dsn = dsn
+        self._connection_provider = connection_provider
+        self._connection_releaser = connection_releaser
 
         with psycopg.connect(self._dsn, autocommit=True) as connection:
             initialize_postgres_schema(connection)
 
     def __call__(self) -> UnitOfWork:
-        connection = psycopg.connect(
-            self._dsn,
-            autocommit=False,
-            row_factory=dict_row,
+        connection = (
+            self._connection_provider()
+            if self._connection_provider is not None
+            else psycopg.connect(
+                self._dsn,
+                autocommit=False,
+                row_factory=dict_row,
+            )
         )
+        connection.autocommit = False
         connection.isolation_level = IsolationLevel.READ_COMMITTED
-        return PostgresUnitOfWork(connection)
+        connection.row_factory = dict_row
+
+        return PostgresUnitOfWork(
+            connection,
+            release_connection=self._connection_releaser,
+        )

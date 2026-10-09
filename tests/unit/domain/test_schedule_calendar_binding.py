@@ -2,7 +2,12 @@
 
 from datetime import UTC, datetime
 
-from pyschedulekit.domain.calendar import CalendarRef, CalendarRevision, CalendarSnapshotRef
+from pyschedulekit.domain.calendar import (
+    BusinessCalendar,
+    CalendarRef,
+    CalendarRevision,
+    CalendarSnapshotRef,
+)
 from pyschedulekit.domain.schedule import (
     PersistenceVersion,
     Schedule,
@@ -26,6 +31,14 @@ def _calendar(revision: int) -> CalendarSnapshotRef:
     )
 
 
+def _business_calendar(revision: int) -> BusinessCalendar:
+    return BusinessCalendar(
+        calendar_ref=CalendarRef("fr-business-days"),
+        revision=CalendarRevision(revision),
+        working_weekdays=frozenset(range(7)),
+    )
+
+
 def _definition(calendar: CalendarSnapshotRef | None) -> ScheduleDefinition:
     return ScheduleDefinition(
         target=TargetRef.python("jobs:calendar"),
@@ -41,11 +54,12 @@ def test_schedule_definition_defaults_to_no_calendar_binding() -> None:
     assert _definition(None).calendar is None
 
 
-def test_calendar_binding_is_functional_definition_without_timing_semantics_yet() -> None:
+def test_calendar_binding_remains_functional_definition_with_resolved_calendar() -> None:
     schedule = Schedule.create(
         schedule_id=ScheduleId("calendar-bound"),
         definition=_definition(_calendar(1)),
         reference=_instant(hour=9),
+        calendar=_business_calendar(1),
     )
 
     assert schedule.definition.calendar == _calendar(1)
@@ -56,6 +70,7 @@ def test_calendar_binding_is_functional_definition_without_timing_semantics_yet(
     schedule.reschedule(
         definition=_definition(_calendar(2)),
         reference=_instant(hour=9, minute=30),
+        calendar=_business_calendar(2),
     )
 
     assert schedule.definition.calendar == _calendar(2)

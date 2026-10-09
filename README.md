@@ -54,13 +54,37 @@ REL-01  Wheel + sdist Build                        ✅
 REL-02  Artifact / Metadata Validation             ✅
 REL-03  Clean-Install Matrix                       ✅
 REL-04  Version / Tag / Release Candidate Gate     ✅
-REL-05  TestPyPI Trusted Publishing                🟡 READY
-REL-06  PyPI Trusted Publishing                    🟡 READY
-REL-07  GitHub Release + Provenance                🟡 READY
+REL-05  TestPyPI Trusted Publishing                ✅ implemented / optional path
+REL-06  PyPI Trusted Publishing                    ✅ live
+REL-07  GitHub Release + Provenance                ✅ live
 REL-08  Release Runbook / Rollback Discipline      ✅
-
-Release engineering implementation complete — go-live pending external controls.
 ```
+
+PyScheduleKit `0.1.0a3` is published on PyPI and as an immutable GitHub prerelease.
+The go-live path actually used was:
+
+```text
+Tag → Qualification → PyPI Trusted Publishing → PyPI verification
+    → GitHub Release → provenance / immutable release evidence
+```
+
+Post-release hardening is tracked as POST-00:
+
+```text
+00.A  Restore Green Main                         ✅
+00.B  Runtime Transition-Race Hardening          ✅
+00.C  SQLite Concurrent Bootstrap                ✅
+00.D  Admission-Lock Conflict Recovery           ✅
+00.E  Persistence Adapter Contract               ✅
+00.F  HTTP Resource / Redirect Hardening         ✅
+00.G  CI / Coverage Hardening                    ✅
+B7    Target Registry Transaction Safety         ✅
+00.H  Audit Documentation Consolidation          🚧
+```
+
+The next release target is `0.1.0a4` after final qualification. Current audit-remediation
+status is recorded in
+`docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 

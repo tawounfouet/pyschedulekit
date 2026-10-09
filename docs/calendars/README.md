@@ -327,11 +327,11 @@ The calendar series still does **not**:
 - call external calendar APIs;
 - implement a remote HTTP/SaaS CalendarProvider.
 
-Those belong to later calendar lots.
+Those are intentionally deferred beyond the current 0.3.x calendar sequence.
 
-## Next calendar lots
+## Calendar delivery status
 
-Proposed sequence:
+Completed sequence:
 
 ```text
 CAL-00 Calendar Foundations            ✅
@@ -339,11 +339,11 @@ CAL-01 Schedule Calendar Binding       ✅
 CAL-02 Calendar-aware Occurrence Planning  ✅
 CAL-03 Business-Day Trigger Semantics        ✅
 CAL-04 Persistence / Migration Parity         ✅
-CAL-05 Calendar Provider Adapters              ⏭ next
+CAL-05 Calendar Provider Adapters              ✅
 ```
 
-The exact order after CAL-02 may be refined as occurrence semantics are qualified.
+The planned CAL-00 → CAL-05 calendar sequence is now complete.
 
 ---
 
-**Status:** CAL-05 — Calendar Provider Adapters in qualification. This is the final planned calendar lot in the current 0.3.x sequence.
+**Status:** CAL-05 — Calendar Provider Adapters complete. The planned 0.3.x calendar sequence is complete.

@@ -142,4 +142,3 @@ def test_calendar_binding_is_visible_in_schedule_snapshot() -> None:
     snapshot = scheduler.inspect_schedule("calendar-bound")
 
     assert snapshot.calendar == calendar
-

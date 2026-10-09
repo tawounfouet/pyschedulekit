@@ -9,6 +9,11 @@ import psycopg
 import pytest
 
 from pyschedulekit.domain.admission_lock import AdmissionToken, ScheduleAdmissionLock
+from pyschedulekit.domain.calendar import (
+    CalendarRef,
+    CalendarRevision,
+    CalendarSnapshotRef,
+)
 from pyschedulekit.domain.claim import ClaimToken, ExecutionClaim, WorkerId
 from pyschedulekit.domain.execution import Execution
 from pyschedulekit.domain.execution_request import ExecutionRequest, RequestId
@@ -790,3 +795,38 @@ def test_unit_of_work_requires_context_and_rejects_reentry(
 
     with uow, pytest.raises(RuntimeError):
         uow.__enter__()
+
+@pytest.mark.parametrize("adapter", ADAPTERS)
+def test_calendar_snapshot_binding_round_trips_across_adapters(
+    adapter: str,
+    tmp_path: Path,
+) -> None:
+    factory = _factory(adapter, tmp_path)
+    calendar = CalendarSnapshotRef(
+        calendar_ref=CalendarRef("market-days"),
+        revision=CalendarRevision(7),
+    )
+    schedule = Schedule.create(
+        schedule_id=ScheduleId("calendar-bound"),
+        definition=ScheduleDefinition(
+            target=TargetRef.python("jobs:calendar"),
+            trigger=IntervalTrigger(
+                every=Duration.minutes(10),
+                anchor=_instant(),
+            ),
+            calendar=calendar,
+        ),
+        reference=_instant(hour=9),
+    )
+
+    with factory() as uow:
+        uow.schedules.add(schedule)
+        uow.commit()
+
+    with factory() as uow:
+        loaded = uow.schedules.get(schedule.id)
+
+    assert loaded is not None
+    assert loaded.definition.calendar == calendar
+    assert loaded.definition == schedule.definition
+

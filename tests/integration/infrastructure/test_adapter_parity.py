@@ -10,6 +10,7 @@ import pytest
 
 from pyschedulekit.domain.admission_lock import AdmissionToken, ScheduleAdmissionLock
 from pyschedulekit.domain.calendar import (
+    BusinessCalendar,
     CalendarRef,
     CalendarRevision,
     CalendarSnapshotRef,
@@ -803,9 +804,10 @@ def test_calendar_snapshot_binding_round_trips_across_adapters(
     tmp_path: Path,
 ) -> None:
     factory = _factory(adapter, tmp_path)
-    calendar = CalendarSnapshotRef(
+    calendar = BusinessCalendar(
         calendar_ref=CalendarRef("market-days"),
         revision=CalendarRevision(7),
+        working_weekdays=frozenset(range(7)),
     )
     schedule = Schedule.create(
         schedule_id=ScheduleId("calendar-bound"),
@@ -815,9 +817,10 @@ def test_calendar_snapshot_binding_round_trips_across_adapters(
                 every=Duration.minutes(10),
                 anchor=_instant(),
             ),
-            calendar=calendar,
+            calendar=calendar.snapshot_ref,
         ),
         reference=_instant(hour=9),
+        calendar=calendar,
     )
 
     with factory() as uow:
@@ -828,5 +831,5 @@ def test_calendar_snapshot_binding_round_trips_across_adapters(
         loaded = uow.schedules.get(schedule.id)
 
     assert loaded is not None
-    assert loaded.definition.calendar == calendar
+    assert loaded.definition.calendar == calendar.snapshot_ref
     assert loaded.definition == schedule.definition

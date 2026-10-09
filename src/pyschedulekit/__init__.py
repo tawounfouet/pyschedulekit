@@ -9,6 +9,7 @@ from importlib import import_module
 
 from pyschedulekit._version import __version__ as __version__
 from pyschedulekit.api import AdmissionSnapshot as AdmissionSnapshot
+from pyschedulekit.api import AnyOfTrigger as AnyOfTrigger
 from pyschedulekit.api import AsyncioExecutor as AsyncioExecutor
 from pyschedulekit.api import AsyncPythonTargetRegistry as AsyncPythonTargetRegistry
 from pyschedulekit.api import AttemptId as AttemptId

@@ -100,6 +100,7 @@ from pyschedulekit.domain.time import (
 )
 from pyschedulekit.domain.trigger import Trigger as Trigger
 from pyschedulekit.domain.triggers import (
+    AnyOfTrigger as AnyOfTrigger,
     BusinessDayTrigger as BusinessDayTrigger,
     CronAmbiguousTimePolicy as CronAmbiguousTimePolicy,
     CronDialect as CronDialect,

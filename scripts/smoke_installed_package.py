@@ -16,8 +16,10 @@ def main() -> None:
     assert installed_version == pyschedulekit.__version__
     assert installed_version == "0.1.0a4"
 
+    assert pyschedulekit.AnyOfTrigger is public_api.AnyOfTrigger
     assert pyschedulekit.Scheduler is public_api.Scheduler
     assert pyschedulekit.IntervalTrigger is public_api.IntervalTrigger
+    assert "AnyOfTrigger" in pyschedulekit.__all__
     assert "Scheduler" in pyschedulekit.__all__
     assert "ExecutionClaim" not in pyschedulekit.__all__
     assert "PostgresUnitOfWorkFactory" not in pyschedulekit.__all__

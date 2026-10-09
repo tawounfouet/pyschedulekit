@@ -11,7 +11,7 @@ CMP-01 AnyOf Occurrence Planning                  COMPLETE
 CMP-02 Checkpoints, Deduplication and Bounds      COMPLETE
 CMP-03 Versioned Codec and Migration              COMPLETE
 CMP-04 Persistence Adapter Parity                 COMPLETE
-CMP-05 Public API, E2E, Documentation, Benchmark  PLANNED
+CMP-05 Public API, E2E, Documentation, Benchmark  COMPLETE
 ```
 
 ## Why union first
@@ -43,9 +43,9 @@ Each CMP lot must preserve:
 - parity across InMemory, SQLite and PostgreSQL before stable public exposure;
 - zero runtime dependencies.
 
-CMP-01 intentionally remains domain-internal. Public API exposure follows only after codec,
-migration and adapter-parity guarantees are executable.
+CMP-01 intentionally remained domain-internal. CMP-05 exposes `AnyOfTrigger` only after
+codec, migration and adapter-parity guarantees became executable.
 
 ---
 
-**Status:** CMP-00 through CMP-04 complete; CMP-05 is the final planned composite-trigger lot.
+**Status:** CMP-00 through CMP-05 complete; the 0.4.x composite-trigger sequence is closed.

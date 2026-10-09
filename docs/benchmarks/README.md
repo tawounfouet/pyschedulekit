@@ -8,12 +8,13 @@ in-memory scheduling. It does not define an absolute latency SLA.
 
 ## Goals
 
-The benchmark layer answers four questions:
+The benchmark layer answers five questions:
 
 1. how fast are deterministic interval lookups?
 2. how expensive are calendar/cron lookups?
 3. how does one due-work cycle behave with many in-memory schedules?
 4. how does the same cycle behave with durable SQLite persistence?
+5. what is the direct lookup cost of a two-child temporal union?
 
 It does **not** promise a performance SLA yet.
 
@@ -47,6 +48,7 @@ Used by the normal test suite only to prove the benchmark harness remains execut
 ```text
 repeats               2
 interval iterations   200
+AnyOf iterations      200
 cron iterations       40
 memory schedules      5
 SQLite schedules      3
@@ -62,6 +64,7 @@ The default evidence workload, automatically recorded after benchmark-relevant m
 ```text
 repeats               7
 interval iterations   100,000
+AnyOf iterations      100,000
 cron iterations       2,000
 memory schedules      250
 SQLite schedules      50
@@ -89,6 +92,13 @@ Measures repeated `CronTrigger.next_after()` calls for the weekday Paris express
 ```
 
 This covers civil-calendar iteration, weekday matching and timezone conversion.
+
+### any_of_next_after
+
+Measures repeated `AnyOfTrigger.next_after()` calls over two anchored interval children
+with overlapping occurrence streams. Construction happens before timing. The measurement
+therefore captures child lookup, earliest-candidate selection and duplicate-free strict
+progression rather than setup cost.
 
 ### run_pending_memory
 
@@ -218,7 +228,7 @@ exists, this harness can evolve toward:
 - memory/allocation measurements;
 - scale curves rather than one fixed workload;
 - controlled regression budgets;
-- PostgreSQL benchmarks after the adapter exists;
+- broader composite fan-out curves;
 - multi-worker throughput and lease-contention benchmarks.
 
 Those belong after evidence exists; POST-05 intentionally establishes the measurement

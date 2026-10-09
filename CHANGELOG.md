@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CMP-05 public composite graduation: stable root/API `AnyOfTrigger`, public Scheduler
+  and SQLite E2E qualification, an executable cookbook scenario, explicit API boundaries and
+  a reproducible two-child union benchmark. The 0.4.x composite-trigger sequence is complete.
+
 - Added CMP-04 composite persistence parity across InMemory, SQLite and PostgreSQL, including
   definition/checkpoint reopen-and-advance qualification and canonical upgrade-on-write for
   valid nested SQL payloads.

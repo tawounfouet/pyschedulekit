@@ -163,9 +163,39 @@ CAL-05 intentionally does not introduce remote HTTP/SaaS calendar resolution.
 | `IntervalTrigger` | anchored fixed-rate recurrence |
 | `CronTrigger` | calendar recurrence with explicit timezone semantics |
 | `BusinessDayTrigger` | Nth working day of each month at one Schedule-local civil time |
+| `AnyOfTrigger` | duplicate-free temporal union of two or more child triggers |
 | `CronDialect` | cron interpretation dialect |
 | `CronAmbiguousTimePolicy` | DST-fold behavior |
 | `CronNonexistentTimePolicy` | DST-gap behavior |
+
+### AnyOfTrigger
+
+`AnyOfTrigger` runs one Schedule whenever any child rule is due:
+
+```python
+from pyschedulekit import AnyOfTrigger, Duration, Instant, IntervalTrigger
+
+trigger = AnyOfTrigger(
+    IntervalTrigger(every=Duration.minutes(10), anchor=Instant.parse("2026-01-01T10:10:00Z")),
+    IntervalTrigger(every=Duration.minutes(15), anchor=Instant.parse("2026-01-01T10:15:00Z")),
+)
+```
+
+For each lookup it asks every child for its next candidate and returns the earliest one.
+When several children produce the same `Instant`, the Schedule emits that occurrence once.
+
+The public contract is deliberately bounded:
+
+- at least two children are required;
+- nested `AnyOfTrigger` values flatten into one union;
+- at most 64 flattened children are accepted;
+- children must implement the ordinary pure temporal `Trigger` protocol;
+- calendar-aware children, including `BusinessDayTrigger`, are rejected;
+- `AllOfTrigger` / intersection semantics are not part of the public API.
+
+Composite definitions and checkpoints round-trip across InMemory, SQLite and PostgreSQL.
+SQLite/PostgreSQL payloads use the versioned Trigger codec and normalize valid nested rows
+on the next normal write.
 
 ## Schedule model
 

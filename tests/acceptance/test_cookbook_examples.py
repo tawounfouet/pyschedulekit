@@ -25,6 +25,10 @@ EXAMPLES = (
         "examples/05_operational_health.py",
         "operational health: scheduler is ready after startup barriers",
     ),
+    (
+        "examples/06_composite_any_of.py",
+        "composite any-of: shared occurrence executed once",
+    ),
 )
 
 

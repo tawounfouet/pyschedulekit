@@ -31,7 +31,7 @@ from pyschedulekit.domain.schedule import (
     TargetRef,
 )
 from pyschedulekit.domain.time import Duration, Instant
-from pyschedulekit.domain.triggers import IntervalTrigger
+from pyschedulekit.domain.triggers import BusinessDayTrigger, IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.postgres import PostgresUnitOfWorkFactory
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
@@ -832,3 +832,36 @@ def test_calendar_snapshot_binding_round_trips_across_adapters(
     assert loaded is not None
     assert loaded.definition.calendar == calendar.snapshot_ref
     assert loaded.definition == schedule.definition
+
+
+@pytest.mark.parametrize("adapter", ADAPTERS)
+def test_business_day_trigger_round_trips_across_adapters(
+    adapter: str,
+    tmp_path: Path,
+) -> None:
+    factory = _factory(adapter, tmp_path)
+    calendar = BusinessCalendar(
+        calendar_ref=CalendarRef("finance-days"),
+        revision=CalendarRevision(3),
+    )
+    schedule = Schedule.create(
+        schedule_id=ScheduleId("business-day-trigger"),
+        definition=ScheduleDefinition(
+            target=TargetRef.python("jobs:month-close"),
+            trigger=BusinessDayTrigger(ordinal=-1, hour=18, minute=30),
+            calendar=calendar.snapshot_ref,
+        ),
+        reference=_instant(hour=9),
+        calendar=calendar,
+    )
+
+    with factory() as uow:
+        uow.schedules.add(schedule)
+        uow.commit()
+
+    with factory() as uow:
+        loaded = uow.schedules.get(schedule.id)
+
+    assert loaded is not None
+    assert loaded.definition == schedule.definition
+    assert loaded.next_run_time == schedule.next_run_time

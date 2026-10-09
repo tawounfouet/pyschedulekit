@@ -4,9 +4,9 @@ CAL-00 introduced the temporal calendar abstractions that were specified from th
 but intentionally deferred until the core scheduler, persistence and execution ecosystem
 were mature.
 
-CAL-01 now binds a Schedule definition to an optional exact `CalendarSnapshotRef`. The
-binding is declarative, persisted and inspectable, but it does not yet alter occurrence
-planning. Calendar-aware occurrence semantics begin in CAL-02.
+CAL-01 binds a Schedule definition to an exact optional `CalendarSnapshotRef`. CAL-02
+consumes that binding during occurrence planning, and CAL-03 adds the first intrinsic
+calendar-aware trigger for monthly business-day rules.
 
 ## Why calendars are separate from Cron
 
@@ -230,14 +230,40 @@ the excluded candidate.
 
 ### CAL-02 boundary
 
-CAL-02 only filters temporal candidates. Intrinsic business rules such as "first working
-day of month" or "last business day" belong to CAL-03 Business-Day Trigger Semantics.
+CAL-02 only filters temporal candidates. Intrinsic business rules require a calendar-aware
+trigger family.
+
+## CAL-03 — Business-Day Trigger Semantics
+
+`BusinessDayTrigger` models a monthly business recurrence directly:
+
+```python
+BusinessDayTrigger(ordinal=1, hour=8)  # first working day
+BusinessDayTrigger(ordinal=2, hour=9)  # second working day
+BusinessDayTrigger(ordinal=-1, hour=18)  # last working day
+```
+
+Positive ordinals count from the beginning of the month; negative ordinals count from the
+end. The exact bound `BusinessCalendar` determines which dates are working dates, including
+holidays and explicit extra working days.
+
+The Schedule still owns the timezone and exact `CalendarSnapshotRef`. The trigger performs
+no provider I/O. `CalendarOccurrencePlanner` resolves the distinction between pure temporal
+triggers and calendar-aware triggers while keeping `SchedulerEngine` independent of concrete
+trigger types.
+
+Local civil time is resolved through the Schedule timezone with the same explicit ambiguous
+and nonexistent-time policies already used by Cron. Monthly search is bounded.
+
+### CAL-03 boundary
+
+CAL-03 ships the business-day recurrence semantics, not country holiday datasets or remote
+calendar-provider adapters.
 
 ## Non-goals
 
 The calendar series still does **not** yet:
 
-- implement "first/last working day" triggers;
 - ship country-specific holiday truth;
 - call external calendar APIs;
 - implement a SQL/File/HTTP CalendarProvider.
@@ -252,8 +278,8 @@ Proposed sequence:
 CAL-00 Calendar Foundations            ✅
 CAL-01 Schedule Calendar Binding       ✅
 CAL-02 Calendar-aware Occurrence Planning  ✅
-CAL-03 Business-Day Trigger Semantics        ⏭ next
-CAL-04 Persistence / Migration Parity
+CAL-03 Business-Day Trigger Semantics        ✅
+CAL-04 Persistence / Migration Parity         ⏭ next
 CAL-05 Calendar Provider Adapters
 ```
 
@@ -261,4 +287,4 @@ The exact order after CAL-02 may be refined as occurrence semantics are qualifie
 
 ---
 
-**Status:** CAL-02 — Calendar-aware Occurrence Planning complete. Next: CAL-03.
+**Status:** CAL-03 — Business-Day Trigger Semantics complete. Next: CAL-04.

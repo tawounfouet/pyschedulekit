@@ -13,6 +13,7 @@ from pyschedulekit.api import AsyncioExecutor as AsyncioExecutor
 from pyschedulekit.api import AsyncPythonTargetRegistry as AsyncPythonTargetRegistry
 from pyschedulekit.api import AttemptId as AttemptId
 from pyschedulekit.api import BusinessCalendar as BusinessCalendar
+from pyschedulekit.api import BusinessDayTrigger as BusinessDayTrigger
 from pyschedulekit.api import CalendarProvider as CalendarProvider
 from pyschedulekit.api import CalendarRef as CalendarRef
 from pyschedulekit.api import CalendarRevision as CalendarRevision

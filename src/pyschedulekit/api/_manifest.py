@@ -6,6 +6,7 @@ STABLE_PUBLIC_NAMES = (
     "AsyncioExecutor",
     "AttemptId",
     "BusinessCalendar",
+    "BusinessDayTrigger",
     "CalendarProvider",
     "CalendarRef",
     "CalendarRevision",

@@ -58,6 +58,7 @@ class ScheduleSnapshot:
     target_kind: str
     target_reference: str
     timezone: str
+    calendar: CalendarSnapshotRef | None
     timeout_seconds: float | None
 
     @classmethod
@@ -72,6 +73,7 @@ class ScheduleSnapshot:
             target_kind=schedule.definition.target.kind,
             target_reference=schedule.definition.target.reference,
             timezone=schedule.definition.timezone.name,
+            calendar=schedule.definition.calendar,
             timeout_seconds=timeout.total_seconds if timeout is not None else None,
         )
 

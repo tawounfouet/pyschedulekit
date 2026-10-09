@@ -238,8 +238,8 @@ trigger family.
 `BusinessDayTrigger` models a monthly business recurrence directly:
 
 ```python
-BusinessDayTrigger(ordinal=1, hour=8)    # first working day
-BusinessDayTrigger(ordinal=2, hour=9)    # second working day
+BusinessDayTrigger(ordinal=1, hour=8)  # first working day
+BusinessDayTrigger(ordinal=2, hour=9)  # second working day
 BusinessDayTrigger(ordinal=-1, hour=18)  # last working day
 ```
 

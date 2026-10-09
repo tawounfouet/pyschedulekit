@@ -44,14 +44,10 @@ def decode_business_calendar(value: str) -> BusinessCalendar:
     try:
         payload = cast(dict[str, Any], json.loads(value))
     except (TypeError, json.JSONDecodeError) as exc:
-        raise PyScheduleKitConfigurationError(
-            "BusinessCalendar JSON is malformed."
-        ) from exc
+        raise PyScheduleKitConfigurationError("BusinessCalendar JSON is malformed.") from exc
 
     if not isinstance(payload, dict):
-        raise PyScheduleKitConfigurationError(
-            "BusinessCalendar JSON must contain an object."
-        )
+        raise PyScheduleKitConfigurationError("BusinessCalendar JSON must contain an object.")
 
     return _decode_business_calendar_payload(payload)
 
@@ -71,10 +67,7 @@ def encode_business_calendar_collection(
     return json.dumps(
         {
             "schema_version": _CALENDAR_COLLECTION_CODEC_VERSION,
-            "calendars": [
-                _encode_business_calendar_payload(calendar)
-                for calendar in ordered
-            ],
+            "calendars": [_encode_business_calendar_payload(calendar) for calendar in ordered],
         },
         separators=(",", ":"),
         sort_keys=True,
@@ -119,10 +112,7 @@ def decode_business_calendar_collection(value: str) -> tuple[BusinessCalendar, .
         )
         for item in raw_calendars
     )
-    keys = [
-        (calendar.calendar_ref, calendar.revision)
-        for calendar in calendars
-    ]
+    keys = [(calendar.calendar_ref, calendar.revision) for calendar in calendars]
     if len(keys) != len(set(keys)):
         raise PyScheduleKitConfigurationError(
             "BusinessCalendar collection contains duplicate revisions."
@@ -148,9 +138,7 @@ def _encode_business_calendar_payload(
         "revision": calendar.revision.value,
         "working_weekdays": sorted(calendar.working_weekdays),
         "holidays": sorted(day.isoformat() for day in calendar.holidays),
-        "extra_working_days": sorted(
-            day.isoformat() for day in calendar.extra_working_days
-        ),
+        "extra_working_days": sorted(day.isoformat() for day in calendar.extra_working_days),
     }
 
 
@@ -163,9 +151,7 @@ def _decode_business_calendar_payload(
         subject="BusinessCalendar",
     )
     if payload["schema_version"] != _CALENDAR_CODEC_VERSION:
-        raise PyScheduleKitConfigurationError(
-            "Unsupported BusinessCalendar schema version."
-        )
+        raise PyScheduleKitConfigurationError("Unsupported BusinessCalendar schema version.")
 
     reference = payload["reference"]
     revision = payload["revision"]
@@ -174,16 +160,11 @@ def _decode_business_calendar_payload(
     extra_working_days = payload["extra_working_days"]
 
     if not isinstance(reference, str):
-        raise PyScheduleKitConfigurationError(
-            "BusinessCalendar reference must be a string."
-        )
+        raise PyScheduleKitConfigurationError("BusinessCalendar reference must be a string.")
     if not isinstance(revision, int) or isinstance(revision, bool):
-        raise PyScheduleKitConfigurationError(
-            "BusinessCalendar revision must be an integer."
-        )
+        raise PyScheduleKitConfigurationError("BusinessCalendar revision must be an integer.")
     if not isinstance(working_weekdays, list) or not all(
-        isinstance(value, int) and not isinstance(value, bool)
-        for value in working_weekdays
+        isinstance(value, int) and not isinstance(value, bool) for value in working_weekdays
     ):
         raise PyScheduleKitConfigurationError(
             "BusinessCalendar working_weekdays must be a list of integers."
@@ -194,9 +175,7 @@ def _decode_business_calendar_payload(
             calendar_ref=CalendarRef(reference),
             revision=CalendarRevision(revision),
             working_weekdays=frozenset(cast(list[int], working_weekdays)),
-            holidays=frozenset(
-                _decode_date_list(holidays, field="holidays")
-            ),
+            holidays=frozenset(_decode_date_list(holidays, field="holidays")),
             extra_working_days=frozenset(
                 _decode_date_list(
                     extra_working_days,
@@ -211,9 +190,7 @@ def _decode_business_calendar_payload(
 
 
 def _decode_date_list(value: object, *, field: str) -> tuple[date, ...]:
-    if not isinstance(value, list) or not all(
-        isinstance(item, str) for item in value
-    ):
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise PyScheduleKitConfigurationError(
             f"BusinessCalendar {field} must be a list of ISO dates."
         )

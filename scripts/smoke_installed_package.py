@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 from importlib.metadata import version
 from importlib.resources import files
 from importlib.util import find_spec
@@ -24,7 +25,7 @@ def main() -> None:
 
     if find_spec("psycopg") is None:
         try:
-            import pyschedulekit.postgres  # noqa: F401
+            import_module("pyschedulekit.postgres")
         except pyschedulekit.PyScheduleKitConfigurationError as exc:
             assert "pyschedulekit[postgres]" in str(exc)
         else:

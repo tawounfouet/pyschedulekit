@@ -168,9 +168,7 @@ def test_pg01_staged_queries_observe_uncommitted_work() -> None:
         assert uow.requests.get_by_occurrence(request.occurrence_key) is request
         assert uow.executions.get_by_request(request.id) is execution
         assert [item.id for item in uow.executions.list_running(limit=10)] == []
-        assert [item.id for item in uow.attempts.list_for_execution(execution.id)] == [
-            attempt.id
-        ]
+        assert [item.id for item in uow.attempts.list_for_execution(execution.id)] == [attempt.id]
 
 
 def test_pg01_duplicate_schedule_maps_to_framework_error() -> None:

@@ -21,6 +21,7 @@ def test_t_pypi_001_publish_job_requires_successful_qualification() -> None:
     assert "qualify-release-candidate" in publish_section
     assert "github.event_name == 'push'" in publish_section
     assert "startsWith(github.ref, 'refs/tags/v')" in publish_section
+    assert "needs.qualify-release-candidate.outputs.publish-pypi == 'true'" in publish_section
 
 
 def test_t_pypi_002_publish_job_uses_production_environment_and_oidc() -> None:
@@ -73,3 +74,15 @@ def test_t_pypi_005_post_publish_verification_reads_from_pypi() -> None:
     assert "needs.qualify-release-candidate.outputs.package-version" in verify_section
     assert "cd /tmp" in verify_section
     assert "scripts/smoke_installed_package.py" in verify_section
+
+def test_t_pypi_006_qualification_exposes_publication_policy_output() -> None:
+    workflow = _workflow_text()
+    qualify_section = workflow.split("  qualify-release-candidate:", 1)[1].split(
+        "  publish-pypi:",
+        1,
+    )[0]
+
+    assert "publish-pypi: ${{ steps.publication-policy.outputs.value }}" in qualify_section
+    assert "python -m scripts.release_policy" in qualify_section
+    assert 'echo "value=$value" >> "$GITHUB_OUTPUT"' in qualify_section
+

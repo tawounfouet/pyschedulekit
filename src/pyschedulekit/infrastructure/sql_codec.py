@@ -34,8 +34,9 @@ from pyschedulekit.domain.retry import (
 )
 from pyschedulekit.domain.schedule import ScheduleDefinition, TargetRef
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
-from pyschedulekit.domain.trigger import Trigger
+from pyschedulekit.domain.trigger import CalendarAwareTrigger, Trigger
 from pyschedulekit.domain.triggers import (
+    BusinessDayTrigger,
     CronAmbiguousTimePolicy,
     CronDialect,
     CronNonexistentTimePolicy,
@@ -221,7 +222,18 @@ def _decode_target(payload: dict[str, Any]) -> TargetRef:
     )
 
 
-def _encode_trigger(trigger: Trigger) -> dict[str, Any]:
+def _encode_trigger(trigger: Trigger | CalendarAwareTrigger) -> dict[str, Any]:
+
+    if isinstance(trigger, BusinessDayTrigger):
+        return {
+            "kind": "business_day",
+            "ordinal": trigger.ordinal,
+            "hour": trigger.hour,
+            "minute": trigger.minute,
+            "ambiguous_time": trigger.ambiguous_time.value,
+            "nonexistent_time": trigger.nonexistent_time.value,
+        }
+
     if isinstance(trigger, DateTrigger):
         return {
             "kind": "date",
@@ -248,8 +260,19 @@ def _encode_trigger(trigger: Trigger) -> dict[str, Any]:
     raise TypeError(f"Unsupported Trigger type for SQL persistence: {type(trigger)!r}.")
 
 
-def _decode_trigger(payload: dict[str, Any]) -> Trigger:
+def _decode_trigger(payload: dict[str, Any]) -> Trigger | CalendarAwareTrigger:
     kind = cast(str, payload["kind"])
+    if kind == "business_day":
+        return BusinessDayTrigger(
+            ordinal=cast(int, payload["ordinal"]),
+            hour=cast(int, payload["hour"]),
+            minute=cast(int, payload["minute"]),
+            ambiguous_time=CronAmbiguousTimePolicy(cast(str, payload["ambiguous_time"])),
+            nonexistent_time=CronNonexistentTimePolicy(
+                cast(str, payload["nonexistent_time"])
+            ),
+        )
+
     if kind == "date":
         return DateTrigger(at=Instant.parse(cast(str, payload["at"])))
 

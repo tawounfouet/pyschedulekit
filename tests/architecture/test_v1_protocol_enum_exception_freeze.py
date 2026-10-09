@@ -26,8 +26,8 @@ from pyschedulekit.api import (
     HttpMethod,
     MisfirePolicyAction,
     ObservationSink,
-    OutboxPublishError,
     OutboxPublisher,
+    OutboxPublishError,
     OutboxState,
     PreparedTarget,
     PyScheduleKitConfigurationError,
@@ -283,4 +283,4 @@ def test_v1_01e_deprecation_warning_category_is_frozen() -> None:
 
 
 def test_v1_01e_error_named_diagnostic_records_remain_non_exceptions() -> None:
-    assert all(not issubclass(record_type, BaseException) for record_type in DIAGNOSTIC_RECORDS_WITH_ERROR_NAMES)
+    assert all(\n        not issubclass(record_type, BaseException)\n        for record_type in DIAGNOSTIC_RECORDS_WITH_ERROR_NAMES\n    )

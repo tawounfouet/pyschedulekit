@@ -48,11 +48,11 @@
 
 | Composant | Hébergement | Particularité |
 |---|---|---|
-| Paquet `pyschedulekit` | PyPI (Trusted Publishing OIDC), version `0.1.0a3` | Wheel/sdist, **0 dépendance runtime**, Python ≥ 3.11 |
+| Paquet `pyschedulekit` | PyPI : dernière version publique `0.1.0a3`; les versions source pré-1.0 peuvent avancer sans publication | Wheel/sdist, **0 dépendance runtime**, Python ≥ 3.11 |
 | Processus d'exécution | **chez le consommateur** (aucun serveur fourni) | Un ou N travailleurs ouvrant le même fichier SQLite |
 | CI qualité | GitHub Actions `ci.yml` (push/PR), matrice 3.11-3.13 | `ruff check → ruff format --check → mypy src → pytest --cov` |
 | Qualification | `distribution.yml` : wheel+sdist, clean-install, smoke hors arbre | Empêche de tester l'arbre source par accident |
-| Release | tag `v*` → qualification → PyPI Trusted Publishing → vérification → GitHub Release/provenance | `v0.1.0a3` est publié en prerelease immutable ; TestPyPI n'est pas obligatoire dans le chemin de go-live final |
+| Release publique | stable `>=1.0.0` uniquement : qualification → PyPI Trusted Publishing → vérification → GitHub Release/provenance | les milestones `0.x` et préversions restent internes et ne publient pas sur PyPI |
 
 ---
 
@@ -244,5 +244,4 @@ Les limites encore structurelles sont différentes :
 6. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
    compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
 
-Ces limites appartiennent à la Phase II / trajectoire vers `1.0`, pas au périmètre de
-correction de `0.1.0a4`.
+Ces limites appartiennent à la trajectoire pré-1.0 / Phase II et seront traitées par lots dédiés. Leur traitement n'est plus lié à une publication intermédiaire `0.x`.

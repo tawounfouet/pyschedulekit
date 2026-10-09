@@ -118,5 +118,10 @@ the stable API, public E2E, cookbook and benchmark surfaces. Calendars must rema
 deterministic and versioned; do not couple
 domain calendar rules to a holiday library, database, HTTP service, or global mutable
 provider.
+V1-00 readiness audit is complete and records a NO-GO for an immediate `v1.0.0`; the runtime
+foundation is green, while compatibility policy, secondary public namespaces, persistence
+support floors, Python 3.14/warning/security gates and stable-release workflow behavior remain
+tracked in `docs/v1/V1-00_READINESS_AUDIT.md`. V1-01 Public Contract Freeze is next. Do not
+bump the version, create `v1.0.0`, or expand the public feature surface during V1-01.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

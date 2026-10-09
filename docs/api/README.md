@@ -30,7 +30,8 @@ The root package mirrors the stable `pyschedulekit.api` surface.
 
 Pre-1.0 development may still evolve contracts, but exported stable names are already
 protected by manifest and identity tests. The project will make its full compatibility
-promise at `1.0.0`.
+promise at `1.0.0`. The exact remaining freeze work is tracked by the
+[V1-00 readiness audit](../v1/V1-00_READINESS_AUDIT.md).
 
 ## Scheduler facade
 

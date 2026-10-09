@@ -173,6 +173,13 @@ No public package publication is required to progress through those milestones.
 
 ## 1.0.0 activation gate
 
+The [V1-00 Readiness Audit](../v1/V1-00_READINESS_AUDIT.md) records the current gate as
+**NO-GO**. Runtime qualification is green; the public compatibility promise, persistence
+support floor, platform/security gates and stable GitHub Release behavior remain open.
+
+Closure is organized as V1-01 through V1-05 in the
+[1.0 readiness roadmap](../v1/README.md).
+
 Before creating `v1.0.0`, all of the following must be true:
 
 - source version and changelog are `1.0.0`;

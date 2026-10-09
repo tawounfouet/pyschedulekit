@@ -90,6 +90,11 @@ in `docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`.
 The 0.3.x calendar and 0.4.x composite-trigger sequences are complete. `AnyOfTrigger` is
 now a stable public primitive for a bounded, duplicate-free union of pure temporal rules.
 
+The [V1-00 readiness audit](./docs/v1/V1-00_READINESS_AUDIT.md) has started the 1.0
+stabilization sequence. Runtime qualification is green, but the current `v1.0.0` verdict is
+**NO-GO** until the public compatibility policy, persistence support floor, platform/security
+gates and stable GitHub Release path are closed.
+
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 
 The implementation follows a domain-first roadmap:

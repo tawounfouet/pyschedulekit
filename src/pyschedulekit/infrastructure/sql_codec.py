@@ -5,6 +5,11 @@ from __future__ import annotations
 import json
 from typing import Any, cast
 
+from pyschedulekit.domain.calendar import (
+    CalendarRef,
+    CalendarRevision,
+    CalendarSnapshotRef,
+)
 from pyschedulekit.domain.concurrency import (
     ConcurrencyMode,
     ConcurrencyOverflowPolicy,
@@ -63,6 +68,7 @@ def encode_schedule_definition(definition: ScheduleDefinition) -> str:
             "target": _encode_target(definition.target),
             "trigger": _encode_trigger(definition.trigger),
             "timezone": definition.timezone.name,
+            "calendar": _encode_calendar_snapshot_ref(definition.calendar),
             "misfire": _encode_misfire(definition.misfire),
             "concurrency": _encode_concurrency(definition.concurrency),
             "retry": _encode_retry(definition.retry),
@@ -77,6 +83,7 @@ def decode_schedule_definition(value: str) -> ScheduleDefinition:
         target=_decode_target(cast(dict[str, Any], payload["target"])),
         trigger=_decode_trigger(cast(dict[str, Any], payload["trigger"])),
         timezone=Timezone(cast(str, payload["timezone"])),
+        calendar=_decode_calendar_snapshot_ref(payload.get("calendar")),
         misfire=_decode_misfire(cast(dict[str, Any], payload["misfire"])),
         concurrency=_decode_concurrency(cast(dict[str, Any], payload["concurrency"])),
         retry=_decode_retry(cast(dict[str, Any], payload["retry"])),
@@ -160,6 +167,28 @@ def decode_execution_result(value: str | None) -> ExecutionResult | None:
         state=ExecutionState(cast(str, payload["state"])),
         completed_at=Instant.parse(cast(str, payload["completed_at"])),
         failure=_decode_failure(payload.get("failure")),
+    )
+
+
+def _encode_calendar_snapshot_ref(
+    snapshot: CalendarSnapshotRef | None,
+) -> dict[str, Any] | None:
+    if snapshot is None:
+        return None
+    return {
+        "reference": snapshot.calendar_ref.value,
+        "revision": snapshot.revision.value,
+    }
+
+
+def _decode_calendar_snapshot_ref(payload: object) -> CalendarSnapshotRef | None:
+    if payload is None:
+        return None
+
+    value = cast(dict[str, Any], payload)
+    return CalendarSnapshotRef(
+        calendar_ref=CalendarRef(cast(str, value["reference"])),
+        revision=CalendarRevision(cast(int, value["revision"])),
     )
 
 

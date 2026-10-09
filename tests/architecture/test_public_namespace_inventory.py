@@ -19,8 +19,8 @@ def test_v1_01a_namespace_classifications_are_exact() -> None:
     assert PUBLIC_NAMESPACE_CLASSIFICATIONS == {
         "pyschedulekit": "stable-candidate",
         "pyschedulekit.api": "stable-candidate",
-        "pyschedulekit.postgres": "stable-candidate",
-        "pyschedulekit.testing": "supported-testing",
+        "pyschedulekit.postgres": "stable-optional",
+        "pyschedulekit.testing": "stable-testing",
         "pyschedulekit.experimental": "experimental",
     }
 

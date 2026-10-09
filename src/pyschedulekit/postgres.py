@@ -18,9 +18,7 @@ try:
         PostgresUnitOfWorkFactory as PostgresUnitOfWorkFactory,
     )
 except ModuleNotFoundError as exc:
-    if exc.name is not None and (
-        exc.name == "psycopg" or exc.name.startswith("psycopg.")
-    ):
+    if exc.name is not None and (exc.name == "psycopg" or exc.name.startswith("psycopg.")):
         raise PyScheduleKitConfigurationError(
             "PostgreSQL persistence requires the optional dependency extra: "
             'pip install "pyschedulekit[postgres]".'

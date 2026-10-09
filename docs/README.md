@@ -34,6 +34,7 @@ docs/
 ├── SDLC.md                    # current engineering lifecycle
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
+├── cookbook/                  # runnable real-world usage scenarios
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
 ├── release/                   # release engineering and rollback discipline
 └── specs/                     # domain / architecture / acceptance specifications
@@ -59,8 +60,8 @@ Do not interpret red states inside the three snapshot documents as current repos
 ```text
 LOT-00 ... LOT-34                     ✅ initial functional roadmap
 POST-00 Audit Remediation             ✅ complete
-POST-01 Documentation Cleanup         🚧 current
-POST-02 Real-world Examples/Cookbook  ⬜
+POST-01 Documentation Cleanup         ✅
+POST-02 Real-world Examples/Cookbook  🚧 current
 POST-03 API Documentation             ⬜
 POST-04 Dogfooding                    ⬜
 POST-05 Benchmarks                    ⬜
@@ -101,6 +102,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | verify whether an audit finding is still open | [POST-00 status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) |
 | inspect original design intent | [Specs](./specs/) |
 | inspect implementation history | [Implementation LOTs](./implementation/) |
+| run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule

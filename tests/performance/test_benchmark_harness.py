@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from benchmarks.run_baseline import assert_guardrails, run_baseline
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

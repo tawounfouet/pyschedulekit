@@ -49,6 +49,7 @@ from pyschedulekit.api import ExecutorRegistry as ExecutorRegistry
 from pyschedulekit.api import ExponentialBackoff as ExponentialBackoff
 from pyschedulekit.api import Failure as Failure
 from pyschedulekit.api import FailureCategory as FailureCategory
+from pyschedulekit.api import FileCalendarProvider as FileCalendarProvider
 from pyschedulekit.api import FixedBackoff as FixedBackoff
 from pyschedulekit.api import GracePeriod as GracePeriod
 from pyschedulekit.api import HttpExecutor as HttpExecutor
@@ -101,6 +102,7 @@ from pyschedulekit.api import SchedulerHealth as SchedulerHealth
 from pyschedulekit.api import SchedulerReadiness as SchedulerReadiness
 from pyschedulekit.api import ShutdownMode as ShutdownMode
 from pyschedulekit.api import ShutdownResult as ShutdownResult
+from pyschedulekit.api import SqliteCalendarProvider as SqliteCalendarProvider
 from pyschedulekit.api import SqliteUnitOfWorkFactory as SqliteUnitOfWorkFactory
 from pyschedulekit.api import TargetRef as TargetRef
 from pyschedulekit.api import TargetResolutionError as TargetResolutionError

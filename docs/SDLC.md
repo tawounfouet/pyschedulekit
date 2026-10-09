@@ -103,7 +103,7 @@ POST-06 Chaos / Fault Injection         ✅
 0.3.x CAL-02 Calendar-aware Planning      ✅
 0.3.x CAL-03 Business-Day Trigger Semantics ✅
 0.3.x CAL-04 Persistence / Migration Parity  ✅
-0.3.x CAL-05 Calendar Provider Adapters       ⏭ next
+0.3.x CAL-05 Calendar Provider Adapters       ✅
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -116,7 +116,7 @@ POST-06 Chaos / Fault Injection         ✅
 - **PG-03 qualifié** : contrat partagé InMemory/SQLite/PostgreSQL, 130 tests PostgreSQL live, couverture PostgreSQL 87,88% avec floor 85%.
 - **PG-04 qualifié** : 138 tests PostgreSQL live, Scheduler/run_pending, retry, outbox, reconciliation, crash recovery et contention multi-worker; couverture PostgreSQL 88,59%.
 - **PostgreSQL** : qualifié jusqu'à PG-05, public via `pyschedulekit.postgres`, support matrix 16/17/18, couverture live 88,86%.
-- **Étape active** : CAL-04 est qualifié ; CAL-05 ajoute maintenant les adapters CalendarProvider externes sans déplacer les règles métier hors du domaine.
+- **Étape active** : la séquence calendrier CAL-00 → CAL-05 est qualifiée et complète ; le prochain axe pré-1.0 doit être sélectionné explicitement avant implémentation.
 
 ---
 
@@ -147,7 +147,10 @@ POST-06 Chaos / Fault Injection         ✅
 7. executor plugin registry ✅ ;
 8. CAL-00 Calendar Foundations ✅ ;
 9. CAL-01 Schedule Calendar Binding ✅ ;
-10. CAL-02 Calendar-aware Occurrence Planning ⏭.
+10. CAL-02 Calendar-aware Occurrence Planning ✅ ;
+11. CAL-03 Business-Day Trigger Semantics ✅ ;
+12. CAL-04 Persistence / Migration Parity ✅ ;
+13. CAL-05 Calendar Provider Adapters ✅.
 
 Aucune publication PyPI intermédiaire n'est nécessaire pour franchir ces étapes.
 

@@ -75,7 +75,7 @@ POST-04 Dogfooding                    ✅
 POST-05 Benchmarks                    ✅
 POST-06 Chaos / Fault Injection       ✅
         ↓
-0.2.x Execution & Storage Ecosystem   🚧 current
+0.2.x Execution & Storage Ecosystem   ✅ complete
   PG-00 PostgreSQL Foundation         ✅
   PG-01 Core Repositories             ✅
   PG-02 Coordination/Outbox/Retention ✅
@@ -86,15 +86,15 @@ POST-06 Chaos / Fault Injection       ✅
   Async Python Executor                 ✅
   Executor Plugin Registry              ✅
         ↓
-0.3.x Advanced Scheduling               🚧 current
+0.3.x Advanced Scheduling               ✅ complete
   CAL-00 Calendar Foundations             ✅
   CAL-01 Schedule Calendar Binding        ✅
   CAL-02 Calendar-aware Planning          ✅
   CAL-03 Business-Day Trigger Semantics   ✅
   CAL-04 Persistence / Migration Parity    ✅
-  CAL-05 Calendar Provider Adapters          ⏭ next
+  CAL-05 Calendar Provider Adapters          ✅
         ↓
-...
+Next pre-1.0 roadmap axis: to be selected
         ↓
 1.0.0 stable public contract
 ```
@@ -149,4 +149,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CAL-04 Persistence / Migration Parity.
+**Last refreshed:** 2026-10-09 — CAL-05 Calendar Provider Adapters.

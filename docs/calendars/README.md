@@ -286,19 +286,52 @@ the next normal write upgrades the JSON to v3 without changing the SQL schema.
 This is a serialized domain-configuration migration. It deliberately does not introduce a
 database schema migration because no table or column change is required.
 
+## CAL-05 — Calendar Provider Adapters
+
+The calendar port now has three concrete deterministic local adapters:
+
+- `InMemoryCalendarProvider` — explicit process-local registrations;
+- `FileCalendarProvider` — validated read-only JSON snapshot loaded once;
+- `SqliteCalendarProvider` — durable revision store with an isolated versioned schema.
+
+All three preserve the same contract:
+
+```text
+CalendarRef
++
+optional exact CalendarRevision
+        ↓
+BusinessCalendar
+```
+
+The File adapter deliberately does not watch or hot-reload its source. The file is validated
+at construction and becomes the provider snapshot for that instance.
+
+The SQLite adapter stores calendar definitions separately from Scheduler runtime tables and
+may safely share the same database file as `SqliteUnitOfWorkFactory`.
+
+Both external adapters use a strict versioned calendar JSON codec. Unknown fields,
+malformed dates and unsupported future versions fail closed.
+
+### CAL-05 boundary
+
+Remote HTTP/SaaS providers remain out of scope. They require a transient
+SchedulerEvaluationError/retry-suppression contract that is distinct from static local
+configuration.
+
 ## Non-goals
 
-The calendar series still does **not** yet:
+The calendar series still does **not**:
 
 - ship country-specific holiday truth;
 - call external calendar APIs;
-- implement a SQL/File/HTTP CalendarProvider.
+- implement a remote HTTP/SaaS CalendarProvider.
 
-Those belong to later calendar lots.
+Those are intentionally deferred beyond the current 0.3.x calendar sequence.
 
-## Next calendar lots
+## Calendar delivery status
 
-Proposed sequence:
+Completed sequence:
 
 ```text
 CAL-00 Calendar Foundations            ✅
@@ -306,11 +339,11 @@ CAL-01 Schedule Calendar Binding       ✅
 CAL-02 Calendar-aware Occurrence Planning  ✅
 CAL-03 Business-Day Trigger Semantics        ✅
 CAL-04 Persistence / Migration Parity         ✅
-CAL-05 Calendar Provider Adapters              ⏭ next
+CAL-05 Calendar Provider Adapters              ✅
 ```
 
-The exact order after CAL-02 may be refined as occurrence semantics are qualified.
+The planned CAL-00 → CAL-05 calendar sequence is now complete.
 
 ---
 
-**Status:** CAL-04 — Persistence / Migration Parity complete. Next: CAL-05.
+**Status:** CAL-05 — Calendar Provider Adapters complete. The planned 0.3.x calendar sequence is complete.

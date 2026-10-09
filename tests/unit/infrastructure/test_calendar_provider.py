@@ -1,5 +1,6 @@
 """CAL-00 qualification for InMemoryCalendarProvider."""
 
+import sqlite3
 from datetime import date
 
 import pytest
@@ -11,7 +12,14 @@ from pyschedulekit.domain.calendar import (
     CalendarSnapshotRef,
 )
 from pyschedulekit.errors import PyScheduleKitConfigurationError
-from pyschedulekit.infrastructure.calendar import InMemoryCalendarProvider
+from pyschedulekit.infrastructure.calendar import (
+    FileCalendarProvider,
+    InMemoryCalendarProvider,
+    SqliteCalendarProvider,
+)
+from pyschedulekit.infrastructure.calendar_codec import (
+    encode_business_calendar_collection,
+)
 from pyschedulekit.ports.calendar import CalendarProvider
 
 
@@ -108,3 +116,112 @@ def test_calendar_providers_are_isolated_instances() -> None:
 
     with pytest.raises(PyScheduleKitConfigurationError):
         second.resolve(CalendarRef("private"))
+
+
+def test_file_calendar_provider_satisfies_provider_shape(tmp_path) -> None:
+    calendar_file = tmp_path / "calendars.json"
+    calendar_file.write_text(
+        encode_business_calendar_collection((_calendar("market", 1),)),
+        encoding="utf-8",
+    )
+
+    provider = FileCalendarProvider(calendar_file)
+
+    assert _accept_provider(provider) is provider
+    assert provider.resolve(CalendarRef("market")).revision == CalendarRevision(1)
+
+
+def test_file_provider_loads_one_immutable_snapshot(tmp_path) -> None:
+    calendar_file = tmp_path / "calendars.json"
+    calendar_file.write_text(
+        encode_business_calendar_collection((_calendar("market", 1),)),
+        encoding="utf-8",
+    )
+    provider = FileCalendarProvider(calendar_file)
+
+    calendar_file.write_text(
+        encode_business_calendar_collection((_calendar("market", 2),)),
+        encoding="utf-8",
+    )
+
+    assert provider.resolve(CalendarRef("market")).revision == CalendarRevision(1)
+
+
+def test_file_provider_rejects_missing_or_oversized_files(tmp_path) -> None:
+    with pytest.raises(PyScheduleKitConfigurationError, match="cannot be read"):
+        FileCalendarProvider(tmp_path / "missing.json")
+
+    calendar_file = tmp_path / "oversized.json"
+    calendar_file.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(PyScheduleKitConfigurationError, match="size limit"):
+        FileCalendarProvider(calendar_file, max_bytes=1)
+
+
+def test_sqlite_calendar_provider_persists_and_reopens_revisions(tmp_path) -> None:
+    database = tmp_path / "calendars.db"
+    provider = SqliteCalendarProvider(database)
+    provider.register(_calendar("market", 1, holiday=date(2026, 5, 1)))
+    provider.register(_calendar("market", 3))
+    provider.register(_calendar("market", 2))
+
+    reopened = SqliteCalendarProvider(database)
+
+    assert _accept_provider(reopened) is reopened
+    assert reopened.resolve(CalendarRef("market")).revision == CalendarRevision(3)
+    assert reopened.resolve(
+        CalendarRef("market"),
+        revision=CalendarRevision(1),
+    ).holidays == frozenset({date(2026, 5, 1)})
+    assert reopened.references == (
+        CalendarSnapshotRef(CalendarRef("market"), CalendarRevision(1)),
+        CalendarSnapshotRef(CalendarRef("market"), CalendarRevision(2)),
+        CalendarSnapshotRef(CalendarRef("market"), CalendarRevision(3)),
+    )
+
+
+def test_sqlite_provider_duplicate_revision_requires_explicit_replace(tmp_path) -> None:
+    provider = SqliteCalendarProvider(tmp_path / "calendars.db")
+    provider.register(_calendar("market", 1, holiday=date(2026, 5, 1)))
+
+    with pytest.raises(PyScheduleKitConfigurationError, match="already registered"):
+        provider.register(_calendar("market", 1))
+
+    provider.register(_calendar("market", 1), replace=True)
+
+    assert (
+        provider.resolve(
+            CalendarRef("market"),
+            revision=CalendarRevision(1),
+        ).holidays
+        == frozenset()
+    )
+
+
+def test_sqlite_provider_unknown_calendar_matches_static_provider_error(tmp_path) -> None:
+    provider = SqliteCalendarProvider(tmp_path / "calendars.db")
+
+    with pytest.raises(PyScheduleKitConfigurationError, match="is not registered"):
+        provider.resolve(CalendarRef("unknown"))
+
+    provider.register(_calendar("market", 1))
+    with pytest.raises(PyScheduleKitConfigurationError, match="revision 2"):
+        provider.resolve(CalendarRef("market"), revision=CalendarRevision(2))
+
+
+def test_sqlite_provider_rejects_in_memory_database() -> None:
+    with pytest.raises(PyScheduleKitConfigurationError, match="file-backed"):
+        SqliteCalendarProvider(":memory:")
+
+
+def test_sqlite_provider_rejects_future_schema_version(tmp_path) -> None:
+    database = tmp_path / "calendars.db"
+    SqliteCalendarProvider(database)
+
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "UPDATE pyschedulekit_calendar_schema SET version = 2 WHERE singleton = 1"
+        )
+
+    with pytest.raises(PyScheduleKitConfigurationError, match="schema version"):
+        SqliteCalendarProvider(database)

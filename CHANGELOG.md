@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CAL-05 Calendar Provider Adapters: public `FileCalendarProvider` and `SqliteCalendarProvider`, a shared strict/versioned BusinessCalendar JSON codec, immutable file snapshots, isolated revision-aware SQLite storage, explicit duplicate replacement, future-schema fail-closed behavior, and Scheduler E2E qualification including coexistence with `SqliteUnitOfWorkFactory` in one database file.
+
 - Added CAL-04 Persistence / Migration Parity: Schedule-definition codec v3, independently versioned Trigger envelopes, v1/v2 legacy reads, fail-closed future-version handling, semantic migration conformance, and live SQLite/PostgreSQL upgrade-on-write qualification for legacy calendar-bound BusinessDayTrigger rows.
 
 - Added CAL-03 Business-Day Trigger Semantics with public `BusinessDayTrigger` support for positive/negative monthly working-day ordinals, Schedule-local civil time, exact versioned calendars, explicit DST policies, bounded search, declarative persistence, and Memory/SQLite/PostgreSQL parity qualification.

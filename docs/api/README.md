@@ -78,6 +78,8 @@ composition-root parameter resolves exact calendar revisions for calendar-bound 
 | `BusinessCalendar` | immutable working-week / holiday / exception rules |
 | `CalendarProvider` | port resolving latest or exact calendar revisions |
 | `InMemoryCalendarProvider` | thread-safe process-local provider implementation |
+| `FileCalendarProvider` | read-only validated JSON snapshot provider loaded once at construction |
+| `SqliteCalendarProvider` | durable revision-aware provider backed by an isolated SQLite schema |
 
 CAL-01 binds an optional exact `CalendarSnapshotRef` into `ScheduleDefinition` and exposes
 it through `ScheduleSnapshot.calendar`. CAL-02 resolves that exact revision through the
@@ -132,6 +134,21 @@ write. Unsupported future Schedule-definition or Trigger versions fail closed.
 
 This migration contract is internal persistence behavior; it does not add a public migration
 method or change the `Scheduler.add_schedule()` API.
+
+## CAL-05 provider adapters
+
+`FileCalendarProvider(path)` loads one strict versioned JSON collection at construction.
+The effective provider snapshot does not change if the file is edited later.
+
+`SqliteCalendarProvider(database)` stores exact calendar revisions in dedicated
+`pyschedulekit_calendar_schema` and `pyschedulekit_business_calendars` tables. It may use
+the same SQLite file as `SqliteUnitOfWorkFactory`; the schemas remain independent.
+
+Both providers implement the same `CalendarProvider.resolve(reference, revision=...)`
+contract as `InMemoryCalendarProvider`. Static missing/malformed/unsupported definitions
+fail as `PyScheduleKitConfigurationError`.
+
+CAL-05 intentionally does not introduce remote HTTP/SaaS calendar resolution.
 
 ## Time and trigger model
 

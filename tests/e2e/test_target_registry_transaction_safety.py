@@ -12,8 +12,8 @@ from pyschedulekit.ports.persistence import DuplicateScheduleError
 from pyschedulekit.testing import MutableClock
 
 
-def _instant() -> Instant:
-    return Instant(datetime(2026, 1, 1, 10, 0, tzinfo=UTC))
+def _instant(minute: int = 0) -> Instant:
+    return Instant(datetime(2026, 1, 1, 10, minute, tzinfo=UTC))
 
 
 def test_failed_schedule_commit_compensates_implicit_target_registration() -> None:
@@ -22,7 +22,7 @@ def test_failed_schedule_commit_compensates_implicit_target_registration() -> No
     scheduler = Scheduler(clock=clock, registry=registry)
     trigger = IntervalTrigger(
         every=Duration.minutes(10),
-        anchor=_instant() + Duration.minutes(10),
+        anchor=_instant(10),
     )
 
     scheduler.add_schedule(

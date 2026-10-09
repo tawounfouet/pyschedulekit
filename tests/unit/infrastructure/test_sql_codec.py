@@ -93,6 +93,7 @@ def test_t_sql_codec_003_cron_trigger_round_trip() -> None:
 
     assert decoded == definition
 
+
 def test_calendar_snapshot_definition_round_trip() -> None:
     definition = ScheduleDefinition(
         target=TargetRef.python("jobs:calendar"),

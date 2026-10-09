@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.application.calendar_resolution import resolve_calendar_binding
 from pyschedulekit.application.materialization import ScheduleMaterializationCoordinator
+from pyschedulekit.domain.calendar import BusinessCalendar
 from pyschedulekit.domain.execution_request import ExecutionRequest
 from pyschedulekit.domain.materialization_lease import (
     MaterializationLeaseOwnershipError,
@@ -19,6 +21,7 @@ from pyschedulekit.domain.misfire import (
 from pyschedulekit.domain.occurrence import Occurrence, OccurrenceKey, OccurrencePlanner
 from pyschedulekit.domain.schedule import Schedule, ScheduleId, ScheduleState
 from pyschedulekit.domain.time import Instant
+from pyschedulekit.ports.calendar import CalendarProvider
 from pyschedulekit.ports.persistence import PersistenceConflictError, UnitOfWork, UnitOfWorkFactory
 
 
@@ -71,11 +74,13 @@ class SchedulerEngine:
         *,
         uow_factory: UnitOfWorkFactory,
         occurrence_planner: OccurrencePlanner | None = None,
+        calendar_provider: CalendarProvider | None = None,
         misfire_evaluator: MisfireEvaluator | None = None,
         materialization_coordinator: ScheduleMaterializationCoordinator | None = None,
     ) -> None:
         self._uow_factory = uow_factory
         self._occurrence_planner = occurrence_planner or OccurrencePlanner()
+        self._calendar_provider = calendar_provider
         self._misfire_evaluator = misfire_evaluator or MisfireEvaluator()
         self._materialization_coordinator = materialization_coordinator
 
@@ -184,8 +189,20 @@ class SchedulerEngine:
                 )
                 return _ScheduleEvaluation()
 
-            occurrence = self._occurrence_planner.current(schedule)
+            calendar = resolve_calendar_binding(
+                schedule.definition.calendar,
+                self._calendar_provider,
+            )
+            occurrence = self._occurrence_planner.current(
+                schedule,
+                calendar=calendar,
+            )
             if occurrence is None:
+                schedule.advance_next_run_after(
+                    reference=checkpoint,
+                    calendar=calendar,
+                )
+                uow.schedules.save(schedule)
                 self._commit_with_materialization_lease(
                     uow=uow,
                     handle=materialization_handle,
@@ -200,7 +217,11 @@ class SchedulerEngine:
             ):
                 existing = uow.requests.get_by_occurrence(occurrence.key)
                 if existing is not None:
-                    self._advance_schedule(schedule, occurrences=(occurrence,))
+                    self._advance_schedule(
+                        schedule,
+                        occurrences=(occurrence,),
+                        calendar=calendar,
+                    )
                     uow.schedules.save(schedule)
                     self._commit_with_materialization_lease(
                         uow=uow,
@@ -226,6 +247,7 @@ class SchedulerEngine:
                     evaluation_now=evaluation_now,
                     misfire_record=record,
                     materialization_handle=materialization_handle,
+                    calendar=calendar,
                 )
 
             if decision.action is MisfireDecisionAction.COALESCE:
@@ -235,10 +257,15 @@ class SchedulerEngine:
                     evaluation_now=evaluation_now,
                     misfire_record=record,
                     materialization_handle=materialization_handle,
+                    calendar=calendar,
                 )
 
             if decision.action is MisfireDecisionAction.SKIP:
-                self._advance_schedule(schedule, occurrences=(occurrence,))
+                self._advance_schedule(
+                        schedule,
+                        occurrences=(occurrence,),
+                        calendar=calendar,
+                    )
                 uow.schedules.save(schedule)
                 self._commit_with_materialization_lease(
                     uow=uow,
@@ -253,7 +280,11 @@ class SchedulerEngine:
                 occurrence=occurrence,
                 created_at=evaluation_now,
             )
-            self._advance_schedule(schedule, occurrences=(occurrence,))
+            self._advance_schedule(
+                        schedule,
+                        occurrences=(occurrence,),
+                        calendar=calendar,
+                    )
             uow.schedules.save(schedule)
             self._commit_with_materialization_lease(
                 uow=uow,
@@ -291,7 +322,11 @@ class SchedulerEngine:
             for occurrence in backlog.occurrences
         )
 
-        self._advance_schedule(schedule, occurrences=backlog.occurrences)
+        self._advance_schedule(
+            schedule,
+            occurrences=backlog.occurrences,
+            calendar=calendar,
+        )
         uow.schedules.save(schedule)
         self._commit_with_materialization_lease(
             uow=uow,
@@ -371,7 +406,11 @@ class SchedulerEngine:
             )
         )
 
-        self._advance_schedule(schedule, occurrences=backlog.occurrences)
+        self._advance_schedule(
+            schedule,
+            occurrences=backlog.occurrences,
+            calendar=calendar,
+        )
         uow.schedules.save(schedule)
         self._commit_with_materialization_lease(
             uow=uow,
@@ -455,6 +494,10 @@ class SchedulerEngine:
         schedule: Schedule,
         *,
         occurrences: tuple[Occurrence, ...],
+        calendar: BusinessCalendar | None,
     ) -> None:
         for occurrence in occurrences:
-            schedule.advance_next_run_after(reference=occurrence.scheduled_at)
+            schedule.advance_next_run_after(
+                reference=occurrence.scheduled_at,
+                calendar=calendar,
+            )

@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — V1-00 Readiness Audit
+## 4. État courant — V1-01 Public Contract Freeze
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -106,7 +106,9 @@ POST-06 Chaos / Fault Injection         ✅
 0.3.x CAL-05 Calendar Provider Adapters       ✅
 0.4.x CMP-00 → CMP-05 Composite Triggers       ✅
 V1-00 Readiness Audit                           ✅ NO-GO recorded
-V1-01 Public Contract Freeze                    ⏭ NEXT
+V1-01 Public Contract Freeze                    🚧 IN PROGRESS
+  V1-01.A Public API Inventory & Classification  ✅
+  V1-01.B Root/API Stable Candidate Review       ⏭ NEXT
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -122,7 +124,8 @@ V1-01 Public Contract Freeze                    ⏭ NEXT
 - **Composite Triggers** : CMP-00 → CMP-05 qualifiés et publics via `AnyOfTrigger`.
 - **Verdict `v1.0.0`** : **NO-GO contractuel/release**, avec runtime et qualification
   fonctionnelle verts ; voir [V1-00 Readiness Audit](./v1/V1-00_READINESS_AUDIT.md).
-- **Étape active** : V1-01 Public Contract Freeze.
+- **V1-01.A** : inventaire exécutable figé à 104 exports root/API, 2 PostgreSQL, 5 testing et 11 experimental/legacy ; classifications provisoires enregistrées dans le manifest.
+- **Étape active** : V1-01.B Root/API Stable Candidate Review.
 
 ---
 
@@ -145,11 +148,12 @@ V1-01 Public Contract Freeze                    ⏭ NEXT
 ### Suite
 
 1. V1-00 — Readiness Audit ✅ ;
-2. V1-01 — Public Contract Freeze ⏭ ;
-3. V1-02 — Persistence Compatibility Contract ;
-4. V1-03 — Platform, Warning and Security Gates ;
-5. V1-04 — Consumer and Stable-Release Rehearsal ;
-6. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
+2. V1-01.A — Public API Inventory & Classification ✅ ;
+3. V1-01.B — Root/API Stable Candidate Review ⏭ ;
+4. V1-02 — Persistence Compatibility Contract ;
+5. V1-03 — Platform, Warning and Security Gates ;
+6. V1-04 — Consumer and Stable-Release Rehearsal ;
+7. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
 
 Aucune publication PyPI intermédiaire n'est autorisée pour franchir ces étapes. Le tag
 `v1.0.0` reste interdit avant un GO explicite en V1-05.
@@ -185,4 +189,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — V1-00 Readiness Audit.*
+*Dernière mise à jour : 2026-10-09 — V1-01.A Public API Inventory & Classification.*

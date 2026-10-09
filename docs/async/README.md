@@ -226,4 +226,6 @@ without expanding Scheduler-specific branches.
 
 ---
 
-**Status:** 0.2.x — Async Python Executor.
+**Status:** 0.2.x — Async Python Executor ✅ complete.
+
+**Next:** Executor Plugin Registry.

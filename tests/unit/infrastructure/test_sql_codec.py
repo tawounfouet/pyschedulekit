@@ -19,6 +19,7 @@ from pyschedulekit.domain.retry import ExponentialBackoff, RetryPolicy
 from pyschedulekit.domain.schedule import ScheduleDefinition, TargetRef
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
 from pyschedulekit.domain.triggers import (
+    BusinessDayTrigger,
     CronAmbiguousTimePolicy,
     CronNonexistentTimePolicy,
     CronTrigger,
@@ -167,3 +168,27 @@ def test_future_schedule_definition_codec_version_fails_closed() -> None:
 
     with pytest.raises(ValueError, match="Unsupported Schedule definition codec version"):
         decode_schedule_definition(json.dumps(encoded))
+
+
+def test_business_day_trigger_definition_round_trip() -> None:
+    definition = ScheduleDefinition(
+        target=TargetRef.python("jobs:month-close"),
+        trigger=BusinessDayTrigger(
+            ordinal=-1,
+            hour=18,
+            minute=30,
+            ambiguous_time=CronAmbiguousTimePolicy.SECOND,
+            nonexistent_time=CronNonexistentTimePolicy.RAISE,
+        ),
+        timezone=Timezone("Europe/Paris"),
+        calendar=CalendarSnapshotRef(
+            calendar_ref=CalendarRef("finance-days"),
+            revision=CalendarRevision(7),
+        ),
+    )
+
+    encoded = encode_schedule_definition(definition)
+    decoded = decode_schedule_definition(encoded)
+
+    assert json.loads(encoded)["version"] == 2
+    assert decoded == definition

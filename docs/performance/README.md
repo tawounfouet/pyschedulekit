@@ -6,6 +6,12 @@ PyScheduleKit performance qualification follows the V1 test specification:
 
 The executable harness is [`benchmarks/run_baseline.py`](../../benchmarks/run_baseline.py).
 
+
+For broader, non-gating cron/SQLite/throughput evidence, see the companion
+[benchmark measurement harness](../benchmarks/README.md). The two harnesses are intentionally
+separate: this document covers V1 complexity guardrails; the companion covers comparative
+measurement evidence.
+
 ## What is measured
 
 ### T-PERF-001 — bounded IntervalTrigger calculation

@@ -6,6 +6,26 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ## [Unreleased]
 
+## [0.1.0a4] - 2026-10-09
+
+### Fixed
+
+- Hardened cancellation/timeout/retry interactions so cancellation cannot schedule another attempt.
+- Made concurrent execution-state changes survivable in `run_pending()` and the continuous runtime.
+- Made SQLite schema bootstrap safe under concurrent initialization.
+- Released admission locks immediately after persistence conflicts instead of waiting for TTL expiry.
+- Aligned InMemory and SQLite persistence semantics through shared adapter-parity contracts.
+- Compensated implicit local target registrations when schedule creation does not commit.
+- Closed HTTP error responses deterministically and enforced bounded same-host HTTP(S) redirect handling.
+
+### Changed
+
+- Added an enforced 85% coverage floor, pinned Ruff/tooling, and stronger CI reproducibility.
+- Integrated maintained acceptance/public-package qualification into the quality surface.
+- Consolidated the OpenCode audit into immutable snapshot documents plus an authoritative current remediation status.
+- Completed POST-00 audit remediation and adversarial hardening with no remaining open B1-B12 finding.
+- Updated release-readiness defaults for the `v0.1.0a4` candidate.
+
 ## [0.1.0a3] - 2026-10-08
 
 ### Changed

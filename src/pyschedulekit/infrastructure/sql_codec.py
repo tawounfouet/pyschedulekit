@@ -36,6 +36,7 @@ from pyschedulekit.domain.schedule import ScheduleDefinition, TargetRef
 from pyschedulekit.domain.time import Duration, GracePeriod, Instant, Timezone
 from pyschedulekit.domain.trigger import CalendarAwareTrigger, Trigger
 from pyschedulekit.domain.triggers import (
+    AnyOfTrigger,
     BusinessDayTrigger,
     CronAmbiguousTimePolicy,
     CronDialect,
@@ -48,6 +49,7 @@ from pyschedulekit.domain.triggers import (
 _CODEC_VERSION = 1
 _SCHEDULE_DEFINITION_CODEC_VERSION = 3
 _TRIGGER_CODEC_VERSION = 1
+_MAX_TRIGGER_NESTING = 16
 
 
 def _dump_with_version(payload: dict[str, Any], *, version: int) -> str:
@@ -230,7 +232,12 @@ def _encode_trigger(trigger: Trigger | CalendarAwareTrigger) -> dict[str, Any]:
     kind: str
     config: dict[str, Any]
 
-    if isinstance(trigger, BusinessDayTrigger):
+    if isinstance(trigger, AnyOfTrigger):
+        kind = "any_of"
+        config = {
+            "children": [_encode_trigger(child) for child in trigger.triggers],
+        }
+    elif isinstance(trigger, BusinessDayTrigger):
         kind = "business_day"
         config = {
             "ordinal": trigger.ordinal,
@@ -273,7 +280,11 @@ def _decode_trigger(
     payload: dict[str, Any],
     *,
     require_versioned: bool = False,
+    nesting_depth: int = 0,
 ) -> Trigger | CalendarAwareTrigger:
+    if nesting_depth > _MAX_TRIGGER_NESTING:
+        raise ValueError("Trigger payload exceeds the supported nesting depth.")
+
     schema_version = payload.get("schema_version")
 
     if schema_version is None:
@@ -282,6 +293,7 @@ def _decode_trigger(
         return _decode_trigger_config(
             kind=cast(str, payload["kind"]),
             config=payload,
+            nesting_depth=nesting_depth,
         )
 
     if schema_version != _TRIGGER_CODEC_VERSION:
@@ -294,6 +306,7 @@ def _decode_trigger(
     return _decode_trigger_config(
         kind=cast(str, payload["kind"]),
         config=cast(dict[str, Any], config),
+        nesting_depth=nesting_depth,
     )
 
 
@@ -301,7 +314,31 @@ def _decode_trigger_config(
     *,
     kind: str,
     config: dict[str, Any],
+    nesting_depth: int,
 ) -> Trigger | CalendarAwareTrigger:
+    if kind == "any_of":
+        if set(config) != {"children"}:
+            raise ValueError("AnyOf Trigger config requires exactly the children field.")
+
+        children = config["children"]
+        if not isinstance(children, list):
+            raise ValueError("AnyOf Trigger children must be an array.")
+
+        temporal_children: list[Trigger] = []
+        for child in children:
+            if not isinstance(child, dict):
+                raise ValueError("AnyOf Trigger children must be Trigger payload objects.")
+            decoded = _decode_trigger(
+                cast(dict[str, Any], child),
+                require_versioned=True,
+                nesting_depth=nesting_depth + 1,
+            )
+            if not isinstance(decoded, Trigger):
+                raise ValueError("AnyOf Trigger children must be pure temporal Triggers.")
+            temporal_children.append(decoded)
+
+        return AnyOfTrigger(*temporal_children)
+
     if kind == "business_day":
         return BusinessDayTrigger(
             ordinal=cast(int, config["ordinal"]),

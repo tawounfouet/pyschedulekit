@@ -99,7 +99,8 @@ POST-06 Chaos / Fault Injection       ✅
   CMP-00 Composite Trigger Contract  ✅
   CMP-01 AnyOf Occurrence Planning   ✅
   CMP-02 Checkpoints/Dedup/Bounds    ✅
-  CMP-03 ... CMP-05                  ⬜ planned
+  CMP-03 Versioned Codec/Migration   ✅
+  CMP-04 ... CMP-05                  ⬜ planned
         ↓
 1.0.0 stable public contract
 ```
@@ -155,4 +156,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CMP-02 Checkpoints, Deduplication and Bounds complete.
+**Last refreshed:** 2026-10-09 — CMP-03 Versioned Codec and Migration complete.

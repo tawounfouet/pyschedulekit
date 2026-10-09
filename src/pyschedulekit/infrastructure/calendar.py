@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Iterable
 from pathlib import Path
-import sqlite3
 from threading import RLock
 
 from pyschedulekit.domain.calendar import (

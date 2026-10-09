@@ -12,6 +12,7 @@ from benchmarks.run import _postgres_cycle_sample
 from psycopg import IsolationLevel
 from psycopg.errors import DeadlockDetected, SerializationFailure
 from psycopg.rows import dict_row
+
 from pyschedulekit.domain.schedule import ScheduleId
 from pyschedulekit.infrastructure.postgres import (
     PostgresUnitOfWork,

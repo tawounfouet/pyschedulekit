@@ -124,7 +124,7 @@ The relational invariants include:
 
 No public PostgreSQL factory yet.
 
-### PG-01 — Core Repositories 🚧 current
+### PG-01 — Core Repositories ✅
 
 Implement:
 
@@ -142,7 +142,7 @@ Exit criteria:
 - optimistic CAS;
 - due/runnable queries.
 
-### PG-02 — Coordination / Outbox / Retention
+### PG-02 — Coordination / Outbox / Retention 🚧 current
 
 Implement:
 
@@ -200,6 +200,22 @@ Qualify and document:
 
 Only after PG-03/PG-04 should `PostgresUnitOfWorkFactory` enter the stable public manifest.
 
+## Coverage policy
+
+The base package keeps its global branch-aware coverage floor at **85%** and excludes the
+optional PostgreSQL implementation modules from that calculation.
+
+PostgreSQL owns a dedicated live-service coverage surface:
+
+```text
+PG-01 baseline: 66.88%
+temporary floor: 60%
+target by PG-03: >=85%
+```
+
+The floor may only move upward as PG-02/PG-03 add contract coverage. It must reach the
+project-level 85% standard before the adapter can enter the stable public API.
+
 ## PG-00 CI
 
 Dedicated workflow:
@@ -243,4 +259,4 @@ Those guarantees belong to the later PG lots and must not be implied early.
 
 ---
 
-**Current phase:** 0.2.x — PostgreSQL / PG-01.
+**Current phase:** 0.2.x — PostgreSQL / PG-02.

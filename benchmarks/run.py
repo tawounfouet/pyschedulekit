@@ -22,6 +22,7 @@ from pyschedulekit import (
     IntervalTrigger,
     Scheduler,
     SqliteUnitOfWorkFactory,
+    TargetRef,
     Timezone,
 )
 from pyschedulekit.testing import MutableClock
@@ -34,6 +35,7 @@ class BenchmarkProfile:
     cron_iterations: int
     memory_schedules: int
     sqlite_schedules: int
+    memory_idle_counts: tuple[int, int]
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +56,7 @@ PROFILES = {
         cron_iterations=40,
         memory_schedules=5,
         sqlite_schedules=3,
+        memory_idle_counts=(100, 1_000),
     ),
     "standard": BenchmarkProfile(
         repeats=7,
@@ -61,18 +64,18 @@ PROFILES = {
         cron_iterations=2_000,
         memory_schedules=250,
         sqlite_schedules=50,
+        memory_idle_counts=(1_000, 10_000),
     ),
 }
 
 
-def _measure(
+def _result_from_samples(
     *,
     name: str,
     operations: int,
     repeats: int,
-    sample: Callable[[], float],
+    samples: list[float],
 ) -> BenchmarkResult:
-    samples = [sample() for _ in range(repeats)]
     middle = median(samples)
     return BenchmarkResult(
         name=name,
@@ -82,6 +85,21 @@ def _measure(
         min_seconds=min(samples),
         max_seconds=max(samples),
         operations_per_second=operations / middle if middle > 0 else float("inf"),
+    )
+
+
+def _measure(
+    *,
+    name: str,
+    operations: int,
+    repeats: int,
+    sample: Callable[[], float],
+) -> BenchmarkResult:
+    return _result_from_samples(
+        name=name,
+        operations=operations,
+        repeats=repeats,
+        samples=[sample() for _ in range(repeats)],
     )
 
 
@@ -172,6 +190,50 @@ def _sqlite_cycle_sample(schedule_count: int) -> float:
         return elapsed
 
 
+def _memory_idle_result(
+    *,
+    schedule_count: int,
+    repeats: int,
+) -> BenchmarkResult:
+    start = Instant(datetime(2026, 1, 1, 10, 0, tzinfo=UTC))
+    clock = MutableClock(start)
+    scheduler = Scheduler(
+        clock=clock,
+        worker_id=f"idle-benchmark-{schedule_count}",
+    )
+    target = TargetRef.python("benchmark:not-due")
+    trigger = IntervalTrigger(
+        every=Duration.minutes(1),
+        anchor=start.add(Duration.days(1)),
+    )
+
+    for index in range(schedule_count):
+        scheduler.add_schedule(
+            id=f"idle-{schedule_count}-{index:05d}",
+            target=target,
+            trigger=trigger,
+        )
+
+    warmup = scheduler.run_pending()
+    assert warmup.executions == ()
+    assert warmup.materialized_request_ids == ()
+
+    samples: list[float] = []
+    for _ in range(repeats):
+        started = perf_counter()
+        result = scheduler.run_pending()
+        samples.append(perf_counter() - started)
+        assert result.executions == ()
+        assert result.materialized_request_ids == ()
+
+    return _result_from_samples(
+        name=f"run_pending_memory_idle_{schedule_count}",
+        operations=schedule_count,
+        repeats=repeats,
+        samples=samples,
+    )
+
+
 def run(profile_name: str) -> dict[str, object]:
     profile = PROFILES[profile_name]
     results = [
@@ -201,13 +263,33 @@ def run(profile_name: str) -> dict[str, object]:
         ),
     ]
 
+    small_count, large_count = profile.memory_idle_counts
+    small_idle = _memory_idle_result(
+        schedule_count=small_count,
+        repeats=profile.repeats,
+    )
+    large_idle = _memory_idle_result(
+        schedule_count=large_count,
+        repeats=profile.repeats,
+    )
+    results.extend((small_idle, large_idle))
+
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "profile": profile_name,
         "pyschedulekit_version": pyschedulekit.__version__,
         "python_version": platform.python_version(),
         "python_implementation": platform.python_implementation(),
         "platform": platform.platform(),
+        "scaling": {
+            "memory_idle_small_count": small_count,
+            "memory_idle_large_count": large_count,
+            "memory_idle_large_to_small_ratio": (
+                large_idle.median_seconds / small_idle.median_seconds
+                if small_idle.median_seconds > 0
+                else float("inf")
+            ),
+        },
         "results": [asdict(result) for result in results],
     }
 
@@ -234,8 +316,19 @@ def render_markdown(report: dict[str, object]) -> str:
             )
         )
 
+    scaling = report["scaling"]
+    assert isinstance(scaling, dict)
     rows.extend(
         [
+            "",
+            "## Scale evidence",
+            "",
+            (
+                "- Idle in-memory cycle ratio "
+                f"({scaling['memory_idle_large_count']}/"
+                f"{scaling['memory_idle_small_count']} schedules): "
+                f"`{float(scaling['memory_idle_large_to_small_ratio']):.2f}x`"
+            ),
             "",
             "> Benchmark numbers are evidence, not CI pass/fail thresholds. Compare runs only",
             "> when Python version, platform, profile and workload remain comparable.",

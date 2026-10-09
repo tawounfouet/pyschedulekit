@@ -13,7 +13,6 @@ from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.time import Duration, Instant, Timezone
 from pyschedulekit.domain.trigger import Trigger
 
-
 _CALENDAR_OCCURRENCE_PLANNER = CalendarOccurrencePlanner()
 
 

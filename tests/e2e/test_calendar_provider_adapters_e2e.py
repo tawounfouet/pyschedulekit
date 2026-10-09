@@ -109,7 +109,10 @@ def test_sqlite_calendar_provider_coexists_with_scheduler_database(tmp_path) -> 
 
     assert len(result.executions) == 1
     assert executions == ["ran"]
-    assert SqliteCalendarProvider(database).resolve(
-        CalendarRef("finance-days"),
-        revision=CalendarRevision(1),
-    ) == calendar
+    assert (
+        SqliteCalendarProvider(database).resolve(
+            CalendarRef("finance-days"),
+            revision=CalendarRevision(1),
+        )
+        == calendar
+    )

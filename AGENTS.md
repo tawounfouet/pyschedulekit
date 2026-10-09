@@ -114,8 +114,8 @@ Adapters ✅. The 0.4.x composite-trigger axis is now active: CMP-00 establishes
 domain-internal pure temporal union contract, CMP-01 qualifies Schedule/Occurrence planning,
 and CMP-02 bounds nested unions plus recovery behavior; public API and persistence support
 are still withheld, while CMP-03 adds the shared versioned SQL definition codec. Live adapter
-parity and public exposure remain deferred to CMP-04/CMP-05. Calendars must remain
-deterministic and versioned; do not couple
+parity is qualified by CMP-04 across InMemory/SQLite/PostgreSQL; public exposure remains
+deferred to CMP-05. Calendars must remain deterministic and versioned; do not couple
 domain calendar rules to a holiday library, database, HTTP service, or global mutable
 provider.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,

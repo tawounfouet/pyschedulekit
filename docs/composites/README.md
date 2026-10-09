@@ -10,7 +10,7 @@ CMP-00 Composite Trigger Contract                 COMPLETE
 CMP-01 AnyOf Occurrence Planning                  COMPLETE
 CMP-02 Checkpoints, Deduplication and Bounds      COMPLETE
 CMP-03 Versioned Codec and Migration              COMPLETE
-CMP-04 Persistence Adapter Parity                 PLANNED
+CMP-04 Persistence Adapter Parity                 COMPLETE
 CMP-05 Public API, E2E, Documentation, Benchmark  PLANNED
 ```
 
@@ -48,4 +48,4 @@ migration and adapter-parity guarantees are executable.
 
 ---
 
-**Status:** CMP-00 through CMP-03 complete; CMP-04 is the next planned composite-trigger lot.
+**Status:** CMP-00 through CMP-04 complete; CMP-05 is the final planned composite-trigger lot.

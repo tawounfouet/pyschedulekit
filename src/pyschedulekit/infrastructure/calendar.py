@@ -87,7 +87,6 @@ class InMemoryCalendarProvider:
             return tuple(sorted(calendar.snapshot_ref for calendar in self._calendars.values()))
 
 
-
 class FileCalendarProvider:
     """Read-only provider backed by one explicit versioned JSON snapshot file.
 
@@ -123,13 +122,9 @@ class FileCalendarProvider:
         try:
             text = payload.decode("utf-8")
         except UnicodeDecodeError as exc:
-            raise PyScheduleKitConfigurationError(
-                "Calendar file must be UTF-8 encoded."
-            ) from exc
+            raise PyScheduleKitConfigurationError("Calendar file must be UTF-8 encoded.") from exc
 
-        self._delegate = InMemoryCalendarProvider(
-            decode_business_calendar_collection(text)
-        )
+        self._delegate = InMemoryCalendarProvider(decode_business_calendar_collection(text))
 
     def resolve(
         self,
@@ -258,10 +253,7 @@ class SqliteCalendarProvider:
 
         persisted_revision = CalendarRevision(int(row[0]))
         calendar = decode_business_calendar(str(row[1]))
-        if (
-            calendar.calendar_ref != reference
-            or calendar.revision != persisted_revision
-        ):
+        if calendar.calendar_ref != reference or calendar.revision != persisted_revision:
             raise PyScheduleKitConfigurationError(
                 "Persisted BusinessCalendar identity does not match its SQLite key."
             )
@@ -335,6 +327,4 @@ class SqliteCalendarProvider:
         except PyScheduleKitConfigurationError:
             raise
         except sqlite3.Error as exc:
-            raise RuntimeError(
-                "SQLite calendar provider schema initialization failed."
-            ) from exc
+            raise RuntimeError("SQLite calendar provider schema initialization failed.") from exc

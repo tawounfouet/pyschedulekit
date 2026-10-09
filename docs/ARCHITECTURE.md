@@ -1,6 +1,6 @@
 # Architecture — PyScheduleKit
 
-> Document de référence technique : comment le système est construit et comment les données circulent. Les jugements de valeur sont dans [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) ; les faits d'exécution dans [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md).
+> Document de référence technique : comment le système est construit et comment les données circulent. Les jugements de valeur sont dans [`ANALYSE_CRITIQUE.md`](./audit/2026-10-08/ANALYSE_CRITIQUE.md) ; les faits d'exécution dans [`CODEBASE_ANALYSIS.md`](./audit/2026-10-08/CODEBASE_ANALYSIS.md).
 
 ---
 
@@ -153,7 +153,7 @@ list_runnable ─► claim(exec, gen=3)     list_runnable ─► claim(exec)
    └─ lease perdue (heartbeat.lost) ─► ClaimOwnershipError ─► abandon, pas d'écriture
 ```
 
-⚠️ L'annulation, elle, **n'est pas** coordonnée entre workers : le token est process-local (`api/scheduler.py:379`) et `list_runnable` ne filtre pas `cancellation_requested_at` (`sqlite.py:785`) — voir [ANALYSE_CRITIQUE.md §3.2](./ANALYSE_CRITIQUE.md).
+⚠️ L'annulation, elle, **n'est pas** coordonnée entre workers : le token est process-local (`api/scheduler.py:379`) et `list_runnable` ne filtre pas `cancellation_requested_at` (`sqlite.py:785`) — voir [ANALYSE_CRITIQUE.md §3.2](./audit/2026-10-08/ANALYSE_CRITIQUE.md).
 
 **(d) Recovery après crash**
 
@@ -224,7 +224,7 @@ Pas d'UI ni de CLI : l'interface est l'API publique.
 
 Les findings B1–B12 de l'audit ont été remédiés ; leur historique reste dans les documents
 snapshot et leur disposition dans
-[POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
+[POST-00 Remediation Status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
 
 Les limites encore structurelles sont différentes :
 

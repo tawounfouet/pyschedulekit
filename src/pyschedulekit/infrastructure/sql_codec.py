@@ -268,9 +268,7 @@ def _decode_trigger(payload: dict[str, Any]) -> Trigger | CalendarAwareTrigger:
             hour=cast(int, payload["hour"]),
             minute=cast(int, payload["minute"]),
             ambiguous_time=CronAmbiguousTimePolicy(cast(str, payload["ambiguous_time"])),
-            nonexistent_time=CronNonexistentTimePolicy(
-                cast(str, payload["nonexistent_time"])
-            ),
+            nonexistent_time=CronNonexistentTimePolicy(cast(str, payload["nonexistent_time"])),
         )
 
     if kind == "date":

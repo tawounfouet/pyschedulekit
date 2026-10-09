@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — POST-01 Documentation Cleanup
+## 4. État courant — POST-02 Real-world Examples / Cookbook
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -84,8 +84,8 @@ findings est [POST-00 Remediation Status](./audit/2026-10-08/POST_00_REMEDIATION
 Initial LOT roadmap                     ✅ LOT-00 → LOT-34
 POST-00 Audit Remediation               ✅
 Pre-1.0 PyPI publication guard          ✅
-POST-01 Documentation Cleanup           🚧 current
-POST-02 Examples / Cookbook             ⬜
+POST-01 Documentation Cleanup           ✅
+POST-02 Examples / Cookbook             🚧 current
 POST-03 API Documentation               ⬜
 POST-04 Dogfooding                      ⬜
 POST-05 Benchmarks                      ⬜
@@ -99,7 +99,7 @@ POST-06 Chaos / Fault Injection         ⬜
 - **Quality gates** : Ruff ✅ · mypy strict ✅ · pytest ✅ · coverage ≥85 ✅.
 - **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
 - **Findings B1–B12** : aucun finding ouvert.
-- **Étape active** : structurer et assainir la documentation, puis passer à POST-02.
+- **Étape active** : qualifier des exemples réalistes et exécutables, puis passer à POST-03.
 
 ---
 
@@ -121,12 +121,11 @@ POST-06 Chaos / Fault Injection         ⬜
 
 ### Suite
 
-1. terminer POST-01 et merger le nettoyage documentaire ;
-2. POST-02 — construire les exemples réalistes / cookbook ;
-3. POST-03 — documenter l'API publique ;
-4. POST-04 — dogfooding réel ;
-5. POST-05 / POST-06 — benchmarks et chaos ;
-6. reprendre ensuite la roadmap 0.2.x et avancer vers le contrat stable `1.0.0`.
+1. terminer POST-02 et merger le cookbook exécutable ;
+2. POST-03 — documenter l'API publique ;
+3. POST-04 — dogfooding réel ;
+4. POST-05 / POST-06 — benchmarks et chaos ;
+5. reprendre ensuite la roadmap 0.2.x et avancer vers le contrat stable `1.0.0`.
 
 Aucune publication PyPI intermédiaire n'est nécessaire pour franchir ces étapes.
 

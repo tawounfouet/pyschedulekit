@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added the V1-00 readiness audit with an evidence-backed `v1.0.0` NO-GO, explicit public
+  contract, persistence, platform/security and stable-release findings, plus the V1-01 →
+  V1-05 closure roadmap. No runtime behavior, version, tag or publication changed.
+
 - Added CMP-05 public composite graduation: stable root/API `AnyOfTrigger`, public Scheduler
   and SQLite E2E qualification, an executable cookbook scenario, explicit API boundaries and
   a reproducible two-child union benchmark. The 0.4.x composite-trigger sequence is complete.

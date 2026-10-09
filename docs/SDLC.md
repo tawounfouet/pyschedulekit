@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — 0.3.x / CAL-04 Persistence / Migration Parity
+## 4. État courant — V1-00 Readiness Audit
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -104,6 +104,9 @@ POST-06 Chaos / Fault Injection         ✅
 0.3.x CAL-03 Business-Day Trigger Semantics ✅
 0.3.x CAL-04 Persistence / Migration Parity  ✅
 0.3.x CAL-05 Calendar Provider Adapters       ✅
+0.4.x CMP-00 → CMP-05 Composite Triggers       ✅
+V1-00 Readiness Audit                           ✅ NO-GO recorded
+V1-01 Public Contract Freeze                    ⏭ NEXT
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -116,7 +119,10 @@ POST-06 Chaos / Fault Injection         ✅
 - **PG-03 qualifié** : contrat partagé InMemory/SQLite/PostgreSQL, 130 tests PostgreSQL live, couverture PostgreSQL 87,88% avec floor 85%.
 - **PG-04 qualifié** : 138 tests PostgreSQL live, Scheduler/run_pending, retry, outbox, reconciliation, crash recovery et contention multi-worker; couverture PostgreSQL 88,59%.
 - **PostgreSQL** : qualifié jusqu'à PG-05, public via `pyschedulekit.postgres`, support matrix 16/17/18, couverture live 88,86%.
-- **Étape active** : la séquence calendrier CAL-00 → CAL-05 est qualifiée et complète ; le prochain axe pré-1.0 doit être sélectionné explicitement avant implémentation.
+- **Composite Triggers** : CMP-00 → CMP-05 qualifiés et publics via `AnyOfTrigger`.
+- **Verdict `v1.0.0`** : **NO-GO contractuel/release**, avec runtime et qualification
+  fonctionnelle verts ; voir [V1-00 Readiness Audit](./v1/V1-00_READINESS_AUDIT.md).
+- **Étape active** : V1-01 Public Contract Freeze.
 
 ---
 
@@ -138,21 +144,15 @@ POST-06 Chaos / Fault Injection         ✅
 
 ### Suite
 
-1. PG-00 — fondation PostgreSQL / CI / bootstrap ;
-2. PG-01 — core repositories + UnitOfWork ;
-3. PG-02 — coordination / outbox / retention ;
-4. PG-03/PG-04 — parité et E2E multi-worker ;
-5. PG-05 — hardening ✅ ;
-6. Async Python Executor ✅ ;
-7. executor plugin registry ✅ ;
-8. CAL-00 Calendar Foundations ✅ ;
-9. CAL-01 Schedule Calendar Binding ✅ ;
-10. CAL-02 Calendar-aware Occurrence Planning ✅ ;
-11. CAL-03 Business-Day Trigger Semantics ✅ ;
-12. CAL-04 Persistence / Migration Parity ✅ ;
-13. CAL-05 Calendar Provider Adapters ✅.
+1. V1-00 — Readiness Audit ✅ ;
+2. V1-01 — Public Contract Freeze ⏭ ;
+3. V1-02 — Persistence Compatibility Contract ;
+4. V1-03 — Platform, Warning and Security Gates ;
+5. V1-04 — Consumer and Stable-Release Rehearsal ;
+6. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
 
-Aucune publication PyPI intermédiaire n'est nécessaire pour franchir ces étapes.
+Aucune publication PyPI intermédiaire n'est autorisée pour franchir ces étapes. Le tag
+`v1.0.0` reste interdit avant un GO explicite en V1-05.
 
 ---
 
@@ -180,8 +180,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`CODEBASE_ANALYSIS.md`](./audit/2026-10-08/CODEBASE_ANALYSIS.md) — faits vérifiés et bugs B1-B12.
 - [`ANALYSE_CRITIQUE.md`](./audit/2026-10-08/ANALYSE_CRITIQUE.md) — verdict et notes /10.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — référence technique.
+- [`V1-00 Readiness Audit`](./v1/V1-00_READINESS_AUDIT.md) — verdict, preuves et findings 1.0.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — CAL-04 Persistence / Migration Parity.*
+*Dernière mise à jour : 2026-10-09 — V1-00 Readiness Audit.*

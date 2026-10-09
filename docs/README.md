@@ -21,6 +21,7 @@ SNAPSHOT / HISTORY
 | [Project README](../README.md) | Product overview, capabilities, development baseline |
 | [Architecture](./ARCHITECTURE.md) | Current system structure, flows, invariants and limitations |
 | [SDLC](./SDLC.md) | Current development, testing, review and maintenance workflow |
+| [1.0 readiness](./v1/README.md) | Current GO/NO-GO status, findings and stabilization sequence |
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
@@ -46,7 +47,8 @@ docs/
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
 ├── postgres/                  # 0.2.x PostgreSQL adapter roadmap
 ├── release/                   # release engineering and rollback discipline
-└── specs/                     # domain / architecture / acceptance specifications
+├── specs/                     # domain / architecture / acceptance specifications
+└── v1/                        # 1.0 readiness audit, findings and closure roadmap
 ```
 
 ## Audit archive — 2026-10-08
@@ -103,6 +105,14 @@ POST-06 Chaos / Fault Injection       ✅
   CMP-04 Persistence Adapter Parity  ✅
   CMP-05 Public Graduation           ✅
         ↓
+1.0 Readiness
+  V1-00 Readiness Audit              ✅ NO-GO recorded
+  V1-01 Public Contract Freeze       ⬜ planned
+  V1-02 Persistence Compatibility    ⬜ planned
+  V1-03 Platform/Security Gates      ⬜ planned
+  V1-04 Consumer/Release Rehearsal   ⬜ planned
+  V1-05 Final GO/NO-GO               ⬜ planned
+        ↓
 1.0.0 stable public contract
 ```
 
@@ -144,6 +154,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | run reproducible performance measurements | [Benchmarks](./benchmarks/README.md) |
 | inspect deterministic fault-injection qualification | [Chaos](./chaos/README.md) |
 | follow PostgreSQL adapter delivery | [PostgreSQL 0.2.x](./postgres/README.md) |
+| inspect the current 1.0 GO/NO-GO and findings | [1.0 Readiness](./v1/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule
@@ -157,4 +168,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — CMP-05 Public Graduation complete; 0.4.x sequence closed.
+**Last refreshed:** 2026-10-09 — V1-00 readiness audit complete; current `v1.0.0` verdict is NO-GO.

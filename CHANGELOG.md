@@ -8,6 +8,7 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added PostgreSQL PG-05 production hardening: deterministic write ordering, READ COMMITTED transaction semantics, explicit transient concurrency errors, application-owned connection/pool hooks, PostgreSQL 16/17/18 CI qualification, PostgreSQL-vs-SQLite benchmark evidence, migration/support policy, and the stable optional `pyschedulekit.postgres` namespace.
 - Added PostgreSQL PG-04 live Scheduler and multi-worker qualification covering durable `run_pending()`, retry, transactional outbox, reconciliation, crash recovery, admission-lock contention, materialization-lease contention and expired-claim takeover; 138 PostgreSQL tests pass at 88.59% adapter coverage.
 
 - Added PostgreSQL PG-03 shared adapter-parity qualification: the same observable contract now targets InMemory, SQLite and live PostgreSQL for referential integrity, atomic graphs, staged state, rollback, duplicate translation, optimistic CAS, temporal queries, coordination, outbox and retention; PostgreSQL coverage is gated at 85% and PG-03 qualifies at 87.88% across 130 live-service tests.

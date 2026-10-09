@@ -118,7 +118,6 @@ def test_calendar_providers_are_isolated_instances() -> None:
         second.resolve(CalendarRef("private"))
 
 
-
 def test_file_calendar_provider_satisfies_provider_shape(tmp_path) -> None:
     calendar_file = tmp_path / "calendars.json"
     calendar_file.write_text(
@@ -190,10 +189,13 @@ def test_sqlite_provider_duplicate_revision_requires_explicit_replace(tmp_path) 
 
     provider.register(_calendar("market", 1), replace=True)
 
-    assert provider.resolve(
-        CalendarRef("market"),
-        revision=CalendarRevision(1),
-    ).holidays == frozenset()
+    assert (
+        provider.resolve(
+            CalendarRef("market"),
+            revision=CalendarRevision(1),
+        ).holidays
+        == frozenset()
+    )
 
 
 def test_sqlite_provider_unknown_calendar_matches_static_provider_error(tmp_path) -> None:
@@ -210,7 +212,6 @@ def test_sqlite_provider_unknown_calendar_matches_static_provider_error(tmp_path
 def test_sqlite_provider_rejects_in_memory_database() -> None:
     with pytest.raises(PyScheduleKitConfigurationError, match="file-backed"):
         SqliteCalendarProvider(":memory:")
-
 
 
 def test_sqlite_provider_rejects_future_schema_version(tmp_path) -> None:

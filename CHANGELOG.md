@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CMP-03 versioned `AnyOfTrigger` SQL-definition encoding with independently versioned
+  child envelopes, canonical nested-union flattening, semantic migration qualification, and
+  fail-closed child-count, shape, version, calendar-boundary and nesting-depth validation.
+
 - Added CMP-02 composite hardening with associative nested-union flattening, a 64-child
   post-flattening fan-out bound, duplicate-free SchedulerEngine materialization, and explicit
   catch-up/coalescing recovery-limit qualification.

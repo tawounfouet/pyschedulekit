@@ -91,7 +91,7 @@ POST-06 Chaos / Fault Injection       ✅
   CAL-01 Schedule Calendar Binding        ✅
   CAL-02 Calendar-aware Planning          ✅
   CAL-03 Business-Day Trigger Semantics   ✅
-  CAL-04 Persistence / Migration Parity    🚧 current
+  CAL-04 Persistence / Migration Parity    ✅
   CAL-05 Calendar Provider Adapters          ⏭ next
         ↓
 ...

@@ -15,11 +15,11 @@
 - GitHub release: `v0.1.0a3`, published as an immutable prerelease
 - Runtime dependencies: 0
 - Supported Python: 3.11 / 3.12 / 3.13
-- Current hardening target: `0.1.0a4`
+- Release candidate: `0.1.0a4`
 - POST-00 theme: post-release stabilization and adversarial hardening
 
-As of `main@fed749ec999b9ba279364e99b8f50e39d3c8d09f`, the combined CI and
-Distribution Qualification workflows are green on Python 3.11, 3.12 and 3.13.
+POST-00H is merged and the combined CI and Distribution Qualification workflows are green
+on Python 3.11, 3.12 and 3.13.
 
 ## 2. Audit finding disposition
 
@@ -52,7 +52,7 @@ No B1–B12 finding remains open after POST-00G + the B7 closure.
 | 00.F | HTTP resource / redirect hardening | **DONE** | PR #49 / `c1c85e3` |
 | 00.G | CI / coverage hardening | **DONE** | PR #50 / `fed749e` |
 | B7 closure | Target-registry transaction safety | **DONE** | PR #51 / `1c3e31c` |
-| 00.H | Audit documentation consolidation | **IN PROGRESS** | this document + synchronized operational docs |
+| 00.H | Audit documentation consolidation | **DONE** | PR #52 / `678d182` |
 
 PR #47 was an intermediate persistence-contract proposal and was closed as superseded by
 the merged PR #48.
@@ -177,17 +177,16 @@ The published GitHub Release contains:
 [x] audit/current-state separation documented
 [x] no known open B1-B12 finding
 [x] Distribution Qualification green
+[x] POST-00H merged
 [ ] final 0.1.0a4 release qualification
 [ ] publish 0.1.0a4
 ```
 
 ## 8. Next gate
 
-Once POST-00H is merged, the remaining sequence is deliberately small:
+POST-00 is complete. The remaining sequence is deliberately small:
 
 ```text
-POST-00H documentation consolidation
-        ↓
 final release qualification
         ↓
 0.1.0a4
@@ -206,4 +205,4 @@ integration belongs in `0.1.0a4`.
 
 **Last refreshed:** 2026-10-09  
 **Public reference release:** `0.1.0a3`  
-**Hardening target:** `0.1.0a4`
+**Release candidate:** `0.1.0a4`

@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added an installed-package dogfood consumer exercising SQLite persistence, retry/backoff, restart, readiness/health, and schedule operations exclusively through the stable root API.
+- Added distribution-matrix dogfooding so every wheel/sdist clean install on Python 3.11/3.12/3.13 executes the external consumer from outside the repository source tree.
+- Added acceptance fitness checks that prevent the dogfood consumer from importing PyScheduleKit internals.
+
 - Added a stable public API reference backed by an architecture test that requires every manifest export and legacy compatibility name to remain documented.
 - Added a runnable five-scenario cookbook covering interval scheduling, cron/timezones, retry/backoff, SQLite durability, and health/readiness.
 - Added acceptance tests that execute every cookbook script under CI.

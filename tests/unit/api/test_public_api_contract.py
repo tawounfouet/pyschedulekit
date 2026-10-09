@@ -78,6 +78,7 @@ def test_t_public_api_004_scheduler_signature_parameter_contract() -> None:
         "observation_sink",
     )
     assert _parameter_names(Scheduler.register_target) == ("self", "reference", "target")
+    assert _parameter_names(Scheduler.register_async_target) == ("self", "reference", "target")
     assert _parameter_names(Scheduler.register_http_target) == ("self", "reference", "request")
     assert _parameter_names(Scheduler.add_schedule) == (
         "self",

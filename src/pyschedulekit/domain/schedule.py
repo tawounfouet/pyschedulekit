@@ -90,6 +90,10 @@ class TargetRef:
         return cls(kind="python", reference=reference)
 
     @classmethod
+    def async_python(cls, reference: str) -> TargetRef:
+        return cls(kind="python_async", reference=reference)
+
+    @classmethod
     def workflow(cls, reference: str) -> TargetRef:
         return cls(kind="workflow", reference=reference)
 

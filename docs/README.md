@@ -33,6 +33,7 @@ docs/
 ├── ARCHITECTURE.md            # current technical reference
 ├── SDLC.md                    # current engineering lifecycle
 ├── api/                       # stable public API reference
+├── async/                     # async Python execution adapter
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
 ├── benchmarks/                # reproducible performance methodology
@@ -80,7 +81,7 @@ POST-06 Chaos / Fault Injection       ✅
   PG-04 Scheduler/Multi-worker E2E     ✅
   PG-05 Production Hardening           ✅
         ↓
-  Async Executor                        ⏭ next
+  Async Python Executor                 🚧 current
         ↓
 ...
         ↓
@@ -116,6 +117,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect original design intent | [Specs](./specs/) |
 | inspect implementation history | [Implementation LOTs](./implementation/) |
 | inspect the stable public API | [API reference](./api/README.md) |
+| run trusted async Python workloads | [Async Python Executor](./async/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | inspect installed-package dogfooding | [Dogfooding](./dogfood/README.md) |
 | run reproducible performance measurements | [Benchmarks](./benchmarks/README.md) |
@@ -134,4 +136,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — PostgreSQL PG-05 complete; Async Executor next.
+**Last refreshed:** 2026-10-09 — Async Python Executor.

@@ -185,6 +185,21 @@ Production assumptions, supported PostgreSQL majors and migration policy are doc
 - `LocalExecutor`
 - `PythonTargetRegistry`
 
+### Async Python
+
+- `AsyncioExecutor` — execute explicitly registered trusted `async def` targets behind
+  the synchronous Executor boundary.
+- `AsyncPythonTargetRegistry` — process-local registry for trusted async callables.
+- `Scheduler.register_async_target()` — register one async callable and receive a
+  `TargetRef(kind="python_async", ...)`.
+- `TargetRef.async_python()` — declarative async Python target reference.
+
+Passing an `async def` directly to `Scheduler.add_schedule()` is also supported; the
+Scheduler detects coroutine functions and registers them in the async registry.
+
+The Scheduler itself remains synchronous. Async workload execution does not introduce async
+persistence methods or an `AsyncScheduler`.
+
 ### HTTP
 
 - `HttpExecutor`

@@ -37,6 +37,7 @@ docs/
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
 ├── benchmarks/                # reproducible performance methodology
+├── calendars/                 # versioned business-calendar foundations
 ├── chaos/                     # deterministic fault-injection campaign
 ├── cookbook/                  # runnable real-world usage scenarios
 ├── dogfood/                   # installed-distribution consumer qualification
@@ -83,7 +84,10 @@ POST-06 Chaos / Fault Injection       ✅
   PG-05 Production Hardening           ✅
         ↓
   Async Python Executor                 ✅
-  Executor Plugin Registry              🚧 current
+  Executor Plugin Registry              ✅
+        ↓
+0.3.x Advanced Scheduling               🚧 current
+  CAL-00 Calendar Foundations           🚧 current
         ↓
 ...
         ↓
@@ -121,6 +125,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect the stable public API | [API reference](./api/README.md) |
 | run trusted async Python workloads | [Async Python Executor](./async/README.md) |
 | register custom executor plugins | [Executor Plugin Registry](./executors/README.md) |
+| model versioned business calendars | [Calendar Foundations](./calendars/README.md) |
 | run realistic usage examples | [Cookbook](./cookbook/README.md) |
 | inspect installed-package dogfooding | [Dogfooding](./dogfood/README.md) |
 | run reproducible performance measurements | [Benchmarks](./benchmarks/README.md) |
@@ -139,4 +144,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — Executor Plugin Registry.
+**Last refreshed:** 2026-10-09 — CAL-00 Calendar Foundations.

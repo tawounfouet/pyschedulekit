@@ -74,7 +74,8 @@ POST-06 Chaos / Fault Injection       ✅
         ↓
 0.2.x Execution & Storage Ecosystem   🚧 current
   PG-00 PostgreSQL Foundation         ✅
-  PG-01 Core Repositories             🚧 current
+  PG-01 Core Repositories             ✅
+  PG-02 Coordination/Outbox/Retention 🚧 current
         ↓
 ...
         ↓
@@ -128,4 +129,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-01.
+**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-02.

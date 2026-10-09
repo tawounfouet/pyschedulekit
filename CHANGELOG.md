@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added PostgreSQL PG-02 internal coordination, outbox and retention repositories plus a full nine-repository UnitOfWork, still withheld from the stable public API pending parity and Scheduler E2E qualification.
+
 - Added PostgreSQL PG-01 internal core repositories for Schedule, ExecutionRequest, Execution and Attempt with staged UnitOfWork semantics, identity map, rollback, duplicate translation and optimistic compare-and-swap qualification.
 
 - Added PostgreSQL PG-00 foundation: optional Psycopg 3 support, native TIMESTAMPTZ schema, advisory-lock bootstrap, concurrent/idempotent schema qualification, and a live PostgreSQL CI service.

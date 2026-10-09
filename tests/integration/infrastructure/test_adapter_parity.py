@@ -144,6 +144,7 @@ def _claim(execution: Execution) -> ExecutionClaim:
         expires_at=_instant(minute=1),
     )
 
+
 @pytest.mark.parametrize("adapter", ADAPTERS)
 @pytest.mark.parametrize(
     "orphan_kind",
@@ -510,7 +511,6 @@ def test_retention_cleanup_is_bounded_and_adapter_neutral(
         assert uow.executions.get(execution.id) is None
         assert uow.attempts.get(attempt.id) is None
         assert uow.outbox.get(message.id) is None
-
 
 
 @pytest.mark.parametrize("adapter", ADAPTERS)

@@ -9,6 +9,7 @@ from pyschedulekit.domain.calendar import (
     BusinessCalendar,
     CalendarRef,
     CalendarRevision,
+    CalendarSnapshotRef,
 )
 from pyschedulekit.errors import PyScheduleKitConfigurationError
 
@@ -74,8 +75,6 @@ class InMemoryCalendarProvider:
     @property
     def references(self) -> tuple[CalendarSnapshotRef, ...]:
         """Return a deterministic snapshot of every registered revision."""
-
-        from pyschedulekit.domain.calendar import CalendarSnapshotRef
 
         with self._lock:
             return tuple(

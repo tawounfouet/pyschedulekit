@@ -37,8 +37,8 @@ V1-05  Final GO/NO-GO and 1.0.0 Activation     PLANNED
 V1-01.A  Public API Inventory & Classification       COMPLETE
 V1-01.B  Root/API Stable Candidate Review            COMPLETE
 V1-01.C  Secondary Namespace Policy                  COMPLETE
-V1-01.D  Constructor / Method Signature Freeze       NEXT
-V1-01.E  Protocol / Enum / Exception Freeze          PLANNED
+V1-01.D  Constructor / Method Signature Freeze       COMPLETE
+V1-01.E  Protocol / Enum / Exception Freeze          NEXT
 V1-01.F  Compatibility & Deprecation Policy          PLANNED
 V1-01.G  Executable Contract Snapshots               PLANNED
 V1-01.H  Final Public Contract Review                 PLANNED
@@ -50,7 +50,9 @@ and partitions the intended 1.x surface into 63 root conveniences plus 41 advanc
 `pyschedulekit.api`-only names. [V1-01.C](./V1-01C_SECONDARY_NAMESPACE_POLICY.md) then
 freezes the secondary namespace policies: PostgreSQL stable-optional, testing stable-testing,
 experimental outside SemVer, stable `__version__` presence, and legacy root redirects removed
-before `1.0.0`.
+before `1.0.0`. [V1-01.D](./V1-01D_SIGNATURE_FREEZE.md) adds an executable baseline for
+39 consumer-authored constructors and 53 public methods, including parameter names, calling
+modes and defaults.
 
 ## Operating rules
 
@@ -70,4 +72,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-01.C complete. V1-01.D Constructor / Method Signature Freeze is next.
+**Status:** V1-01.D signature baseline recorded. V1-01.E Protocol / Enum / Exception Freeze is next.

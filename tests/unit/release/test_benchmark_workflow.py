@@ -1,4 +1,4 @@
-"""Fitness tests for the manual performance benchmark workflow."""
+"""Fitness tests for the performance benchmark workflow."""
 
 from pathlib import Path
 
@@ -10,13 +10,17 @@ def _workflow_text() -> str:
     return WORKFLOW.read_text(encoding="utf-8")
 
 
-def test_benchmark_workflow_is_manual_only() -> None:
+def test_benchmark_workflow_runs_manually_and_after_main_merges() -> None:
     workflow = _workflow_text()
 
     assert "workflow_dispatch:" in workflow
+    assert "push:" in workflow
+    assert "branches:" in workflow
+    assert "- main" in workflow
     assert "pull_request:" not in workflow
-    assert "push:" not in workflow
     assert "schedule:" not in workflow
+    assert "${{ inputs.profile || 'standard' }}" in workflow
+    assert "${{ inputs.python_version || '3.13' }}" in workflow
 
 
 def test_benchmark_workflow_has_no_performance_threshold_gate() -> None:

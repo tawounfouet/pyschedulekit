@@ -8,6 +8,7 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added a stable public API reference backed by an architecture test that requires every manifest export and legacy compatibility name to remain documented.
 - Added a runnable five-scenario cookbook covering interval scheduling, cron/timezones, retry/backoff, SQLite durability, and health/readiness.
 - Added acceptance tests that execute every cookbook script under CI.
 

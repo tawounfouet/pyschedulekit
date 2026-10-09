@@ -7,7 +7,7 @@ observable `UnitOfWorkFactory` contract already qualified for InMemory and SQLit
 
 ## Driver decision
 
-PG-00 uses **Psycopg 3**.
+The PostgreSQL adapter uses **Psycopg 3**.
 
 Project dependency policy:
 
@@ -21,8 +21,9 @@ PostgreSQL consumer
     → psycopg[binary]>=3.3.6,<4
 ```
 
-Connection pooling is deliberately deferred. Psycopg pooling is a separate capability and
-is not necessary to prove repository semantics.
+Connection pooling remains optional. The base PostgreSQL extra uses Psycopg directly;
+`pyschedulekit[postgres-pool]` additionally installs Psycopg pool support. Applications
+own pool lifecycle and may supply connection provider/releaser hooks to the factory.
 
 ## PostgreSQL-specific rules
 
@@ -185,7 +186,7 @@ Qualify:
 - two workers sharing PostgreSQL;
 - admission / claim / materialization contention.
 
-### PG-05 — Production Hardening 🚧 current
+### PG-05 — Production Hardening ✅
 
 Qualify and document:
 
@@ -198,8 +199,16 @@ Qualify and document:
 - PostgreSQL version support matrix;
 - benchmark comparison against SQLite.
 
-PG-03/PG-04 clear the behavioral gate. `PostgresUnitOfWorkFactory` remains internal until
-PG-05 closes isolation, lock/retry, connection-lifecycle and migration hardening.
+PG-03/PG-04 clear the behavioral gate and PG-05 closes the production assumptions.
+
+The supported public import is intentionally optional:
+
+```python
+from pyschedulekit.postgres import PostgresUnitOfWorkFactory
+```
+
+It is not re-exported from the root `pyschedulekit` namespace, which preserves the
+zero-runtime-dependency base installation.
 
 ## Coverage policy
 
@@ -213,12 +222,27 @@ PG-01 baseline: 66.88%
 PG-02 baseline: 78.45%
 PG-03 qualified: 87.88%
 PG-04 qualified: 88.59% / 138 live tests
+PG-05 qualified: 88.86% on PostgreSQL 16 / 17 / 18
 current floor: 85%
 ```
 
-PG-03 reached the project-level 85% standard and PG-04 qualified the public Scheduler plus
-multi-worker semantics on live PostgreSQL. The 85% floor remains permanent. Public factory
-exposure is deliberately deferred through PG-05 so production assumptions are documented and tested.
+PG-03 reached the project-level 85% standard, PG-04 qualified the Scheduler plus
+multi-worker semantics, and PG-05 keeps the adapter at 88.86% across PostgreSQL 16/17/18.
+The 85% floor remains permanent.
+
+## Production support contract
+
+See [SUPPORT_AND_MIGRATION.md](./SUPPORT_AND_MIGRATION.md) for:
+
+- supported PostgreSQL majors (16/17/18);
+- READ COMMITTED isolation;
+- deterministic write ordering;
+- deadlock/serialization retry semantics;
+- connection/pool ownership;
+- schema-version and migration discipline;
+- PostgreSQL major upgrades;
+- SQLite → PostgreSQL migration boundary;
+- security responsibilities.
 
 ## PG-00 CI
 
@@ -263,4 +287,6 @@ Those guarantees belong to the later PG lots and must not be implied early.
 
 ---
 
-**Current phase:** 0.2.x — PostgreSQL / PG-03.
+**Current phase:** 0.2.x — PostgreSQL persistence ✅ complete through PG-05.
+
+**Next:** Async Executor, then executor plugin registry.

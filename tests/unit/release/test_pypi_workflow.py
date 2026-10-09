@@ -75,6 +75,7 @@ def test_t_pypi_005_post_publish_verification_reads_from_pypi() -> None:
     assert "cd /tmp" in verify_section
     assert "scripts/smoke_installed_package.py" in verify_section
 
+
 def test_t_pypi_006_qualification_exposes_publication_policy_output() -> None:
     workflow = _workflow_text()
     qualify_section = workflow.split("  qualify-release-candidate:", 1)[1].split(

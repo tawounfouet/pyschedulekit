@@ -218,10 +218,10 @@ class SchedulerEngine:
                 existing = uow.requests.get_by_occurrence(occurrence.key)
                 if existing is not None:
                     self._advance_schedule(
-                        schedule,
-                        occurrences=(occurrence,),
-                        calendar=calendar,
-                    )
+                schedule,
+                occurrences=(occurrence,),
+                calendar=calendar,
+            )
                     uow.schedules.save(schedule)
                     self._commit_with_materialization_lease(
                         uow=uow,
@@ -262,10 +262,10 @@ class SchedulerEngine:
 
             if decision.action is MisfireDecisionAction.SKIP:
                 self._advance_schedule(
-                        schedule,
-                        occurrences=(occurrence,),
-                        calendar=calendar,
-                    )
+                    schedule,
+                    occurrences=(occurrence,),
+                    calendar=calendar,
+                )
                 uow.schedules.save(schedule)
                 self._commit_with_materialization_lease(
                     uow=uow,
@@ -305,11 +305,13 @@ class SchedulerEngine:
         evaluation_now: Instant,
         misfire_record: MisfireEvaluationRecord,
         materialization_handle: ScheduleMaterializationLeaseHandle | None,
+        calendar: BusinessCalendar | None,
     ) -> _ScheduleEvaluation:
         backlog = self._occurrence_planner.due_backlog(
             schedule,
             until=evaluation_now,
             limit=schedule.definition.misfire.max_occurrences,
+            calendar=calendar,
         )
 
         requests = tuple(
@@ -355,11 +357,13 @@ class SchedulerEngine:
         evaluation_now: Instant,
         misfire_record: MisfireEvaluationRecord,
         materialization_handle: ScheduleMaterializationLeaseHandle | None,
+        calendar: BusinessCalendar | None,
     ) -> _ScheduleEvaluation:
         backlog = self._occurrence_planner.due_backlog(
             schedule,
             until=evaluation_now,
             limit=schedule.definition.misfire.max_occurrences,
+            calendar=calendar,
         )
 
         recovery_record = RecoveryEvaluationRecord(

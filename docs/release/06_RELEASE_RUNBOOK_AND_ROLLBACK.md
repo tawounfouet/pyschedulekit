@@ -8,13 +8,17 @@ The first public go-live was completed with `0.1.0a3`. The next release prepared
 runbook is:
 
 ```text
-PyScheduleKit 0.1.0a4
-tag: v0.1.0a4
-theme: post-release stabilization and adversarial hardening
+PyScheduleKit 1.0.0
+tag: v1.0.0
+theme: first stable public contract
 ```
 
 Historical TestPyPI work remains documented in REL-05 and the changelog, but **TestPyPI is
 not a mandatory stage of the production pipeline**.
+
+No `0.x`, alpha, beta or release-candidate build is published to PyPI anymore. Pre-1.0
+versions are development milestones validated through normal CI and distribution
+qualification. The public release pipeline is intentionally dormant until stable `1.0.0`.
 
 ## Release pipeline
 
@@ -99,7 +103,7 @@ Before creating a release tag, run:
 from `main` with:
 
 ```text
-release_tag = v0.1.0a4
+release_tag = v1.0.0
 PyPI Trusted Publisher ready = true
 Immutable Releases ready     = true
 ```
@@ -142,19 +146,19 @@ Build attestations enabled through workflow permissions
 
 TestPyPI may be used manually for experiments, but it is not a release gate.
 
-## GO / NO-GO checklist for 0.1.0a4
+## GO / NO-GO checklist for 1.0.0
 
 ```text
 SOURCE
 [ ] main contains the exact intended release commit
 [ ] CI green on Python 3.11 / 3.12 / 3.13
 [ ] Distribution Qualification green
-[ ] package version is 0.1.0a4
-[ ] CHANGELOG.md contains "## [0.1.0a4] - 2026-10-09"
+[ ] package version is 1.0.0
+[ ] CHANGELOG.md contains a dated `## [1.0.0] - YYYY-MM-DD` section
 [ ] no release-affecting changes are pending
 
 IDENTITY
-[ ] v0.1.0a4 does not already exist
+[ ] v1.0.0 does not already exist
 [ ] release tag exactly matches package version
 
 PYPI
@@ -167,7 +171,7 @@ GITHUB
 [ ] provenance permissions/actions are present and SHA-pinned
 
 READINESS
-[ ] Release Readiness passed on main for v0.1.0a4
+[ ] Release Readiness passed on main for v1.0.0
 ```
 
 Any unchecked item is **NO-GO**.
@@ -193,12 +197,12 @@ python -c "import pyschedulekit; print(pyschedulekit.__version__)"
 Expected for this release:
 
 ```text
-0.1.0a4
+1.0.0
 ```
 
 ### 3. Run Release Readiness
 
-Run the manual workflow on `main` with `release_tag=v0.1.0a4` and both external-control
+Run the manual workflow on `main` with `release_tag=v1.0.0` and both external-control
 acknowledgements enabled.
 
 Do not tag until this run is green.
@@ -206,7 +210,7 @@ Do not tag until this run is green.
 ### 4. Create one annotated tag
 
 ```bash
-git tag -a v0.1.0a4 -m "PyScheduleKit v0.1.0a4"
+git tag -a v1.0.0 -m "PyScheduleKit v1.0.0"
 ```
 
 Signing the annotated tag is recommended when local signing is configured.
@@ -214,7 +218,7 @@ Signing the annotated tag is recommended when local signing is configured.
 ### 5. Push only that tag
 
 ```bash
-git push origin v0.1.0a4
+git push origin v1.0.0
 ```
 
 This starts the Release Candidate Gate.
@@ -352,7 +356,7 @@ Never hide an incident by replacing bytes under the same identity.
 Before tagging, freeze release notes under a dated heading:
 
 ```text
-## [0.1.0a4] - 2026-10-09
+## [1.0.0] - 2026-10-09
 ```
 
 Future changes remain under:
@@ -368,28 +372,28 @@ The preflight enforces that the candidate package version has a dated changelog 
 After the workflow is fully green:
 
 ```bash
-python -m pip install --pre --upgrade pyschedulekit==0.1.0a4
+python -m pip install --upgrade pyschedulekit==1.0.0
 python -c "import pyschedulekit; print(pyschedulekit.__version__)"
 ```
 
 Expected:
 
 ```text
-0.1.0a4
+1.0.0
 ```
 
 Verify provenance for a downloaded wheel:
 
 ```bash
 gh attestation verify \
-  pyschedulekit-0.1.0a4-py3-none-any.whl \
+  pyschedulekit-1.0.0-py3-none-any.whl \
   --repo tawounfouet/pyschedulekit
 ```
 
 Verify the GitHub Release:
 
 ```bash
-gh release verify v0.1.0a4
+gh release verify v1.0.0
 ```
 
 ## Release record to retain
@@ -418,12 +422,12 @@ REL-01  Wheel + sdist Build                        ✅
 REL-02  Artifact / Metadata Validation             ✅
 REL-03  Clean-Install Matrix                       ✅
 REL-04  Version / Tag / Release Candidate Gate     ✅
-REL-05  TestPyPI Trusted Publishing                ✅ implemented / optional historical path
-REL-06  PyPI Trusted Publishing                    ✅ live
-REL-07  GitHub Release + Provenance                ✅ live
+REL-05  TestPyPI Trusted Publishing                ✅ implemented / historical
+REL-06  PyPI Trusted Publishing                    ✅ available / deferred to stable 1.0.0
+REL-07  GitHub Release + Provenance                ✅ available
 REL-08  Release Runbook / Rollback Discipline      ✅
 ```
 
-The release-engineering implementation is operational. The next release action for the
-current branch is to merge the `0.1.0a4` preparation, run Release Readiness on `main`,
-then create `v0.1.0a4`.
+The release-engineering implementation is operational but deliberately dormant during
+pre-1.0 development. Resume this runbook only when the source version reaches stable
+`1.0.0`; then run Release Readiness on `main` before creating `v1.0.0`.

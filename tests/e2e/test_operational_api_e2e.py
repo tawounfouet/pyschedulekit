@@ -5,12 +5,14 @@ from datetime import UTC, datetime
 import pytest
 
 from pyschedulekit import (
+    BusinessCalendar,
     CalendarRef,
     CalendarRevision,
     CalendarSnapshotRef,
     Duration,
     ExecutionNotFoundError,
     ExecutionState,
+    InMemoryCalendarProvider,
     Instant,
     IntervalTrigger,
     Scheduler,
@@ -123,7 +125,15 @@ def test_t_operational_e2e_005_shutdown_makes_scheduler_not_ready() -> None:
 
 
 def test_calendar_binding_is_visible_in_schedule_snapshot() -> None:
-    scheduler = Scheduler(clock=MutableClock(_instant()))
+    business_calendar = BusinessCalendar(
+        calendar_ref=CalendarRef("fr-business-days"),
+        revision=CalendarRevision(3),
+        working_weekdays=frozenset(range(7)),
+    )
+    scheduler = Scheduler(
+        clock=MutableClock(_instant()),
+        calendar_provider=InMemoryCalendarProvider([business_calendar]),
+    )
     calendar = CalendarSnapshotRef(
         calendar_ref=CalendarRef("fr-business-days"),
         revision=CalendarRevision(3),

@@ -108,7 +108,7 @@ publication only for stable semantic versions >= `1.0.0`.
 POST-01 through POST-06 and PostgreSQL PG-00 → PG-05 are complete.
 The 0.2.x PostgreSQL / Async Executor / ExecutorRegistry sequence is complete. Current
 sequence: 0.3.x CAL-00 Calendar Foundations ✅ → CAL-01 Schedule Calendar Binding ✅ →
-CAL-02 Calendar-aware Occurrence Planning next. Calendars must remain deterministic and
+CAL-02 Calendar-aware Occurrence Planning ✅ → CAL-03 Business-Day Trigger Semantics next. Calendars must remain deterministic and
 versioned; do not couple domain calendar rules to a holiday
 library, database, HTTP service, or global mutable provider.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,

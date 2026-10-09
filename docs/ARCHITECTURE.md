@@ -256,9 +256,11 @@ Les limites encore structurelles sont différentes :
    déclarative est persistée, jamais l'objet exécutable.
 6. **Calendriers métier** — CAL-00 introduit `CalendarRef`, `CalendarRevision`,
    `CalendarSnapshotRef`, `BusinessCalendar` et le port `CalendarProvider`. CAL-01 lie
-   désormais une référence de snapshot optionnelle à `ScheduleDefinition`, la persiste et
-   l'expose dans les snapshots opérationnels. Cette liaison reste déclarative : les triggers
-   ne consultent pas encore le calendrier ; cette planification commence en CAL-02.
+   une référence de snapshot exacte à `ScheduleDefinition`. CAL-02 résout cette révision
+   à la frontière application puis filtre les candidats du Trigger dans le domaine avec
+   `CalendarOccurrencePlanner`. La date de validation est la date locale du Schedule ;
+   `next_run_time`, catch-up et coalesce utilisent la même sémantique. Les triggers
+   intrinsèquement métier restent hors scope jusqu'à CAL-03.
 7. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
    compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
 

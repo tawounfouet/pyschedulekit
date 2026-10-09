@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.domain.calendar import BusinessCalendar
+from pyschedulekit.domain.calendar_planning import CalendarOccurrencePlanner
 from pyschedulekit.domain.schedule import Schedule, ScheduleId, ScheduleRevision, ScheduleState
 from pyschedulekit.domain.time import Instant
 
@@ -43,9 +45,21 @@ class OccurrenceBacklog:
 
 
 class OccurrencePlanner:
-    """Pure domain service that projects Schedule timing into Occurrences."""
+    """Pure domain service that projects Schedule timing into valid Occurrences."""
 
-    def current(self, schedule: Schedule) -> Occurrence | None:
+    def __init__(
+        self,
+        *,
+        calendar_planner: CalendarOccurrencePlanner | None = None,
+    ) -> None:
+        self._calendar_planner = calendar_planner or CalendarOccurrencePlanner()
+
+    def current(
+        self,
+        schedule: Schedule,
+        *,
+        calendar: BusinessCalendar | None = None,
+    ) -> Occurrence | None:
         """Return the Occurrence represented by the Schedule checkpoint.
 
         Non-active schedules intentionally expose no current occurrence.
@@ -58,9 +72,23 @@ class OccurrencePlanner:
         if scheduled_at is None:
             return None
 
+        if not self._calendar_planner.is_allowed(
+            instant=scheduled_at,
+            timezone=schedule.definition.timezone,
+            binding=schedule.definition.calendar,
+            calendar=calendar,
+        ):
+            return None
+
         return self._occurrence(schedule, scheduled_at)
 
-    def next_after(self, schedule: Schedule, reference: Instant) -> Occurrence | None:
+    def next_after(
+        self,
+        schedule: Schedule,
+        reference: Instant,
+        *,
+        calendar: BusinessCalendar | None = None,
+    ) -> Occurrence | None:
         """Calculate a future occurrence without mutating the Schedule.
 
         This method is useful for deterministic planning and, later, backlog
@@ -70,7 +98,13 @@ class OccurrencePlanner:
         if schedule.state is not ScheduleState.ACTIVE:
             return None
 
-        scheduled_at = schedule.definition.trigger.next_after(reference)
+        scheduled_at = self._calendar_planner.next_after(
+            trigger=schedule.definition.trigger,
+            reference=reference,
+            timezone=schedule.definition.timezone,
+            binding=schedule.definition.calendar,
+            calendar=calendar,
+        )
         if scheduled_at is None:
             return None
 
@@ -82,6 +116,7 @@ class OccurrencePlanner:
         *,
         until: Instant,
         limit: int,
+        calendar: BusinessCalendar | None = None,
     ) -> OccurrenceBacklog:
         """Reconstruct due occurrences oldest-first with bounded work.
 
@@ -92,7 +127,7 @@ class OccurrencePlanner:
         if limit < 1:
             raise ValueError("limit must be greater than or equal to 1.")
 
-        current = self.current(schedule)
+        current = self.current(schedule, calendar=calendar)
         if current is None or current.scheduled_at > until:
             return OccurrenceBacklog(occurrences=(), has_more=False)
 
@@ -100,7 +135,11 @@ class OccurrencePlanner:
         last = current
 
         while len(occurrences) < limit:
-            next_occurrence = self.next_after(schedule, last.scheduled_at)
+            next_occurrence = self.next_after(
+                schedule,
+                last.scheduled_at,
+                calendar=calendar,
+            )
             if next_occurrence is None or next_occurrence.scheduled_at > until:
                 return OccurrenceBacklog(
                     occurrences=tuple(occurrences),
@@ -109,7 +148,11 @@ class OccurrencePlanner:
             occurrences.append(next_occurrence)
             last = next_occurrence
 
-        next_occurrence = self.next_after(schedule, last.scheduled_at)
+        next_occurrence = self.next_after(
+            schedule,
+            last.scheduled_at,
+            calendar=calendar,
+        )
         has_more = next_occurrence is not None and next_occurrence.scheduled_at <= until
         return OccurrenceBacklog(
             occurrences=tuple(occurrences),

@@ -5,12 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from pyschedulekit.domain.calendar import CalendarSnapshotRef
+from pyschedulekit.domain.calendar import BusinessCalendar, CalendarSnapshotRef
+from pyschedulekit.domain.calendar_planning import CalendarOccurrencePlanner
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.time import Duration, Instant, Timezone
 from pyschedulekit.domain.trigger import Trigger
+
+_CALENDAR_OCCURRENCE_PLANNER = CalendarOccurrencePlanner()
 
 
 class InvalidScheduleTransitionError(ValueError):
@@ -158,10 +161,17 @@ class Schedule:
         schedule_id: ScheduleId,
         definition: ScheduleDefinition,
         reference: Instant,
+        calendar: BusinessCalendar | None = None,
     ) -> Schedule:
-        """Create a Schedule and calculate its first future occurrence."""
+        """Create a Schedule and calculate its first valid future occurrence."""
 
-        next_run_time = definition.trigger.next_after(reference)
+        next_run_time = _CALENDAR_OCCURRENCE_PLANNER.next_after(
+            trigger=definition.trigger,
+            reference=reference,
+            timezone=definition.timezone,
+            binding=definition.calendar,
+            calendar=calendar,
+        )
         state = ScheduleState.COMPLETED if next_run_time is None else ScheduleState.ACTIVE
 
         return cls(
@@ -211,7 +221,12 @@ class Schedule:
         self._next_run_time = None
         self._touch()
 
-    def resume(self, *, reference: Instant) -> None:
+    def resume(
+        self,
+        *,
+        reference: Instant,
+        calendar: BusinessCalendar | None = None,
+    ) -> None:
         """Resume from current time without implicitly catching up paused time."""
 
         if self._state is ScheduleState.ACTIVE:
@@ -221,7 +236,13 @@ class Schedule:
                 f"Cannot resume Schedule from state {self._state.value!r}."
             )
 
-        next_run_time = self._definition.trigger.next_after(reference)
+        next_run_time = _CALENDAR_OCCURRENCE_PLANNER.next_after(
+            trigger=self._definition.trigger,
+            reference=reference,
+            timezone=self._definition.timezone,
+            binding=self._definition.calendar,
+            calendar=calendar,
+        )
         self._next_run_time = next_run_time
         self._state = ScheduleState.COMPLETED if next_run_time is None else ScheduleState.ACTIVE
         self._touch()
@@ -259,6 +280,7 @@ class Schedule:
         *,
         definition: ScheduleDefinition,
         reference: Instant,
+        calendar: BusinessCalendar | None = None,
     ) -> None:
         """Replace the functional definition while preserving Schedule identity."""
 
@@ -271,7 +293,13 @@ class Schedule:
         self._revision = self._revision.next()
 
         if self._state is ScheduleState.ACTIVE:
-            next_run_time = definition.trigger.next_after(reference)
+            next_run_time = _CALENDAR_OCCURRENCE_PLANNER.next_after(
+                trigger=definition.trigger,
+                reference=reference,
+                timezone=definition.timezone,
+                binding=definition.calendar,
+                calendar=calendar,
+            )
             self._next_run_time = next_run_time
             if next_run_time is None:
                 self._state = ScheduleState.COMPLETED
@@ -281,7 +309,12 @@ class Schedule:
         self._touch()
         self._assert_invariants()
 
-    def advance_next_run_after(self, *, reference: Instant) -> Instant | None:
+    def advance_next_run_after(
+        self,
+        *,
+        reference: Instant,
+        calendar: BusinessCalendar | None = None,
+    ) -> Instant | None:
         """Advance the operational checkpoint without changing ScheduleRevision."""
 
         if self._state is not ScheduleState.ACTIVE:
@@ -294,7 +327,13 @@ class Schedule:
                 "Cannot advance next_run_time from a reference before the current checkpoint."
             )
 
-        next_run_time = self._definition.trigger.next_after(reference)
+        next_run_time = _CALENDAR_OCCURRENCE_PLANNER.next_after(
+            trigger=self._definition.trigger,
+            reference=reference,
+            timezone=self._definition.timezone,
+            binding=self._definition.calendar,
+            calendar=calendar,
+        )
         self._next_run_time = next_run_time
         if next_run_time is None:
             self._state = ScheduleState.COMPLETED

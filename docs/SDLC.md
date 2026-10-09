@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — 0.3.x / CAL-01 Schedule Calendar Binding
+## 4. État courant — 0.3.x / CAL-02 Calendar-aware Occurrence Planning
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -100,7 +100,8 @@ POST-06 Chaos / Fault Injection         ✅
 0.2.x Executor Plugin Registry           ✅
 0.3.x CAL-00 Calendar Foundations         ✅
 0.3.x CAL-01 Schedule Calendar Binding    ✅
-0.3.x CAL-02 Calendar-aware Planning      ⏭ next
+0.3.x CAL-02 Calendar-aware Planning      ✅
+0.3.x CAL-03 Business-Day Trigger Semantics ⏭ next
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -113,7 +114,7 @@ POST-06 Chaos / Fault Injection         ✅
 - **PG-03 qualifié** : contrat partagé InMemory/SQLite/PostgreSQL, 130 tests PostgreSQL live, couverture PostgreSQL 87,88% avec floor 85%.
 - **PG-04 qualifié** : 138 tests PostgreSQL live, Scheduler/run_pending, retry, outbox, reconciliation, crash recovery et contention multi-worker; couverture PostgreSQL 88,59%.
 - **PostgreSQL** : qualifié jusqu'à PG-05, public via `pyschedulekit.postgres`, support matrix 16/17/18, couverture live 88,86%.
-- **Étape active** : CAL-01 est qualifié ; CAL-02 fera consommer la référence de calendrier par la planification d'occurrences sans casser le déterminisme.
+- **Étape active** : CAL-02 est qualifié ; CAL-03 ajoute maintenant les triggers intrinsèquement métier (premier/dernier/N-ième jour ouvré) au-dessus du même modèle de calendrier versionné.
 
 ---
 
@@ -178,4 +179,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — CAL-01 Schedule Calendar Binding.*
+*Dernière mise à jour : 2026-10-09 — CAL-02 Calendar-aware Occurrence Planning.*

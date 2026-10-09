@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from pyschedulekit.application.calendar_resolution import resolve_calendar_binding
 from pyschedulekit.application.execution_service import ExecutionNotFoundError
 from pyschedulekit.domain.calendar import CalendarSnapshotRef
 from pyschedulekit.domain.execution import (
@@ -15,6 +16,7 @@ from pyschedulekit.domain.execution import (
 from pyschedulekit.domain.schedule import Schedule, ScheduleId, ScheduleState
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.errors import PyScheduleKitNotFoundError
+from pyschedulekit.ports.calendar import CalendarProvider
 from pyschedulekit.ports.persistence import UnitOfWorkFactory
 from pyschedulekit.ports.time import Clock
 
@@ -147,9 +149,11 @@ class SchedulerOperations:
         *,
         clock: Clock,
         uow_factory: UnitOfWorkFactory,
+        calendar_provider: CalendarProvider | None = None,
     ) -> None:
         self._clock = clock
         self._uow_factory = uow_factory
+        self._calendar_provider = calendar_provider
 
     def inspect_schedule(self, schedule_id: ScheduleId) -> ScheduleSnapshot:
         with self._uow_factory() as uow:
@@ -181,7 +185,11 @@ class SchedulerOperations:
             schedule = uow.schedules.get(schedule_id)
             if schedule is None:
                 raise ScheduleNotFoundError(schedule_id.value)
-            schedule.resume(reference=reference)
+            calendar = resolve_calendar_binding(
+                schedule.definition.calendar,
+                self._calendar_provider,
+            )
+            schedule.resume(reference=reference, calendar=calendar)
             uow.schedules.save(schedule)
             uow.commit()
             return ScheduleSnapshot.from_schedule(schedule)

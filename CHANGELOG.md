@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.B Root/API Stable Candidate Review: all 104 primary API names remain supported
+  candidates in `pyschedulekit.api`, while the intended 1.x convenience root is narrowed to
+  63 common scheduling concepts and 41 advanced extension/diagnostic types are designated
+  API-only. The decision is machine-readable and architecture-tested; runtime exports remain
+  unchanged until the final V1-01 contract application.
+
 - Added V1-01.A Public API Inventory & Classification: machine-readable inventories for the
   104 root/API candidates, root `__version__`, 2 PostgreSQL exports, 5 testing helpers and
   11 experimental names; provisional namespace classifications; and architecture tests that

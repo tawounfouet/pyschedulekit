@@ -35,8 +35,8 @@ V1-05  Final GO/NO-GO and 1.0.0 Activation     PLANNED
 
 ```text
 V1-01.A  Public API Inventory & Classification       COMPLETE
-V1-01.B  Root/API Stable Candidate Review            NEXT
-V1-01.C  Secondary Namespace Policy                  PLANNED
+V1-01.B  Root/API Stable Candidate Review            COMPLETE
+V1-01.C  Secondary Namespace Policy                  NEXT
 V1-01.D  Constructor / Method Signature Freeze       PLANNED
 V1-01.E  Protocol / Enum / Exception Freeze          PLANNED
 V1-01.F  Compatibility & Deprecation Policy          PLANNED
@@ -44,8 +44,10 @@ V1-01.G  Executable Contract Snapshots               PLANNED
 V1-01.H  Final Public Contract Review                 PLANNED
 ```
 
-[V1-01.A](./V1-01A_PUBLIC_API_INVENTORY.md) records the exact current namespace inventory
-without yet turning every candidate signature or semantic into a final 1.x promise.
+[V1-01.A](./V1-01A_PUBLIC_API_INVENTORY.md) records the exact current namespace inventory.
+[V1-01.B](./V1-01B_ROOT_API_STABLE_CANDIDATE_REVIEW.md) reviews all 104 primary candidates
+and partitions the intended 1.x surface into 63 root conveniences plus 41 advanced
+`pyschedulekit.api`-only names.
 
 ## Operating rules
 
@@ -65,4 +67,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-01.A complete. V1-01.B Root/API Stable Candidate Review is next.
+**Status:** V1-01.B complete. V1-01.C Secondary Namespace Policy is next.

@@ -37,8 +37,10 @@ Representative contracts include:
 class Trigger(Protocol):
     def next_after(self, reference: Instant) -> Instant | None: ...
 
+
 class Clock(Protocol):
     def now(self) -> Instant: ...
+
 
 class CalendarProvider(Protocol):
     def resolve(
@@ -47,6 +49,7 @@ class CalendarProvider(Protocol):
         *,
         revision: CalendarRevision | None = None,
     ) -> BusinessCalendar: ...
+
 
 class CancellationToken(Protocol):
     @property

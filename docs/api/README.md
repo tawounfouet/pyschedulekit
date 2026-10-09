@@ -41,6 +41,7 @@ promise at `1.0.0`.
 - `Scheduler.register_target()` — register trusted local Python code and receive a
   declarative `TargetRef`.
 - `Scheduler.register_http_target()` — register a trusted `HttpRequestSpec`.
+- `Scheduler.register_executor()` — explicitly register one trusted `Executor` for a target kind.
 - `Scheduler.add_schedule()` — persist a schedule using a `Trigger`, optional timezone,
   misfire, concurrency, retry and timeout policies.
 

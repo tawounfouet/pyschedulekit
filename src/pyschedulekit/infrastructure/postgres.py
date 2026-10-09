@@ -1200,6 +1200,716 @@ class PostgresAttemptRepository:
         self._dirty.clear()
 
 
+
+class PostgresScheduleAdmissionLockRepository:
+    def __init__(self, connection: PostgresConnection) -> None:
+        self._connection = connection
+        self._tracked: dict[ScheduleId, ScheduleAdmissionLock] = {}
+        self._expected_versions: dict[ScheduleId, int] = {}
+        self._new: set[ScheduleId] = set()
+        self._dirty: set[ScheduleId] = set()
+
+    def add(self, lock: ScheduleAdmissionLock) -> None:
+        if lock.schedule_id in self._tracked:
+            raise DuplicateAdmissionLockError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} is already tracked."
+            )
+        self._tracked[lock.schedule_id] = lock
+        self._new.add(lock.schedule_id)
+
+    def get(self, schedule_id: ScheduleId) -> ScheduleAdmissionLock | None:
+        tracked = self._tracked.get(schedule_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM schedule_admission_locks WHERE schedule_id = %s",
+            (schedule_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _admission_lock_from_row(row)
+        self._tracked[schedule_id] = loaded
+        self._expected_versions[schedule_id] = loaded.version
+        return loaded
+
+    def save(self, lock: ScheduleAdmissionLock) -> None:
+        if self._tracked.get(lock.schedule_id) is not lock:
+            raise UntrackedEntityError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} must be loaded before save()."
+            )
+        if lock.schedule_id in self._new:
+            return
+        if lock.schedule_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ScheduleAdmissionLock {lock.schedule_id.value!r} has no tracked version."
+            )
+        self._dirty.add(lock.schedule_id)
+
+    def _validate(self) -> None:
+        for schedule_id in self._new:
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM schedule_admission_locks WHERE schedule_id = %s",
+                    (schedule_id.value,),
+                ).fetchone()
+                is not None
+            ):
+                raise DuplicateAdmissionLockError(
+                    f"ScheduleAdmissionLock {schedule_id.value!r} already exists."
+                )
+        for schedule_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM schedule_admission_locks WHERE schedule_id = %s",
+                (schedule_id.value,),
+            ).fetchone()
+            if row is None or cast(int, row["version"]) != self._expected_versions[schedule_id]:
+                raise OptimisticConcurrencyError(
+                    f"ScheduleAdmissionLock {schedule_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for schedule_id in self._new:
+            lock = self._tracked[schedule_id]
+            self._connection.execute(
+                """
+                INSERT INTO schedule_admission_locks(
+                    schedule_id, worker_id, token, acquired_at, expires_at,
+                    generation, state, released_at, version
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    lock.schedule_id.value,
+                    lock.worker_id.value,
+                    lock.token.value,
+                    lock.acquired_at.value,
+                    lock.expires_at.value,
+                    lock.generation,
+                    lock.state.value,
+                    None if lock.released_at is None else lock.released_at.value,
+                    lock.version,
+                ),
+            )
+
+        for schedule_id in self._dirty:
+            lock = self._tracked[schedule_id]
+            expected = self._expected_versions[schedule_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE schedule_admission_locks
+                SET worker_id = %s, token = %s, acquired_at = %s, expires_at = %s,
+                    generation = %s, state = %s, released_at = %s, version = %s
+                WHERE schedule_id = %s AND version = %s
+                """,
+                (
+                    lock.worker_id.value,
+                    lock.token.value,
+                    lock.acquired_at.value,
+                    lock.expires_at.value,
+                    lock.generation,
+                    lock.state.value,
+                    None if lock.released_at is None else lock.released_at.value,
+                    lock.version,
+                    lock.schedule_id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(cursor, entity=f"ScheduleAdmissionLock {lock.schedule_id.value!r}")
+
+    def _after_commit(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
+class PostgresScheduleMaterializationLeaseRepository:
+    def __init__(self, connection: PostgresConnection) -> None:
+        self._connection = connection
+        self._tracked: dict[ScheduleId, ScheduleMaterializationLease] = {}
+        self._expected_versions: dict[ScheduleId, int] = {}
+        self._new: set[ScheduleId] = set()
+        self._dirty: set[ScheduleId] = set()
+
+    def add(self, lease: ScheduleMaterializationLease) -> None:
+        if lease.schedule_id in self._tracked:
+            raise DuplicateMaterializationLeaseError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} is already tracked."
+            )
+        self._tracked[lease.schedule_id] = lease
+        self._new.add(lease.schedule_id)
+
+    def get(self, schedule_id: ScheduleId) -> ScheduleMaterializationLease | None:
+        tracked = self._tracked.get(schedule_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM schedule_materialization_leases WHERE schedule_id = %s",
+            (schedule_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _materialization_lease_from_row(row)
+        self._tracked[schedule_id] = loaded
+        self._expected_versions[schedule_id] = loaded.version
+        return loaded
+
+    def save(self, lease: ScheduleMaterializationLease) -> None:
+        if self._tracked.get(lease.schedule_id) is not lease:
+            raise UntrackedEntityError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} "
+                "must be loaded before save()."
+            )
+        if lease.schedule_id in self._new:
+            return
+        if lease.schedule_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ScheduleMaterializationLease {lease.schedule_id.value!r} has no tracked version."
+            )
+        self._dirty.add(lease.schedule_id)
+
+    def _validate(self) -> None:
+        for schedule_id in self._new:
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM schedule_materialization_leases WHERE schedule_id = %s",
+                    (schedule_id.value,),
+                ).fetchone()
+                is not None
+            ):
+                raise DuplicateMaterializationLeaseError(
+                    f"ScheduleMaterializationLease {schedule_id.value!r} already exists."
+                )
+        for schedule_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM schedule_materialization_leases WHERE schedule_id = %s",
+                (schedule_id.value,),
+            ).fetchone()
+            if row is None or cast(int, row["version"]) != self._expected_versions[schedule_id]:
+                raise OptimisticConcurrencyError(
+                    f"ScheduleMaterializationLease {schedule_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for schedule_id in self._new:
+            lease = self._tracked[schedule_id]
+            self._connection.execute(
+                """
+                INSERT INTO schedule_materialization_leases(
+                    schedule_id, worker_id, token, acquired_at, expires_at,
+                    generation, state, released_at, version
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    lease.schedule_id.value,
+                    lease.worker_id.value,
+                    lease.token.value,
+                    lease.acquired_at.value,
+                    lease.expires_at.value,
+                    lease.generation,
+                    lease.state.value,
+                    None if lease.released_at is None else lease.released_at.value,
+                    lease.version,
+                ),
+            )
+
+        for schedule_id in self._dirty:
+            lease = self._tracked[schedule_id]
+            expected = self._expected_versions[schedule_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE schedule_materialization_leases
+                SET worker_id = %s, token = %s, acquired_at = %s, expires_at = %s,
+                    generation = %s, state = %s, released_at = %s, version = %s
+                WHERE schedule_id = %s AND version = %s
+                """,
+                (
+                    lease.worker_id.value,
+                    lease.token.value,
+                    lease.acquired_at.value,
+                    lease.expires_at.value,
+                    lease.generation,
+                    lease.state.value,
+                    None if lease.released_at is None else lease.released_at.value,
+                    lease.version,
+                    lease.schedule_id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(
+                cursor,
+                entity=f"ScheduleMaterializationLease {lease.schedule_id.value!r}",
+            )
+
+    def _after_commit(self) -> None:
+        for schedule_id in self._new | self._dirty:
+            self._expected_versions[schedule_id] = self._tracked[schedule_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
+class PostgresExecutionClaimRepository:
+    def __init__(self, connection: PostgresConnection) -> None:
+        self._connection = connection
+        self._tracked: dict[ExecutionId, ExecutionClaim] = {}
+        self._expected_versions: dict[ExecutionId, int] = {}
+        self._new: set[ExecutionId] = set()
+        self._dirty: set[ExecutionId] = set()
+
+    def add(self, claim: ExecutionClaim) -> None:
+        if claim.execution_id in self._tracked:
+            raise DuplicateExecutionClaimError(
+                f"ExecutionClaim {claim.execution_id.value!r} is already tracked."
+            )
+        self._tracked[claim.execution_id] = claim
+        self._new.add(claim.execution_id)
+
+    def get(self, execution_id: ExecutionId) -> ExecutionClaim | None:
+        tracked = self._tracked.get(execution_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM execution_claims WHERE execution_id = %s",
+            (execution_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _claim_from_row(row)
+        self._tracked[execution_id] = loaded
+        self._expected_versions[execution_id] = loaded.version
+        return loaded
+
+    def save(self, claim: ExecutionClaim) -> None:
+        if self._tracked.get(claim.execution_id) is not claim:
+            raise UntrackedEntityError(
+                f"ExecutionClaim {claim.execution_id.value!r} must be loaded before save()."
+            )
+        if claim.execution_id in self._new:
+            return
+        if claim.execution_id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"ExecutionClaim {claim.execution_id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(claim.execution_id)
+
+    def _validate(self) -> None:
+        for execution_id in self._new:
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM execution_claims WHERE execution_id = %s",
+                    (execution_id.value,),
+                ).fetchone()
+                is not None
+            ):
+                raise DuplicateExecutionClaimError(
+                    f"ExecutionClaim {execution_id.value!r} already exists."
+                )
+        for execution_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM execution_claims WHERE execution_id = %s",
+                (execution_id.value,),
+            ).fetchone()
+            if row is None or cast(int, row["version"]) != self._expected_versions[execution_id]:
+                raise OptimisticConcurrencyError(
+                    f"ExecutionClaim {execution_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for execution_id in self._new:
+            claim = self._tracked[execution_id]
+            self._connection.execute(
+                """
+                INSERT INTO execution_claims(
+                    execution_id, worker_id, token, claimed_at, expires_at,
+                    generation, state, released_at, version
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    claim.execution_id.value,
+                    claim.worker_id.value,
+                    claim.token.value,
+                    claim.claimed_at.value,
+                    claim.expires_at.value,
+                    claim.generation,
+                    claim.state.value,
+                    None if claim.released_at is None else claim.released_at.value,
+                    claim.version,
+                ),
+            )
+
+        for execution_id in self._dirty:
+            claim = self._tracked[execution_id]
+            expected = self._expected_versions[execution_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE execution_claims
+                SET worker_id = %s, token = %s, claimed_at = %s, expires_at = %s,
+                    generation = %s, state = %s, released_at = %s, version = %s
+                WHERE execution_id = %s AND version = %s
+                """,
+                (
+                    claim.worker_id.value,
+                    claim.token.value,
+                    claim.claimed_at.value,
+                    claim.expires_at.value,
+                    claim.generation,
+                    claim.state.value,
+                    None if claim.released_at is None else claim.released_at.value,
+                    claim.version,
+                    claim.execution_id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(cursor, entity=f"ExecutionClaim {claim.execution_id.value!r}")
+
+    def _after_commit(self) -> None:
+        for execution_id in self._new | self._dirty:
+            self._expected_versions[execution_id] = self._tracked[execution_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
+class PostgresOutboxRepository:
+    def __init__(self, connection: PostgresConnection) -> None:
+        self._connection = connection
+        self._tracked: dict[OutboxMessageId, OutboxMessage] = {}
+        self._expected_versions: dict[OutboxMessageId, int] = {}
+        self._new: set[OutboxMessageId] = set()
+        self._dirty: set[OutboxMessageId] = set()
+
+    def add(self, message: OutboxMessage) -> None:
+        if message.id in self._tracked:
+            raise DuplicateOutboxMessageError(
+                f"OutboxMessage {message.id.value!r} is already tracked."
+            )
+        self._tracked[message.id] = message
+        self._new.add(message.id)
+
+    def get(self, message_id: OutboxMessageId) -> OutboxMessage | None:
+        tracked = self._tracked.get(message_id)
+        if tracked is not None:
+            return tracked
+        row = self._connection.execute(
+            "SELECT * FROM outbox_messages WHERE id = %s",
+            (message_id.value,),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded = _outbox_from_row(row)
+        self._tracked[message_id] = loaded
+        self._expected_versions[message_id] = loaded.version
+        return loaded
+
+    def save(self, message: OutboxMessage) -> None:
+        if self._tracked.get(message.id) is not message:
+            raise UntrackedEntityError(
+                f"OutboxMessage {message.id.value!r} must be loaded before save()."
+            )
+        if message.id in self._new:
+            return
+        if message.id not in self._expected_versions:
+            raise UntrackedEntityError(
+                f"OutboxMessage {message.id.value!r} has no tracked committed version."
+            )
+        self._dirty.add(message.id)
+
+    def list_pending(self, *, limit: int) -> list[OutboxMessage]:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+        rows = self._connection.execute(
+            """
+            SELECT id
+            FROM outbox_messages
+            WHERE state = %s
+            ORDER BY created_at, aggregate_type, aggregate_id, sequence, id
+            LIMIT %s
+            """,
+            (OutboxState.PENDING.value, limit),
+        ).fetchall()
+        result: list[OutboxMessage] = []
+        for row in rows:
+            message = self.get(OutboxMessageId(str(row["id"])))
+            if message is not None:
+                result.append(message)
+        return result
+
+    def _validate(self) -> None:
+        for message_id in self._new:
+            if (
+                self._connection.execute(
+                    "SELECT 1 FROM outbox_messages WHERE id = %s",
+                    (message_id.value,),
+                ).fetchone()
+                is not None
+            ):
+                raise DuplicateOutboxMessageError(
+                    f"OutboxMessage {message_id.value!r} already exists."
+                )
+        for message_id in self._dirty:
+            row = self._connection.execute(
+                "SELECT version FROM outbox_messages WHERE id = %s",
+                (message_id.value,),
+            ).fetchone()
+            if row is None or cast(int, row["version"]) != self._expected_versions[message_id]:
+                raise OptimisticConcurrencyError(
+                    f"OutboxMessage {message_id.value!r} changed concurrently."
+                )
+
+    def _apply(self) -> None:
+        for message_id in self._new:
+            message = self._tracked[message_id]
+            self._connection.execute(
+                """
+                INSERT INTO outbox_messages(
+                    id, event_type, aggregate_type, aggregate_id,
+                    payload_json, created_at, sequence, state, published_at,
+                    publish_attempts, last_error, version
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    message.id.value,
+                    message.event_type,
+                    message.aggregate_type,
+                    message.aggregate_id,
+                    _encode_outbox_payload(message.payload),
+                    message.created_at.value,
+                    message.sequence,
+                    message.state.value,
+                    None if message.published_at is None else message.published_at.value,
+                    message.publish_attempts,
+                    message.last_error,
+                    message.version,
+                ),
+            )
+
+        for message_id in self._dirty:
+            message = self._tracked[message_id]
+            expected = self._expected_versions[message_id]
+            cursor = self._connection.execute(
+                """
+                UPDATE outbox_messages
+                SET event_type = %s, aggregate_type = %s, aggregate_id = %s,
+                    payload_json = %s, created_at = %s, sequence = %s, state = %s,
+                    published_at = %s, publish_attempts = %s,
+                    last_error = %s, version = %s
+                WHERE id = %s AND version = %s
+                """,
+                (
+                    message.event_type,
+                    message.aggregate_type,
+                    message.aggregate_id,
+                    _encode_outbox_payload(message.payload),
+                    message.created_at.value,
+                    message.sequence,
+                    message.state.value,
+                    None if message.published_at is None else message.published_at.value,
+                    message.publish_attempts,
+                    message.last_error,
+                    message.version,
+                    message.id.value,
+                    expected,
+                ),
+            )
+            _require_cas_update(cursor, entity=f"OutboxMessage {message.id.value!r}")
+
+    def _after_commit(self) -> None:
+        for message_id in self._new | self._dirty:
+            self._expected_versions[message_id] = self._tracked[message_id].version
+        self._new.clear()
+        self._dirty.clear()
+
+    def _rollback(self) -> None:
+        self._tracked.clear()
+        self._expected_versions.clear()
+        self._new.clear()
+        self._dirty.clear()
+
+
+class PostgresRetentionRepository:
+    def __init__(self, connection: PostgresConnection) -> None:
+        self._connection = connection
+        self._criteria: tuple[Instant, Instant, Instant, int] | None = None
+        self._result = RetentionCleanupStats()
+
+    def stage_cleanup(
+        self,
+        *,
+        executions_completed_before: Instant,
+        orphan_requests_created_before: Instant,
+        outbox_published_before: Instant,
+        limit: int,
+    ) -> None:
+        if limit < 1:
+            raise ValueError("limit must be greater than or equal to 1.")
+        self._criteria = (
+            executions_completed_before,
+            orphan_requests_created_before,
+            outbox_published_before,
+            limit,
+        )
+        self._result = RetentionCleanupStats()
+
+    @property
+    def result(self) -> RetentionCleanupStats:
+        return self._result
+
+    def _validate(self) -> None:
+        return
+
+    def _apply(self) -> None:
+        if self._criteria is None:
+            self._result = RetentionCleanupStats()
+            return
+
+        execution_cutoff, request_cutoff, outbox_cutoff, limit = self._criteria
+        budget = limit
+
+        execution_rows = self._connection.execute(
+            """
+            SELECT id, request_id
+            FROM executions
+            WHERE state IN ('success', 'failed', 'cancelled', 'timed_out')
+              AND completed_at IS NOT NULL
+              AND completed_at < %s
+            ORDER BY completed_at, id
+            LIMIT %s
+            """,
+            (execution_cutoff.value, budget),
+        ).fetchall()
+
+        execution_count = 0
+        for row in execution_rows:
+            execution_id = str(row["id"])
+            request_id = str(row["request_id"])
+            self._connection.execute(
+                "DELETE FROM attempts WHERE execution_id = %s",
+                (execution_id,),
+            )
+            self._connection.execute(
+                "DELETE FROM execution_claims WHERE execution_id = %s",
+                (execution_id,),
+            )
+            deleted = self._connection.execute(
+                """
+                DELETE FROM executions
+                WHERE id = %s
+                  AND state IN ('success', 'failed', 'cancelled', 'timed_out')
+                  AND completed_at IS NOT NULL
+                  AND completed_at < %s
+                """,
+                (execution_id, execution_cutoff.value),
+            )
+            if deleted.rowcount != 1:
+                continue
+            self._connection.execute(
+                """
+                DELETE FROM execution_requests
+                WHERE id = %s
+                  AND state = 'dispatched'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM executions WHERE request_id = %s
+                  )
+                """,
+                (request_id, request_id),
+            )
+            execution_count += 1
+
+        budget -= execution_count
+
+        orphan_count = 0
+        if budget > 0:
+            request_rows = self._connection.execute(
+                """
+                SELECT id
+                FROM execution_requests
+                WHERE state IN ('dropped', 'cancelled')
+                  AND created_at < %s
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM executions
+                      WHERE executions.request_id = execution_requests.id
+                  )
+                ORDER BY created_at, id
+                LIMIT %s
+                """,
+                (request_cutoff.value, budget),
+            ).fetchall()
+            for row in request_rows:
+                deleted = self._connection.execute(
+                    """
+                    DELETE FROM execution_requests
+                    WHERE id = %s
+                      AND state IN ('dropped', 'cancelled')
+                      AND created_at < %s
+                      AND NOT EXISTS (
+                          SELECT 1 FROM executions
+                          WHERE executions.request_id = execution_requests.id
+                      )
+                    """,
+                    (str(row["id"]), request_cutoff.value),
+                )
+                orphan_count += deleted.rowcount
+
+            budget -= orphan_count
+
+        outbox_count = 0
+        if budget > 0:
+            outbox_rows = self._connection.execute(
+                """
+                SELECT id
+                FROM outbox_messages
+                WHERE state = 'published'
+                  AND published_at IS NOT NULL
+                  AND published_at < %s
+                ORDER BY published_at, id
+                LIMIT %s
+                """,
+                (outbox_cutoff.value, budget),
+            ).fetchall()
+            for row in outbox_rows:
+                deleted = self._connection.execute(
+                    """
+                    DELETE FROM outbox_messages
+                    WHERE id = %s
+                      AND state = 'published'
+                      AND published_at IS NOT NULL
+                      AND published_at < %s
+                    """,
+                    (str(row["id"]), outbox_cutoff.value),
+                )
+                outbox_count += deleted.rowcount
+
+        self._result = RetentionCleanupStats(
+            execution_graphs=execution_count,
+            orphan_requests=orphan_count,
+            published_outbox_messages=outbox_count,
+        )
+
+    def _after_commit(self) -> None:
+        self._criteria = None
+
+    def _rollback(self) -> None:
+        self._criteria = None
+        self._result = RetentionCleanupStats()
+
+
 class PostgresCoreUnitOfWork:
     """PG-01 UnitOfWork for the four core repositories only."""
 

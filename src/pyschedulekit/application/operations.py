@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pyschedulekit.application.execution_service import ExecutionNotFoundError
+from pyschedulekit.domain.calendar import CalendarSnapshotRef
 from pyschedulekit.domain.execution import (
     Execution,
     ExecutionId,

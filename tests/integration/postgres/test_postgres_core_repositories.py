@@ -134,9 +134,7 @@ def test_pg01_core_graph_round_trips_atomically_with_identity_map() -> None:
             schedule.id
         ]
         assert [item.id for item in uow.executions.list_running(limit=10)] == [execution.id]
-        assert [item.id for item in uow.attempts.list_for_execution(execution.id)] == [
-            attempt.id
-        ]
+        assert [item.id for item in uow.attempts.list_for_execution(execution.id)] == [attempt.id]
 
 
 def test_pg01_rollback_discards_staged_core_state() -> None:

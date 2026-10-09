@@ -34,9 +34,7 @@ class RoutingExecutor:
         executors: Mapping[str, Executor] | ExecutorRegistry,
     ) -> None:
         self._registry = (
-            executors
-            if isinstance(executors, ExecutorRegistry)
-            else ExecutorRegistry(executors)
+            executors if isinstance(executors, ExecutorRegistry) else ExecutorRegistry(executors)
         )
 
         if not self._registry.target_kinds:

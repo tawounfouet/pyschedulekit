@@ -159,7 +159,7 @@ Exit criteria:
 - outbox retry state;
 - bounded cleanup.
 
-### PG-03 — Adapter Parity Contract 🚧 current
+### PG-03 — Adapter Parity Contract ✅
 
 Refactor the existing shared persistence contract so:
 
@@ -173,7 +173,7 @@ must satisfy the same observable behavior.
 
 This is the gate before public exposure.
 
-### PG-04 — Scheduler / Multi-worker E2E
+### PG-04 — Scheduler / Multi-worker E2E 🚧 current
 
 Qualify:
 
@@ -210,12 +210,12 @@ PostgreSQL owns a dedicated live-service coverage surface:
 ```text
 PG-01 baseline: 66.88%
 PG-02 baseline: 78.45%
-PG-03 required floor: 85%
+PG-03 qualified: 87.88%
 current floor: 85%
 ```
 
-The floor may only move upward as PG-02/PG-03 add contract coverage. It must reach the
-project-level 85% standard before the adapter can enter the stable public API.
+PG-03 has reached the project-level 85% standard. The 85% PostgreSQL floor is now a
+permanent regression gate; public exposure still waits for PG-04 Scheduler/multi-worker E2E.
 
 ## PG-00 CI
 

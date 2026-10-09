@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from pyschedulekit.domain.time import Instant
+from pyschedulekit.domain.calendar import BusinessCalendar
+from pyschedulekit.domain.time import Instant, Timezone
 
 
 @runtime_checkable
@@ -21,4 +22,19 @@ class Trigger(Protocol):
 
     def next_after(self, reference: Instant) -> Instant | None:
         """Return the first candidate Instant strictly after the reference."""
+        ...
+
+
+@runtime_checkable
+class CalendarAwareTrigger(Protocol):
+    """Trigger whose occurrence semantics require one resolved BusinessCalendar."""
+
+    def next_after_with_calendar(
+        self,
+        reference: Instant,
+        *,
+        timezone: Timezone,
+        calendar: BusinessCalendar,
+    ) -> Instant | None:
+        """Return the first occurrence strictly after reference using calendar context."""
         ...

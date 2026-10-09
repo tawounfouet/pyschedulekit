@@ -105,6 +105,7 @@ POST-00 is complete. The current development version is `0.1.0a4`.
 Pre-1.0 milestones are **not published to PyPI**; the release workflow enforces public
 publication only for stable semantic versions >= `1.0.0`.
 
-POST-01 through POST-06 are complete. Current sequence: 0.2.x PostgreSQL PG-00 → PG-05,
-then Async Executor and executor plugin registry. PostgreSQL support is optional and must
-not break the base zero-runtime-dependency install.
+POST-01 through POST-06 and PostgreSQL PG-00 → PG-05 are complete.
+Current sequence: Async Executor → executor plugin registry.
+PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
+and must never break the base zero-runtime-dependency root import.

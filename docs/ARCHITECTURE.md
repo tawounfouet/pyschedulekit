@@ -30,8 +30,9 @@
            │ ports/ (Protocoles)           │                   │
    ┌───────▼──────────────┐  ┌─────────────▼──────────┐  ┌─────▼──────────┐
    │ UnitOfWorkFactory    │  │ Clock                  │  │ Executor       │
-   │  ├ SQLite (2 018 LOC)│  │  SystemClock /         │  │  Local (py)    │
-   │  └ InMemory (1 441)  │  │  MutableClock (tests)  │  │  HTTP          │
+   │  ├ SQLite            │  │  SystemClock /         │  │  Local (py)    │
+   │  ├ PostgreSQL 16-18  │  │  MutableClock (tests)  │  │  HTTP          │
+   │  └ InMemory          │  │                        │  │  Routing       │
    │ Persistence/Outbox/  │  │ CancellationController │  │  Routing       │
    │ Observability ports  │  │ ObservationSink        │  └────────────────┘
    └───────┬──────────────┘  └────────────────────────┘
@@ -234,9 +235,10 @@ Les limites encore structurelles sont différentes :
 2. **Arrêt forcé d'un callable Python** — le runtime synchrone utilise un worker thread pour
    reprendre le contrôle au timeout ; Python ne fournit pas de terminaison sûre d'un thread
    arbitraire. Les workloads doivent donc être idempotents et, si possible, coopératifs.
-3. **Persistance durable** — SQLite reste le backend durable pleinement qualifié. Le chantier
-   PostgreSQL 0.2.x est ouvert : PG-00 fournit schéma/bootstrap/CI, mais aucun
-   `PostgresUnitOfWorkFactory` public n'existe avant la parité repositories/E2E.
+3. **Persistance durable** — SQLite et PostgreSQL sont qualifiés. PostgreSQL est optionnel,
+   utilise READ COMMITTED, un schéma versionné fail-closed et une matrice CI 16/17/18.
+   L'import public est `pyschedulekit.postgres.PostgresUnitOfWorkFactory`; le root package
+   reste dependency-free.
 4. **Exécution asynchrone** — les callables `async def` sont encore explicitement rejetés par
    le LocalExecutor synchrone.
 5. **Registres de cibles process-local** — Python/HTTP targets restent des objets de confiance

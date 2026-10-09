@@ -181,15 +181,62 @@ change and therefore advances `ScheduleRevision`.
 
 ### CAL-01 boundary
 
-CAL-01 deliberately does **not** resolve the calendar while calculating `next_run_time`.
-Date, Interval and Cron triggers keep their existing semantics. Calendar-aware occurrence
-planning starts in CAL-02.
+CAL-01 deliberately stopped at the durable binding. CAL-02 now consumes that binding during
+occurrence planning.
+
+## CAL-02 — Calendar-aware Occurrence Planning
+
+The planning pipeline is now explicit:
+
+```text
+Trigger
+  ↓
+candidate Instant
+  ↓
+Schedule timezone → local date
+  ↓
+exact BusinessCalendar revision
+  ↓
+valid Occurrence
+  ↓
+Schedule.next_run_time
+```
+
+`DateTrigger`, `IntervalTrigger` and `CronTrigger` remain pure temporal candidate
+producers. They do not embed country holidays or company rules.
+
+A calendar-bound Schedule resolves the exact `CalendarSnapshotRef` through the configured
+`CalendarProvider` at the application boundary. The domain receives only the immutable
+resolved `BusinessCalendar`.
+
+The planner:
+
+- filters candidates by the Schedule's **local date**, not by UTC date;
+- honors working weekdays, holidays and explicit extra working days;
+- jumps `next_run_time` directly over excluded dates;
+- applies the same filter to catch-up/coalesce reconstruction;
+- never turns an excluded weekend/holiday into a missed occurrence;
+- fails closed if the exact calendar revision cannot be resolved;
+- bounds candidate scanning to avoid pathological infinite searches.
+
+Schedules without a calendar binding keep their existing trigger semantics unchanged.
+
+### CAL-02 compatibility behavior
+
+Schedules persisted during CAL-01 may contain a raw trigger checkpoint that falls on a
+non-working date because calendar filtering did not exist yet. When such a due checkpoint
+is encountered, the engine advances it to the next valid occurrence without materializing
+the excluded candidate.
+
+### CAL-02 boundary
+
+CAL-02 only filters temporal candidates. Intrinsic business rules such as "first working
+day of month" or "last business day" belong to CAL-03 Business-Day Trigger Semantics.
 
 ## Non-goals
 
 The calendar series still does **not** yet:
 
-- filter Cron/Interval/Date trigger occurrences through a business calendar;
 - implement "first/last working day" triggers;
 - ship country-specific holiday truth;
 - call external calendar APIs;
@@ -204,8 +251,8 @@ Proposed sequence:
 ```text
 CAL-00 Calendar Foundations            ✅
 CAL-01 Schedule Calendar Binding       ✅
-CAL-02 Calendar-aware Occurrence Planning  ⏭ next
-CAL-03 Business-Day Trigger Semantics
+CAL-02 Calendar-aware Occurrence Planning  🚧 current
+CAL-03 Business-Day Trigger Semantics        ⏭ next
 CAL-04 Persistence / Migration Parity
 CAL-05 Calendar Provider Adapters
 ```
@@ -214,4 +261,4 @@ The exact order after CAL-02 may be refined as occurrence semantics are qualifie
 
 ---
 
-**Status:** CAL-01 — Schedule Calendar Binding complete. Next: CAL-02.
+**Status:** CAL-02 — Calendar-aware Occurrence Planning in qualification. Next: CAL-03.

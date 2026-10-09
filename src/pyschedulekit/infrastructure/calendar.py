@@ -325,7 +325,7 @@ class SqliteCalendarProvider:
                     """
                     CREATE TABLE IF NOT EXISTS pyschedulekit_business_calendars (
                         reference TEXT NOT NULL
-                            CHECK(length(btrim(reference)) > 0),
+                            CHECK(length(trim(reference)) > 0),
                         revision INTEGER NOT NULL CHECK(revision >= 1),
                         definition_json TEXT NOT NULL,
                         PRIMARY KEY(reference, revision)

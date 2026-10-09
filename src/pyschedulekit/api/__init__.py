@@ -113,6 +113,7 @@ from pyschedulekit.infrastructure.asyncio_executor import (
     AsyncioExecutor as AsyncioExecutor,
     AsyncPythonTargetRegistry as AsyncPythonTargetRegistry,
 )
+from pyschedulekit.infrastructure.executor_registry import ExecutorRegistry as ExecutorRegistry
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor as HttpExecutor,
     HttpMethod as HttpMethod,

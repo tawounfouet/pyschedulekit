@@ -78,7 +78,9 @@ POST-06 Chaos / Fault Injection       ✅
   PG-02 Coordination/Outbox/Retention ✅
   PG-03 Adapter Parity Contract        ✅
   PG-04 Scheduler/Multi-worker E2E     ✅
-  PG-05 Production Hardening           🚧 current
+  PG-05 Production Hardening           ✅
+        ↓
+  Async Executor                        ⏭ next
         ↓
 ...
         ↓
@@ -132,4 +134,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — 0.2.x PostgreSQL PG-05.
+**Last refreshed:** 2026-10-09 — PostgreSQL PG-05 complete; Async Executor next.

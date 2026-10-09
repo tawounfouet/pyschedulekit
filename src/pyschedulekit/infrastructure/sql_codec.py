@@ -326,9 +326,7 @@ def _decode_trigger_config(
             timezone=Timezone(cast(str, config["timezone"])),
             dialect=CronDialect(cast(str, config["dialect"])),
             ambiguous_time=CronAmbiguousTimePolicy(cast(str, config["ambiguous_time"])),
-            nonexistent_time=CronNonexistentTimePolicy(
-                cast(str, config["nonexistent_time"])
-            ),
+            nonexistent_time=CronNonexistentTimePolicy(cast(str, config["nonexistent_time"])),
         )
 
     raise ValueError(f"Unsupported persisted Trigger kind: {kind!r}.")

@@ -81,7 +81,8 @@ POST-06 Chaos / Fault Injection       ✅
   PG-04 Scheduler/Multi-worker E2E     ✅
   PG-05 Production Hardening           ✅
         ↓
-  Async Python Executor                 🚧 current
+  Async Python Executor                 ✅
+  Executor Plugin Registry              ⏭ next
         ↓
 ...
         ↓
@@ -136,4 +137,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — Async Python Executor.
+**Last refreshed:** 2026-10-09 — Async Python Executor complete; Executor Plugin Registry next.

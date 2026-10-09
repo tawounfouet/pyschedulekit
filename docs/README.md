@@ -24,6 +24,7 @@ SNAPSHOT / HISTORY
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
+| [Examples / Cookbook](../examples/README.md) | Executable real-world usage scenarios |
 
 ## Documentation areas
 
@@ -34,7 +35,6 @@ docs/
 ├── SDLC.md                    # current engineering lifecycle
 ├── audit/
 │   └── 2026-10-08/            # dated OpenCode audit archive
-├── cookbook/                  # runnable real-world usage scenarios
 ├── implementation/            # LOT-00 ... LOT-34 implementation records
 ├── release/                   # release engineering and rollback discipline
 └── specs/                     # domain / architecture / acceptance specifications
@@ -102,7 +102,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | verify whether an audit finding is still open | [POST-00 status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) |
 | inspect original design intent | [Specs](./specs/) |
 | inspect implementation history | [Implementation LOTs](./implementation/) |
-| run realistic usage examples | [Cookbook](./cookbook/README.md) |
+| run realistic usage examples | [Examples / Cookbook](../examples/README.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule
@@ -116,4 +116,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — POST-01 documentation cleanup.
+**Last refreshed:** 2026-10-09 — POST-02 executable cookbook.

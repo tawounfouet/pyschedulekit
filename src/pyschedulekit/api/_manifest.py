@@ -235,10 +235,20 @@ TESTING_PUBLIC_NAMES = (
 PUBLIC_NAMESPACE_CLASSIFICATIONS = {
     "pyschedulekit": "stable-candidate",
     "pyschedulekit.api": "stable-candidate",
-    "pyschedulekit.postgres": "stable-candidate",
-    "pyschedulekit.testing": "supported-testing",
+    "pyschedulekit.postgres": "stable-optional",
+    "pyschedulekit.testing": "stable-testing",
     "pyschedulekit.experimental": "experimental",
 }
+
+SECONDARY_NAMESPACE_V1_POLICIES = {
+    "pyschedulekit.experimental": "experimental-no-semver",
+    "pyschedulekit.postgres": "stable-optional",
+    "pyschedulekit.testing": "stable-testing",
+}
+
+ROOT_METADATA_V1_POLICY = "stable-presence"
+LEGACY_ROOT_REDIRECT_V1_POLICY = "remove-before-v1.0.0"
+UNLISTED_SUBMODULE_V1_POLICY = "internal-no-compatibility"
 
 LEGACY_ROOT_NAMES = (
     "AdmissionLockOwnershipError",

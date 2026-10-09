@@ -177,7 +177,9 @@ def _execution_from_row(row: PostgresRow) -> Execution:
         version=cast(int, row["version"]),
         attempt_count=cast(int, row["attempt_count"]),
         active_attempt_number=(
-            None if row["active_attempt_number"] is None else cast(int, row["active_attempt_number"])
+            None
+            if row["active_attempt_number"] is None
+            else cast(int, row["active_attempt_number"])
         ),
         next_attempt_at=_optional_instant(row["next_attempt_at"]),
         cancellation_requested_at=_optional_instant(row["cancellation_requested_at"]),
@@ -757,7 +759,10 @@ class PostgresExecutionRepository:
                 continue
             if execution.state is ExecutionState.QUEUED:
                 return now
-            if execution.state is ExecutionState.RETRY_WAIT and execution.next_attempt_at is not None:
+            if (
+                execution.state is ExecutionState.RETRY_WAIT
+                and execution.next_attempt_at is not None
+            ):
                 retries.append(execution.next_attempt_at)
 
         if not retries:
@@ -955,7 +960,9 @@ class PostgresAttemptRepository:
 
     def save(self, attempt: Attempt) -> None:
         if self._tracked.get(attempt.id) is not attempt:
-            raise UntrackedEntityError(f"Attempt {attempt.id.value!r} must be loaded before save().")
+            raise UntrackedEntityError(
+                f"Attempt {attempt.id.value!r} must be loaded before save()."
+            )
         if attempt.id in self._new:
             return
         if attempt.id not in self._expected_versions:

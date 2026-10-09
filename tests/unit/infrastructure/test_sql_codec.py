@@ -3,6 +3,8 @@
 import json
 from datetime import UTC, datetime
 
+import pytest
+
 from pyschedulekit.domain.calendar import (
     CalendarRef,
     CalendarRevision,
@@ -61,8 +63,10 @@ def test_t_sql_codec_001_interval_definition_round_trip() -> None:
         timeout=Duration.seconds(45),
     )
 
-    decoded = decode_schedule_definition(encode_schedule_definition(definition))
+    encoded = encode_schedule_definition(definition)
+    decoded = decode_schedule_definition(encoded)
 
+    assert json.loads(encoded)["version"] == 2
     assert decoded == definition
 
 
@@ -125,10 +129,41 @@ def test_legacy_v1_schedule_definition_without_calendar_remains_readable() -> No
         ),
     )
     encoded = json.loads(encode_schedule_definition(definition))
-    assert encoded["version"] == 1
+    assert encoded["version"] == 2
+    encoded["version"] = 1
     del encoded["payload"]["calendar"]
 
     decoded = decode_schedule_definition(json.dumps(encoded))
 
     assert decoded == definition
     assert decoded.calendar is None
+
+
+def test_v1_schedule_definition_cannot_smuggle_calendar_binding() -> None:
+    definition = ScheduleDefinition(
+        target=TargetRef.python("jobs:legacy"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(15),
+            anchor=_instant(),
+        ),
+    )
+    encoded = json.loads(encode_schedule_definition(definition))
+    encoded["version"] = 1
+
+    with pytest.raises(ValueError, match="v1 must not contain a calendar binding"):
+        decode_schedule_definition(json.dumps(encoded))
+
+
+def test_future_schedule_definition_codec_version_fails_closed() -> None:
+    definition = ScheduleDefinition(
+        target=TargetRef.python("jobs:future"),
+        trigger=IntervalTrigger(
+            every=Duration.minutes(15),
+            anchor=_instant(),
+        ),
+    )
+    encoded = json.loads(encode_schedule_definition(definition))
+    encoded["version"] = 3
+
+    with pytest.raises(ValueError, match="Unsupported Schedule definition codec version"):
+        decode_schedule_definition(json.dumps(encoded))

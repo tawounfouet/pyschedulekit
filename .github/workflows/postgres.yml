@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "src/pyschedulekit/infrastructure/postgres*.py"
+      - "src/pyschedulekit/infrastructure/sql_codec.py"
       - "tests/integration/postgres/**"
       - "tests/integration/infrastructure/test_adapter_parity.py"
       - "tests/architecture/test_postgres_optional_dependency.py"
@@ -17,6 +18,7 @@ on:
   pull_request:
     paths:
       - "src/pyschedulekit/infrastructure/postgres*.py"
+      - "src/pyschedulekit/infrastructure/sql_codec.py"
       - "tests/integration/postgres/**"
       - "tests/integration/infrastructure/test_adapter_parity.py"
       - "tests/architecture/test_postgres_optional_dependency.py"

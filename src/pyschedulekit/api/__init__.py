@@ -122,7 +122,9 @@ from pyschedulekit.infrastructure.asyncio_executor import (
 )
 from pyschedulekit.infrastructure.executor_registry import ExecutorRegistry as ExecutorRegistry
 from pyschedulekit.infrastructure.calendar import (
+    FileCalendarProvider as FileCalendarProvider,
     InMemoryCalendarProvider as InMemoryCalendarProvider,
+    SqliteCalendarProvider as SqliteCalendarProvider,
 )
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor as HttpExecutor,

@@ -926,6 +926,7 @@ Current references:
 
 - [Architecture](./docs/ARCHITECTURE.md) — system view, lifecycle and invariants.
 - [SDLC](./docs/SDLC.md) — development, test and maintenance workflow.
+- [Examples / Cookbook](./examples/README.md) — executable interval, cron, retry, SQLite and operational scenarios.
 - [POST-00 remediation status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) —
   current disposition of the 2026-10-08 findings.
 - [Audit snapshot](./docs/audit/2026-10-08/README.md) — original analysis, critique,
@@ -937,7 +938,7 @@ Current quality gate from the repository root:
 ruff check .                 # passing
 ruff format --check .        # passing
 mypy src                     # passing
-pytest --cov=pyschedulekit   # 513 tests, coverage gate >= 85%
+pytest --cov=pyschedulekit   # passing; coverage gate >= 85%
 ```
 
 No environment variables are required by the library: the domain forbids hidden

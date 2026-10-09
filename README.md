@@ -79,11 +79,11 @@ Post-release hardening is tracked as POST-00:
 00.F  HTTP Resource / Redirect Hardening         ✅
 00.G  CI / Coverage Hardening                    ✅
 B7    Target Registry Transaction Safety         ✅
-00.H  Audit Documentation Consolidation          🚧
+00.H  Audit Documentation Consolidation          ✅
 ```
 
-The next release target is `0.1.0a4` after final qualification. Current audit-remediation
-status is recorded in
+POST-00 is complete. The release candidate is `0.1.0a4`; final release readiness and
+publication are tracked in
 `docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
@@ -870,7 +870,7 @@ PyScheduleKitError
 └── PyScheduleKitTargetError
 ```
 
-PyScheduleKit is now packaged as a PEP 561 typed library. Version `0.1.0a3` is sourced only from `pyschedulekit._version` and reused by package metadata.
+PyScheduleKit is packaged as a PEP 561 typed library. Release candidate `0.1.0a4` is sourced only from `pyschedulekit._version` and reused by package metadata.
 
 ## Package shape
 
@@ -902,24 +902,26 @@ mypy src
 
 ## Audit (2026-10-08)
 
-A full codebase audit was produced on 2026-10-08. The documents are written in French and are the entry point for any remediation work:
+The OpenCode audit is preserved as a dated snapshot rather than rewritten after fixes:
 
-- [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) — verified facts, metrics, and 12 confirmed bugs (B1–B12) with `file:line` references.
-- [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) — scores, systemic pattern, architecture/security/process critique, repair-vs-rewrite verdict.
-- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — phased remediation plan (Phases 0–5) with ready-to-apply fixes and regression tests.
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system view, `run_pending()` lifecycle, key flows, data model, cross-cutting conventions.
-- [`INDEX.md`](./INDEX.md) — documentation entry point and code map.
+- [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) — factual audit snapshot and original B1–B12 findings.
+- [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) — critical assessment based on that snapshot.
+- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — original remediation plan.
+- [`POST_00_REMEDIATION_STATUS.md`](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) — authoritative current disposition and evidence.
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — current architecture and remaining structural limits.
+- [`INDEX.md`](./INDEX.md) — documentation entry point and snapshot/current-state navigation.
 
-Current state of the quality gate (run from the repository root):
+Current quality gates are green on Python 3.11, 3.12 and 3.13:
 
 ```bash
-ruff check .          # passing
-ruff format --check . # FAILING on scripts/release_preflight.py (bug B3)
-mypy src              # passing
-pytest                # 453 tests passing, 86 % coverage
+ruff check .                     # passing
+ruff format --check .            # passing
+mypy src                         # passing
+pytest --cov=pyschedulekit       # passing; coverage floor >= 85%
 ```
 
-No environment variables are required: the library reads no configuration from the environment (`os.getenv` is forbidden inside `domain/` and unused elsewhere).
+No B1–B12 audit finding remains open. No environment variables are required: the library
+reads no runtime configuration from the environment.
 
 ## Roadmap
 

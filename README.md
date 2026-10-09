@@ -54,9 +54,9 @@ REL-01  Wheel + sdist Build                        ✅
 REL-02  Artifact / Metadata Validation             ✅
 REL-03  Clean-Install Matrix                       ✅
 REL-04  Version / Tag / Release Candidate Gate     ✅
-REL-05  TestPyPI Trusted Publishing                ✅ implemented / optional path
-REL-06  PyPI Trusted Publishing                    ✅ live
-REL-07  GitHub Release + Provenance                ✅ live
+REL-05  TestPyPI Trusted Publishing                ✅ implemented / historical
+REL-06  PyPI Trusted Publishing                    ✅ available / deferred to 1.0.0
+REL-07  GitHub Release + Provenance                ✅ available
 REL-08  Release Runbook / Rollback Discipline      ✅
 ```
 
@@ -82,9 +82,10 @@ B7    Target Registry Transaction Safety         ✅
 00.H  Audit Documentation Consolidation          ✅
 ```
 
-POST-00 is complete. The source candidate is now `0.1.0a4`; `0.1.0a3` remains the latest public release until the final readiness/tag pipeline succeeds. Current audit-remediation
-status is recorded in
-`docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`.
+POST-00 is complete. The source version is `0.1.0a4`, but pre-1.0 milestones are now
+**development-only**: no further PyPI publication is planned before stable `1.0.0`.
+The last public prerelease remains `0.1.0a3`. Current audit-remediation status is recorded
+in `docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md`.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 
@@ -870,7 +871,9 @@ PyScheduleKitError
 └── PyScheduleKitTargetError
 ```
 
-PyScheduleKit is packaged as a PEP 561 typed library. The current source candidate `0.1.0a4` is sourced only from `pyschedulekit._version` and reused by package metadata; the latest public release remains `0.1.0a3` until publication completes.
+PyScheduleKit is packaged as a PEP 561 typed library. The current development version
+`0.1.0a4` is sourced only from `pyschedulekit._version` and reused by package metadata.
+Version numbers may advance internally before `1.0.0` without corresponding PyPI releases.
 
 ## Package shape
 
@@ -900,26 +903,30 @@ ruff format --check .
 mypy src
 ```
 
-## Audit (2026-10-08)
+## Documentation and audit
 
-A full codebase audit was produced on 2026-10-08. The documents are written in French and are the entry point for any remediation work:
+The maintained documentation entry point is [`docs/README.md`](./docs/README.md).
 
-- [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) — verified facts, metrics, and 12 confirmed bugs (B1–B12) with `file:line` references.
-- [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) — scores, systemic pattern, architecture/security/process critique, repair-vs-rewrite verdict.
-- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — phased remediation plan (Phases 0–5) with ready-to-apply fixes and regression tests.
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system view, `run_pending()` lifecycle, key flows, data model, cross-cutting conventions.
-- [`INDEX.md`](./INDEX.md) — documentation entry point and code map.
+Current references:
 
-Current state of the quality gate (run from the repository root):
+- [Architecture](./docs/ARCHITECTURE.md) — system view, lifecycle and invariants.
+- [SDLC](./docs/SDLC.md) — development, test and maintenance workflow.
+- [POST-00 remediation status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) —
+  current disposition of the 2026-10-08 findings.
+- [Audit snapshot](./docs/audit/2026-10-08/README.md) — original analysis, critique,
+  recommendations and raw sessions.
+
+Current quality gate from the repository root:
 
 ```bash
-ruff check .          # passing
-ruff format --check . # FAILING on scripts/release_preflight.py (bug B3)
-mypy src              # passing
-pytest                # 453 tests passing, 86 % coverage
+ruff check .                 # passing
+ruff format --check .        # passing
+mypy src                     # passing
+pytest --cov=pyschedulekit   # 513 tests, coverage gate >= 85%
 ```
 
-No environment variables are required: the library reads no configuration from the environment (`os.getenv` is forbidden inside `domain/` and unused elsewhere).
+No environment variables are required by the library: the domain forbids hidden
+wall-clock/environment access and runtime configuration remains explicit.
 
 ## Roadmap
 

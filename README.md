@@ -888,6 +888,12 @@ src/pyschedulekit/
 
 The directory structure grows only when implementation needs it; the project avoids empty architectural ceremony before working vertical slices.
 
+## API reference
+
+The stable exported surface is documented in
+[`docs/api/README.md`](./docs/api/README.md) and checked against the executable public
+API manifest.
+
 ## Cookbook
 
 Runnable, deterministic examples are maintained in

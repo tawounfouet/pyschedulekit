@@ -1,6 +1,8 @@
 """Shared observable persistence contract for all qualified adapters."""
 
+import json
 import os
+import sqlite3
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -34,6 +36,7 @@ from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import BusinessDayTrigger, IntervalTrigger
 from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.postgres import PostgresUnitOfWorkFactory
+from pyschedulekit.infrastructure.sql_codec import encode_schedule_definition
 from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.ports.persistence import (
     DuplicateAdmissionLockError,
@@ -53,6 +56,7 @@ from pyschedulekit.ports.persistence import (
 
 POSTGRES_DSN = os.getenv("PYSCHEDULEKIT_TEST_POSTGRES_DSN")
 ADAPTERS = ("memory", "sqlite", *(("postgres",) if POSTGRES_DSN else ()))
+SQL_ADAPTERS = ("sqlite", *(("postgres",) if POSTGRES_DSN else ()))
 
 
 def _instant(*, hour: int = 10, minute: int = 0) -> Instant:
@@ -68,6 +72,66 @@ def _factory(adapter: str, tmp_path: Path) -> UnitOfWorkFactory:
         assert POSTGRES_DSN is not None
         return PostgresUnitOfWorkFactory(POSTGRES_DSN)
     raise AssertionError(f"Unknown adapter: {adapter}")
+
+
+def _legacy_v2_definition_json(definition: ScheduleDefinition) -> str:
+    encoded = json.loads(encode_schedule_definition(definition))
+    trigger = encoded["payload"]["trigger"]
+    encoded["version"] = 2
+    encoded["payload"]["trigger"] = {
+        "kind": trigger["kind"],
+        **trigger["config"],
+    }
+    return json.dumps(encoded)
+
+
+def _replace_definition_json(
+    adapter: str,
+    tmp_path: Path,
+    *,
+    schedule_id: str,
+    definition_json: str,
+) -> None:
+    if adapter == "sqlite":
+        with sqlite3.connect(tmp_path / "scheduler.db") as connection:
+            connection.execute(
+                "UPDATE schedules SET definition_json = ? WHERE id = ?",
+                (definition_json, schedule_id),
+            )
+        return
+
+    assert adapter == "postgres"
+    assert POSTGRES_DSN is not None
+    with psycopg.connect(POSTGRES_DSN) as connection:
+        connection.execute(
+            "UPDATE schedules SET definition_json = %s WHERE id = %s",
+            (definition_json, schedule_id),
+        )
+
+
+def _read_definition_json(
+    adapter: str,
+    tmp_path: Path,
+    *,
+    schedule_id: str,
+) -> str:
+    if adapter == "sqlite":
+        with sqlite3.connect(tmp_path / "scheduler.db") as connection:
+            row = connection.execute(
+                "SELECT definition_json FROM schedules WHERE id = ?",
+                (schedule_id,),
+            ).fetchone()
+    else:
+        assert adapter == "postgres"
+        assert POSTGRES_DSN is not None
+        with psycopg.connect(POSTGRES_DSN) as connection:
+            row = connection.execute(
+                "SELECT definition_json FROM schedules WHERE id = %s",
+                (schedule_id,),
+            ).fetchone()
+
+    assert row is not None
+    return str(row[0])
 
 
 @pytest.fixture(autouse=True)
@@ -865,3 +929,59 @@ def test_business_day_trigger_round_trips_across_adapters(
     assert loaded is not None
     assert loaded.definition == schedule.definition
     assert loaded.next_run_time == schedule.next_run_time
+
+
+@pytest.mark.parametrize("adapter", SQL_ADAPTERS)
+def test_legacy_v2_definition_is_upgraded_on_next_sql_write(
+    adapter: str,
+    tmp_path: Path,
+) -> None:
+    factory = _factory(adapter, tmp_path)
+    calendar = BusinessCalendar(
+        calendar_ref=CalendarRef("finance-days"),
+        revision=CalendarRevision(3),
+    )
+    schedule = Schedule.create(
+        schedule_id=ScheduleId("legacy-definition"),
+        definition=ScheduleDefinition(
+            target=TargetRef.python("jobs:legacy-definition"),
+            trigger=BusinessDayTrigger(ordinal=-1, hour=18),
+            calendar=calendar.snapshot_ref,
+        ),
+        reference=_instant(hour=9),
+        calendar=calendar,
+    )
+
+    with factory() as uow:
+        uow.schedules.add(schedule)
+        uow.commit()
+
+    _replace_definition_json(
+        adapter,
+        tmp_path,
+        schedule_id=schedule.id.value,
+        definition_json=_legacy_v2_definition_json(schedule.definition),
+    )
+
+    with factory() as uow:
+        loaded = uow.schedules.get(schedule.id)
+        assert loaded is not None
+        assert loaded.definition == schedule.definition
+        loaded.pause()
+        uow.schedules.save(loaded)
+        uow.commit()
+
+    persisted = json.loads(
+        _read_definition_json(
+            adapter,
+            tmp_path,
+            schedule_id=schedule.id.value,
+        )
+    )
+    assert persisted["version"] == 3
+    assert persisted["payload"]["trigger"]["schema_version"] == 1
+    assert persisted["payload"]["trigger"]["kind"] == "business_day"
+    assert persisted["payload"]["calendar"] == {
+        "reference": "finance-days",
+        "revision": 3,
+    }

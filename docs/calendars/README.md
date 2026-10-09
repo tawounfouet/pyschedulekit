@@ -257,8 +257,34 @@ and nonexistent-time policies already used by Cron. Monthly search is bounded.
 
 ### CAL-03 boundary
 
-CAL-03 ships the business-day recurrence semantics, not country holiday datasets or remote
-calendar-provider adapters.
+CAL-03 ships the business-day recurrence semantics, not persistence migration guarantees or
+remote calendar-provider adapters.
+
+## CAL-04 — Persistence / Migration Parity
+
+Calendar-aware schedules now use an explicit serialized-configuration migration contract.
+
+Schedule definitions are written as codec **v3**. Their Trigger payload is independently
+versioned with `schema_version=1` and a declarative `config` object.
+
+The decoder continues to read:
+
+- Schedule-definition v1 without calendar binding;
+- Schedule-definition v2 with the legacy flat Trigger shape;
+- current v3 with the versioned Trigger envelope.
+
+Supported legacy definitions normalize into current domain objects and are written back only
+in the latest format. Unsupported future Schedule-definition or Trigger versions fail
+closed.
+
+CAL-04 also qualifies real SQLite and PostgreSQL rows containing legacy v2
+`BusinessDayTrigger` + `CalendarSnapshotRef` payloads. Loading preserves the definition;
+the next normal write upgrades the JSON to v3 without changing the SQL schema.
+
+### CAL-04 boundary
+
+This is a serialized domain-configuration migration. It deliberately does not introduce a
+database schema migration because no table or column change is required.
 
 ## Non-goals
 
@@ -279,12 +305,12 @@ CAL-00 Calendar Foundations            ✅
 CAL-01 Schedule Calendar Binding       ✅
 CAL-02 Calendar-aware Occurrence Planning  ✅
 CAL-03 Business-Day Trigger Semantics        ✅
-CAL-04 Persistence / Migration Parity         ⏭ next
-CAL-05 Calendar Provider Adapters
+CAL-04 Persistence / Migration Parity         ✅
+CAL-05 Calendar Provider Adapters              ⏭ next
 ```
 
 The exact order after CAL-02 may be refined as occurrence semantics are qualified.
 
 ---
 
-**Status:** CAL-03 — Business-Day Trigger Semantics complete. Next: CAL-04.
+**Status:** CAL-04 — Persistence / Migration Parity complete. Next: CAL-05.

@@ -111,6 +111,28 @@ The trigger is monthly:
 
 The trigger does not fetch calendars or contain country-specific holiday data.
 
+## CAL-04 persistence compatibility
+
+Schedule definitions are now written as persistence codec v3. Trigger configuration has its
+own declarative version envelope:
+
+```json
+{
+  "kind": "cron",
+  "schema_version": 1,
+  "config": {
+    "expression": "0 6 * * *"
+  }
+}
+```
+
+Existing persisted v1/v2 definitions remain readable. Legacy flat Trigger payloads normalize
+to the same domain Trigger and are rewritten in the current format on the next normal SQL
+write. Unsupported future Schedule-definition or Trigger versions fail closed.
+
+This migration contract is internal persistence behavior; it does not add a public migration
+method or change the `Scheduler.add_schedule()` API.
+
 ## Time and trigger model
 
 | Public name | Role |

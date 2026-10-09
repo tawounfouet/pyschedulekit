@@ -46,7 +46,8 @@ from pyschedulekit.domain.triggers import (
 )
 
 _CODEC_VERSION = 1
-_SCHEDULE_DEFINITION_CODEC_VERSION = 2
+_SCHEDULE_DEFINITION_CODEC_VERSION = 3
+_TRIGGER_CODEC_VERSION = 1
 
 
 def _dump_with_version(payload: dict[str, Any], *, version: int) -> str:
@@ -87,7 +88,7 @@ def encode_schedule_definition(definition: ScheduleDefinition) -> str:
 def decode_schedule_definition(value: str) -> ScheduleDefinition:
     decoded = cast(dict[str, Any], json.loads(value))
     version = decoded.get("version")
-    if version not in (1, _SCHEDULE_DEFINITION_CODEC_VERSION):
+    if version not in (1, 2, _SCHEDULE_DEFINITION_CODEC_VERSION):
         raise ValueError("Unsupported Schedule definition codec version.")
 
     payload = cast(dict[str, Any], decoded["payload"])
@@ -96,11 +97,14 @@ def decode_schedule_definition(value: str) -> ScheduleDefinition:
 
     return ScheduleDefinition(
         target=_decode_target(cast(dict[str, Any], payload["target"])),
-        trigger=_decode_trigger(cast(dict[str, Any], payload["trigger"])),
+        trigger=_decode_trigger(
+            cast(dict[str, Any], payload["trigger"]),
+            require_versioned=version == _SCHEDULE_DEFINITION_CODEC_VERSION,
+        ),
         timezone=Timezone(cast(str, payload["timezone"])),
         calendar=(
             _decode_calendar_snapshot_ref(payload.get("calendar"))
-            if version == _SCHEDULE_DEFINITION_CODEC_VERSION
+            if version in (2, _SCHEDULE_DEFINITION_CODEC_VERSION)
             else None
         ),
         misfire=_decode_misfire(cast(dict[str, Any], payload["misfire"])),
@@ -223,74 +227,119 @@ def _decode_target(payload: dict[str, Any]) -> TargetRef:
 
 
 def _encode_trigger(trigger: Trigger | CalendarAwareTrigger) -> dict[str, Any]:
+    kind: str
+    config: dict[str, Any]
 
     if isinstance(trigger, BusinessDayTrigger):
-        return {
-            "kind": "business_day",
+        kind = "business_day"
+        config = {
             "ordinal": trigger.ordinal,
             "hour": trigger.hour,
             "minute": trigger.minute,
             "ambiguous_time": trigger.ambiguous_time.value,
             "nonexistent_time": trigger.nonexistent_time.value,
         }
-
-    if isinstance(trigger, DateTrigger):
-        return {
-            "kind": "date",
+    elif isinstance(trigger, DateTrigger):
+        kind = "date"
+        config = {
             "at": trigger.at.value.isoformat(),
         }
-
-    if isinstance(trigger, IntervalTrigger):
-        return {
-            "kind": "interval",
+    elif isinstance(trigger, IntervalTrigger):
+        kind = "interval"
+        config = {
             "every_seconds": trigger.every.total_seconds,
             "anchor": trigger.anchor.value.isoformat(),
         }
-
-    if isinstance(trigger, CronTrigger):
-        return {
-            "kind": "cron",
+    elif isinstance(trigger, CronTrigger):
+        kind = "cron"
+        config = {
             "expression": trigger.expression,
             "timezone": trigger.timezone.name,
             "dialect": trigger.dialect.value,
             "ambiguous_time": trigger.ambiguous_time.value,
             "nonexistent_time": trigger.nonexistent_time.value,
         }
+    else:
+        raise TypeError(f"Unsupported Trigger type for SQL persistence: {type(trigger)!r}.")
 
-    raise TypeError(f"Unsupported Trigger type for SQL persistence: {type(trigger)!r}.")
+    return {
+        "kind": kind,
+        "schema_version": _TRIGGER_CODEC_VERSION,
+        "config": config,
+    }
 
 
-def _decode_trigger(payload: dict[str, Any]) -> Trigger | CalendarAwareTrigger:
-    kind = cast(str, payload["kind"])
+def _decode_trigger(
+    payload: dict[str, Any],
+    *,
+    require_versioned: bool = False,
+) -> Trigger | CalendarAwareTrigger:
+    schema_version = payload.get("schema_version")
+
+    if schema_version is None:
+        if require_versioned:
+            raise ValueError("Schedule definition codec v3 requires a versioned Trigger payload.")
+        return _decode_trigger_config(
+            kind=cast(str, payload["kind"]),
+            config=payload,
+        )
+
+    if schema_version != _TRIGGER_CODEC_VERSION:
+        raise ValueError("Unsupported Trigger codec version.")
+
+    config = payload.get("config")
+    if not isinstance(config, dict):
+        raise ValueError("Versioned Trigger payload requires an object config.")
+
+    return _decode_trigger_config(
+        kind=cast(str, payload["kind"]),
+        config=cast(dict[str, Any], config),
+    )
+
+
+def _decode_trigger_config(
+    *,
+    kind: str,
+    config: dict[str, Any],
+) -> Trigger | CalendarAwareTrigger:
     if kind == "business_day":
         return BusinessDayTrigger(
-            ordinal=cast(int, payload["ordinal"]),
-            hour=cast(int, payload["hour"]),
-            minute=cast(int, payload["minute"]),
-            ambiguous_time=CronAmbiguousTimePolicy(cast(str, payload["ambiguous_time"])),
-            nonexistent_time=CronNonexistentTimePolicy(cast(str, payload["nonexistent_time"])),
+            ordinal=cast(int, config["ordinal"]),
+            hour=cast(int, config["hour"]),
+            minute=cast(int, config["minute"]),
+            ambiguous_time=CronAmbiguousTimePolicy(cast(str, config["ambiguous_time"])),
+            nonexistent_time=CronNonexistentTimePolicy(
+                cast(str, config["nonexistent_time"])
+            ),
         )
 
     if kind == "date":
-        return DateTrigger(at=Instant.parse(cast(str, payload["at"])))
+        return DateTrigger(at=Instant.parse(cast(str, config["at"])))
 
     if kind == "interval":
         return IntervalTrigger(
-            every=Duration.seconds(cast(float, payload["every_seconds"])),
-            anchor=Instant.parse(cast(str, payload["anchor"])),
+            every=Duration.seconds(cast(float, config["every_seconds"])),
+            anchor=Instant.parse(cast(str, config["anchor"])),
         )
 
     if kind == "cron":
         return CronTrigger(
-            expression=cast(str, payload["expression"]),
-            timezone=Timezone(cast(str, payload["timezone"])),
-            dialect=CronDialect(cast(str, payload["dialect"])),
-            ambiguous_time=CronAmbiguousTimePolicy(cast(str, payload["ambiguous_time"])),
-            nonexistent_time=CronNonexistentTimePolicy(cast(str, payload["nonexistent_time"])),
+            expression=cast(str, config["expression"]),
+            timezone=Timezone(cast(str, config["timezone"])),
+            dialect=CronDialect(cast(str, config["dialect"])),
+            ambiguous_time=CronAmbiguousTimePolicy(cast(str, config["ambiguous_time"])),
+            nonexistent_time=CronNonexistentTimePolicy(
+                cast(str, config["nonexistent_time"])
+            ),
         )
 
     raise ValueError(f"Unsupported persisted Trigger kind: {kind!r}.")
 
+
+def migrate_schedule_definition_json(value: str) -> str:
+    """Normalize any supported legacy Schedule definition into the current codec."""
+
+    return encode_schedule_definition(decode_schedule_definition(value))
 
 def _encode_misfire(policy: MisfirePolicy) -> dict[str, Any]:
     return {

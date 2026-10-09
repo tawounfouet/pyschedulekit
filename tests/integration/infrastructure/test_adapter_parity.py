@@ -830,4 +830,3 @@ def test_calendar_snapshot_binding_round_trips_across_adapters(
     assert loaded is not None
     assert loaded.definition.calendar == calendar
     assert loaded.definition == schedule.definition
-

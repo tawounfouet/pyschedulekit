@@ -261,7 +261,12 @@ Les limites encore structurelles sont différentes :
    `BusinessDayTrigger` pour les règles dont le calendrier fait partie de la définition
    même de l'occurrence. Le Schedule continue de porter la timezone et le snapshot ; le
    domaine reçoit un `BusinessCalendar` déjà résolu et ne réalise aucun I/O.
-7. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
+7. **Migration de configuration sérialisée** — CAL-04 sépare explicitement la
+   migration du schéma SQL de celle des configurations domaine persistées. Les
+   `ScheduleDefinition` v1/v2 restent lisibles, v3 est l'unique format écrit, et chaque
+   Trigger possède désormais son propre `schema_version`. Les versions futures inconnues
+   échouent fermées ; SQLite et PostgreSQL partagent le même codec et les mêmes garanties.
+8. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
    compatibility policy, long-term SemVer guarantees) n'est pas encore promise.
 
 Ces limites appartiennent à la trajectoire pré-1.0 / Phase II et seront traitées par lots dédiés. Leur traitement n'est plus lié à une publication intermédiaire `0.x`.

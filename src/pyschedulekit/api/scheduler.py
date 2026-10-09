@@ -66,6 +66,7 @@ from pyschedulekit.infrastructure.asyncio_executor import (
     AsyncPythonTargetRegistry,
 )
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
+from pyschedulekit.infrastructure.executor_registry import ExecutorRegistry
 from pyschedulekit.infrastructure.http_executor import (
     HttpExecutor,
     HttpRequestSpec,
@@ -97,6 +98,7 @@ class Scheduler:
         registry: PythonTargetRegistry | None = None,
         http_registry: HttpTargetRegistry | None = None,
         executors: Mapping[str, Executor] | None = None,
+        executor_registry: ExecutorRegistry | None = None,
         worker_id: str | WorkerId | None = None,
         claim_ttl: Duration | None = None,
         lease_heartbeat_interval: Duration | None = None,
@@ -111,7 +113,10 @@ class Scheduler:
         self._registry = registry if registry is not None else PythonTargetRegistry()
         self._async_registry = AsyncPythonTargetRegistry()
         self._http_registry = http_registry if http_registry is not None else HttpTargetRegistry()
-        configured_executors: dict[str, Executor] = {
+        self._executor_registry = (
+            executor_registry if executor_registry is not None else ExecutorRegistry()
+        )
+        builtin_executors: dict[str, Executor] = {
             "python": LocalExecutor(
                 registry=self._registry,
                 clock=self._clock,
@@ -125,9 +130,13 @@ class Scheduler:
                 clock=self._clock,
             ),
         }
+        for kind, executor in builtin_executors.items():
+            if not self._executor_registry.contains(kind):
+                self._executor_registry.register(kind, executor)
         if executors is not None:
-            configured_executors.update(executors)
-        self._executor = RoutingExecutor(configured_executors)
+            for kind, executor in executors.items():
+                self._executor_registry.register(kind, executor, replace=True)
+        self._executor = RoutingExecutor(self._executor_registry)
         self._worker_id = (
             worker_id if isinstance(worker_id, WorkerId) else WorkerId(worker_id or uuid4().hex)
         )
@@ -237,6 +246,12 @@ class Scheduler:
             clock=self._clock,
             observer=self._observer,
         )
+
+    @property
+    def executor_registry(self) -> ExecutorRegistry:
+        """Instance-owned registry used for explicit Executor plugin registration."""
+
+        return self._executor_registry
 
     @property
     def worker_id(self) -> WorkerId:

@@ -1,11 +1,10 @@
 # POST-05 — Performance Benchmarks
 
-POST-05 introduces two complementary performance surfaces:
+POST-05 introduces one reproducible benchmark surface:
+`benchmarks/run.py`.
 
-- `benchmarks/run_baseline.py` — V1 complexity guardrails for T-PERF-001/T-PERF-002;
-- `benchmarks/run.py` — broader measurement evidence for cron, memory and SQLite workloads.
-
-Neither surface defines an absolute latency SLA.
+It combines representative trigger/runtime measurements with scale evidence for idle
+in-memory scheduling. It does not define an absolute latency SLA.
 
 ## Goals
 
@@ -57,7 +56,8 @@ These numbers are deliberately too small to be treated as useful performance evi
 
 ### standard
 
-The default manual measurement workload.
+The default evidence workload, automatically recorded after benchmark-relevant merges to
+`main` and also available manually.
 
 ```text
 repeats               7
@@ -152,30 +152,13 @@ The report records:
 Normal pytest runs the small `smoke` evidence profile through
 `tests/acceptance/test_benchmark_harness.py`.
 
-A separate `Performance Baseline` workflow may enforce the broad V1 **complexity-ratio**
-guardrails implemented by `run_baseline.py`:
+The harness reports the 1k→10k idle-scan ratio as **scale evidence** for T-PERF-002, but
+does not fail CI from a wall-clock or ratio threshold. Shared runners vary in CPU scheduling,
+host contention, virtualization and thermal state.
 
-- far/near IntervalTrigger ratio <= 50;
-- 10k/1k idle-cycle ratio <= 30.
-
-These are catastrophe detectors, not latency SLAs. No rule says that a benchmark must finish
-within N milliseconds, because shared runners vary in CPU scheduling, host contention,
-virtualization and thermal state.
-
-Raw timing evidence remains review material rather than a direct product guarantee.
-
-## V1 complexity baseline
-
-Detailed T-PERF-001/T-PERF-002 methodology lives in
-[`docs/performance/README.md`](../performance/README.md).
-
-The automatic baseline and the manual evidence harness intentionally answer different
-questions:
-
-```text
-complexity baseline  → did algorithmic scaling become catastrophically worse?
-manual evidence      → what did representative operations measure on this environment?
-```
+Raw timing and scaling evidence remain review material rather than direct product guarantees.
+The V1 performance specification can later promote a ratio into a controlled guardrail once
+enough history exists on a comparable runner.
 
 ## Workflow
 

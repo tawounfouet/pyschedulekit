@@ -331,10 +331,6 @@ def test_v2_to_v3_migration_preserves_cron_occurrence_semantics() -> None:
 
     assert isinstance(legacy.trigger, CronTrigger)
     assert isinstance(migrated.trigger, CronTrigger)
-    assert [
-        legacy.trigger.next_after(reference)
-        for reference in references
-    ] == [
-        migrated.trigger.next_after(reference)
-        for reference in references
+    assert [legacy.trigger.next_after(reference) for reference in references] == [
+        migrated.trigger.next_after(reference) for reference in references
     ]

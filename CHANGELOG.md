@@ -8,6 +8,8 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added CAL-04 Persistence / Migration Parity: Schedule-definition codec v3, independently versioned Trigger envelopes, v1/v2 legacy reads, fail-closed future-version handling, semantic migration conformance, and live SQLite/PostgreSQL upgrade-on-write qualification for legacy calendar-bound BusinessDayTrigger rows.
+
 - Added CAL-03 Business-Day Trigger Semantics with public `BusinessDayTrigger` support for positive/negative monthly working-day ordinals, Schedule-local civil time, exact versioned calendars, explicit DST policies, bounded search, declarative persistence, and Memory/SQLite/PostgreSQL parity qualification.
 
 - Added CAL-02 Calendar-aware Occurrence Planning: exact calendar revisions are resolved through `CalendarProvider`, Trigger candidates are filtered by the Schedule's local business date, `next_run_time` skips excluded dates, catch-up/coalesce ignore non-occurrences, legacy CAL-01 raw checkpoints self-heal, and candidate scanning is bounded/fail-closed.

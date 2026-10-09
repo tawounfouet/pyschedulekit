@@ -5,14 +5,15 @@ post-release audit performed on 2026-10-08.
 
 ## Snapshot documents
 
-The original audit deliverables remain at the repository root to preserve their existing
-links and review history:
+The original audit deliverables are archived in this dated directory. Git history
+preserves their origin and review trail while keeping the repository root focused on
+current project entry points:
 
-- [CODEBASE_ANALYSIS.md](../../../CODEBASE_ANALYSIS.md) — verified facts and B1–B12 findings;
-- [ANALYSE_CRITIQUE.md](../../../ANALYSE_CRITIQUE.md) — critical assessment based on the snapshot;
-- [RECOMMANDATIONS.md](../../../RECOMMANDATIONS.md) — original remediation plan;
-- [ARCHITECTURE.md](../../../ARCHITECTURE.md) — current architecture reference;
-- [SDLC.md](../../../SDLC.md) — current development lifecycle;
+- [CODEBASE_ANALYSIS.md](./CODEBASE_ANALYSIS.md) — verified facts and B1–B12 findings;
+- [ANALYSE_CRITIQUE.md](./ANALYSE_CRITIQUE.md) — critical assessment based on the snapshot;
+- [RECOMMANDATIONS.md](./RECOMMANDATIONS.md) — original remediation plan;
+- [ARCHITECTURE.md](../../ARCHITECTURE.md) — current architecture reference;
+- [SDLC.md](../../SDLC.md) — current development lifecycle;
 - [AGENTS.md](../../../AGENTS.md) — current operational guidance.
 
 The first three are explicitly marked as **AUDIT SNAPSHOT — 2026-10-08**.

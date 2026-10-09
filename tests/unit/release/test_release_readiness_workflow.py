@@ -59,8 +59,8 @@ def test_t_release_readiness_005_workflow_never_creates_or_pushes_tag() -> None:
     assert "This workflow intentionally did not create or push a tag." in workflow
 
 
-def test_t_release_readiness_006_defaults_to_next_unpublished_alpha_tag() -> None:
+def test_t_release_readiness_006_defaults_to_first_public_stable_tag() -> None:
     workflow = _workflow_text()
 
-    assert 'default: "v0.1.0a4"' in workflow
-    assert 'default: "v0.1.0a3"' not in workflow
+    assert 'default: "v1.0.0"' in workflow
+    assert 'default: "v0.1.0a4"' not in workflow

@@ -1,6 +1,6 @@
 # SDLC — PyScheduleKit
 
-> Guide du cycle de vie de développement : les 7 phases, les outils OpenCode associés, et où en est le projet. Ce document complète [`INDEX.md`](./INDEX.md) (sommaire) et [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) (plan de remédiation).
+> Guide du cycle de vie de développement : les 7 phases, les outils OpenCode associés, et où en est le projet. Ce document complète [`docs/README.md`](./README.md) (sommaire) et [`RECOMMANDATIONS.md`](./audit/2026-10-08/RECOMMANDATIONS.md) (plan de remédiation).
 
 ---
 
@@ -55,12 +55,12 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ### 3.4 Review
 - **Outils** : `/review` · `/pr-review` · `@code-reviewer` · mode `security-audit` (`ctrl+s`) · mode `debug` (`ctrl+d`).
-- **Critère de sortie** : plus d'issue bloquante ; faits consignés dans [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) / [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md).
+- **Critère de sortie** : plus d'issue bloquante ; comportement courant reflété dans les tests et, si nécessaire, dans [`ARCHITECTURE.md`](./ARCHITECTURE.md) ou le registre de statut concerné. Les snapshots d'audit datés ne sont jamais réécrits.
 
 ### 3.5 Release
 - **Outils** : `/release` · `@release-prep` · skill `release-prep` · `diff-summary`.
-- **Commande projet** : `python -m scripts.release_preflight` · `python -m scripts.verify_distribution dist` · `python scripts/smoke_installed_package.py`.
-- **Critère de sortie** : tag, artefacts PyPI, GitHub Release et provenance alignés ; B4 est désormais historique/résolu.
+- **Commande projet** : `python -m scripts.verify_distribution dist` · `python scripts/smoke_installed_package.py`; `release_preflight` seulement pour une vraie publication.
+- **Critère de sortie** : avant `1.0.0`, version interne + gates vertes suffisent. À partir de la première stable `1.0.0`, tag, PyPI, GitHub Release et provenance redeviennent obligatoires.
 
 ### 3.6 Déploiement
 - **Outils** : `/commit` · skill `git-hygiene` · `check-ci` · plugin `env-protection`.
@@ -74,26 +74,32 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — POST-00 clos / 0.1.0a4 en préparation
+## 4. État courant — POST-01 Documentation Cleanup
 
-Le snapshot détaillé de l'audit du 2026-10-08 est conservé dans les documents racine.
-Le statut faisant foi des findings est
-[POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
+Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
+[`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
+findings est [POST-00 Remediation Status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
 
 ```text
- 1 Plan ──► 2 Build ──► 3 Test ──► 4 Review ──► 5 Release ──► 6 Deploy ──► 7 Maintain
-   ✅        ✅          ✅          ✅           ✅            ✅           ✅
- specs     fixes       quality     audit +      a3 PyPI +    main green   POST-00
- versionnés POST-00    gate 85%    hardening    GH Release   3.11-3.13   consolidé
+Initial LOT roadmap                     ✅ LOT-00 → LOT-34
+POST-00 Audit Remediation               ✅
+Pre-1.0 PyPI publication guard          ✅
+POST-01 Documentation Cleanup           🚧 current
+POST-02 Examples / Cookbook             ⬜
+POST-03 API Documentation               ⬜
+POST-04 Dogfooding                      ⬜
+POST-05 Benchmarks                      ⬜
+POST-06 Chaos / Fault Injection         ⬜
 ```
 
-- **Version publique** : `0.1.0a3`.
-- **GitHub Release** : `v0.1.0a3`, prerelease immutable.
+- **Dernière version publique PyPI** : `0.1.0a3`.
+- **Version de développement** : `0.1.0a4`.
+- **Politique de publication** : aucun nouveau package PyPI avant une version stable
+  `>=1.0.0`; alpha/beta/rc restent non publiables.
 - **Quality gates** : Ruff ✅ · mypy strict ✅ · pytest ✅ · coverage ≥85 ✅.
 - **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
 - **Findings B1–B12** : aucun finding ouvert.
-- **Source candidate** : `0.1.0a4`.
-- **Étape active** : merge de la préparation release, puis Release Readiness sur `main` et tag `v0.1.0a4`.
+- **Étape active** : structurer et assainir la documentation, puis passer à POST-02.
 
 ---
 
@@ -113,13 +119,16 @@ Le statut faisant foi des findings est
 | B11 — README status | ✅ FIXED | README courant |
 | B12 — specs non versionnées | ✅ FIXED | `0d09e34` |
 
-### Prochaine étape recommandée
+### Suite
 
-1. merger la préparation `0.1.0a4` ;
-2. exécuter Release Readiness sur `main` pour `v0.1.0a4` ;
-3. créer/pousser le tag uniquement après GO ;
-4. vérifier PyPI + GitHub Release/provenance ;
-5. seulement ensuite reprendre POST-01 → POST-06 et la Phase II.
+1. terminer POST-01 et merger le nettoyage documentaire ;
+2. POST-02 — construire les exemples réalistes / cookbook ;
+3. POST-03 — documenter l'API publique ;
+4. POST-04 — dogfooding réel ;
+5. POST-05 / POST-06 — benchmarks et chaos ;
+6. reprendre ensuite la roadmap 0.2.x et avancer vers le contrat stable `1.0.0`.
+
+Aucune publication PyPI intermédiaire n'est nécessaire pour franchir ces étapes.
 
 ---
 
@@ -141,14 +150,14 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ## 7. Voir aussi
 
-- [`INDEX.md`](./INDEX.md) — sommaire de toute la documentation.
-- [`POST-00 Remediation Status`](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) — état courant et preuves.
-- [`RECOMMANDATIONS.md`](./RECOMMANDATIONS.md) — plan de remédiation historique issu de l'audit.
-- [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) — faits vérifiés et bugs B1-B12.
-- [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) — verdict et notes /10.
+- [`docs/README.md`](./README.md) — sommaire de toute la documentation.
+- [`POST-00 Remediation Status`](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) — état courant et preuves.
+- [`RECOMMANDATIONS.md`](./audit/2026-10-08/RECOMMANDATIONS.md) — plan de remédiation historique issu de l'audit.
+- [`CODEBASE_ANALYSIS.md`](./audit/2026-10-08/CODEBASE_ANALYSIS.md) — faits vérifiés et bugs B1-B12.
+- [`ANALYSE_CRITIQUE.md`](./audit/2026-10-08/ANALYSE_CRITIQUE.md) — verdict et notes /10.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — référence technique.
-- [`AGENTS.md`](./AGENTS.md) — commandes et gotchas pour les agents.
+- [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — POST-00H.*
+*Dernière mise à jour : 2026-10-09 — POST-01.*

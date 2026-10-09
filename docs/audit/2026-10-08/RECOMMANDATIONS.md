@@ -3,7 +3,7 @@
 > **AUDIT SNAPSHOT / REMEDIATION PLAN — 2026-10-08.** Ce document conserve le plan
 > d'action produit à partir de l'audit initial. Plusieurs actions décrites plus bas sont
 > désormais terminées. Le statut d'exécution faisant foi est
-> [POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
+> [POST-00 Remediation Status](./POST_00_REMEDIATION_STATUS.md).
 
 > Document d'**action** : traduit les constats de [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) et le verdict de [`ANALYSE_CRITIQUE.md`](./ANALYSE_CRITIQUE.md) en plan de remédiation concret, ordonné par priorité, avec correctifs prêts à l'emploi et critères de validation.
 

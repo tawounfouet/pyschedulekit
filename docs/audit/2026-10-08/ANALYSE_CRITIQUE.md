@@ -3,7 +3,7 @@
 > **AUDIT SNAPSHOT — 2026-10-08.** Cette analyse critique reste attachée à l'état du
 > code observé lors de l'audit. Les notes et critiques ci-dessous sont conservées comme
 > historique de décision. Pour l'état courant des corrections, voir
-> [POST-00 Remediation Status](./docs/audit/2026-10-08/POST_00_REMEDIATION_STATUS.md).
+> [POST-00 Remediation Status](./POST_00_REMEDIATION_STATUS.md).
 
 > Document d'**opinion** : évalue les choix de conception, pas seulement l'état des lieux. Les faits bruts et la liste exhaustive des bugs sont dans [`CODEBASE_ANALYSIS.md`](./CODEBASE_ANALYSIS.md) ; ici on répond à la question « ce code est-il bon, et pourquoi ? ».
 

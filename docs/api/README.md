@@ -34,7 +34,8 @@ promise at `1.0.0`.
 
 ## Scheduler facade
 
-`Scheduler` is the primary application-facing entry point.
+`Scheduler` is the primary application-facing entry point. Its optional `calendar_provider=`
+composition-root parameter resolves exact calendar revisions for calendar-bound schedules.
 
 ### Registration and scheduling
 
@@ -79,8 +80,10 @@ promise at `1.0.0`.
 | `InMemoryCalendarProvider` | thread-safe process-local provider implementation |
 
 CAL-01 binds an optional exact `CalendarSnapshotRef` into `ScheduleDefinition` and exposes
-it through `ScheduleSnapshot.calendar`. The binding is persisted but does **not** yet alter
-trigger occurrence calculation; calendar-aware occurrence planning begins in CAL-02.
+it through `ScheduleSnapshot.calendar`. CAL-02 resolves that exact revision through the
+configured `CalendarProvider` and filters Date/Interval/Cron candidates by the Schedule's
+local calendar date before they become occurrences. Catch-up/coalesce uses the same filter,
+and missing revisions fail closed.
 
 ## Time and trigger model
 

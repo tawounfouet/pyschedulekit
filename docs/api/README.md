@@ -178,6 +178,8 @@ Production assumptions, supported PostgreSQL majors and migration policy are doc
 - `Executor`
 - `PreparedTarget`
 - `ExecutorOutcome`
+- `ExecutorRegistry` — instance-owned explicit registry mapping `TargetRef.kind` to an
+  `Executor`; no process-global or import-time plugin mutation.
 - `RoutingExecutor`
 
 ### Local Python
@@ -207,9 +209,22 @@ persistence methods or an `AsyncScheduler`.
 - `HttpRequestSpec`
 - `HttpMethod`
 
+Executor plugins are registered explicitly:
+
+```python
+scheduler.executor_registry.register("workflow", workflow_executor)
+```
+
+The registry is owned by one Scheduler/composition root, so separate Scheduler instances
+may use different plugins in the same process. Registration is thread-safe and dynamic:
+`RoutingExecutor` resolves the current registry at prepare time.
+
+PyScheduleKit does **not** auto-import executors from persisted strings or mutate a hidden
+global registry. Automatic package-entry-point discovery is intentionally deferred.
+
 Target registries contain **trusted process-local executable configuration**. Durable
 schedule state stores declarative references; executable Python objects are not serialized
-into SQLite.
+into persistence.
 
 ## Observability
 

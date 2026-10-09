@@ -11,7 +11,7 @@ from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.misfire import MisfirePolicy
 from pyschedulekit.domain.retry import RetryPolicy
 from pyschedulekit.domain.time import Duration, Instant, Timezone
-from pyschedulekit.domain.trigger import Trigger
+from pyschedulekit.domain.trigger import CalendarAwareTrigger, Trigger
 
 _CALENDAR_OCCURRENCE_PLANNER = CalendarOccurrencePlanner()
 
@@ -111,7 +111,7 @@ class ScheduleDefinition:
     """Immutable functional definition of a Schedule."""
 
     target: TargetRef
-    trigger: Trigger
+    trigger: Trigger | CalendarAwareTrigger
     timezone: Timezone = field(default_factory=lambda: Timezone("UTC"))
     calendar: CalendarSnapshotRef | None = None
     misfire: MisfirePolicy = field(default_factory=MisfirePolicy.run_now)

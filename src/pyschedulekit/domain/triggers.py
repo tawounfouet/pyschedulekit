@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from calendar import monthrange
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import StrEnum
 from typing import ClassVar
 
+from pyschedulekit.domain.calendar import BusinessCalendar
 from pyschedulekit.domain.time import (
     Duration,
     Instant,
@@ -26,6 +28,14 @@ class InvalidCronExpressionError(ValueError):
 
 class CronSearchLimitError(RuntimeError):
     """Raised when bounded Cron lookup cannot find a valid future occurrence."""
+
+
+class InvalidBusinessDayTriggerError(ValueError):
+    """Raised when a BusinessDayTrigger configuration is invalid."""
+
+
+class BusinessDaySearchLimitError(RuntimeError):
+    """Raised when bounded business-day lookup cannot find a future occurrence."""
 
 
 class CronDialect(StrEnum):
@@ -47,6 +57,124 @@ class CronNonexistentTimePolicy(StrEnum):
 
     SKIP = "skip"
     RAISE = "raise"
+
+
+@dataclass(frozen=True, slots=True)
+class BusinessDayTrigger:
+    """Monthly recurrence on an ordinal working day at one local civil time.
+
+    Positive ordinals count from the start of the month:
+        1 = first working day, 2 = second working day, ...
+
+    Negative ordinals count from the end:
+        -1 = last working day, -2 = penultimate working day, ...
+
+    The Schedule supplies the timezone and exact BusinessCalendar revision.
+    """
+
+    ordinal: int = 1
+    hour: int = 0
+    minute: int = 0
+    ambiguous_time: CronAmbiguousTimePolicy = CronAmbiguousTimePolicy.FIRST
+    nonexistent_time: CronNonexistentTimePolicy = CronNonexistentTimePolicy.SKIP
+
+    _MAX_SEARCH_MONTHS: ClassVar[int] = 12 * 100
+
+    def __post_init__(self) -> None:
+        if self.ordinal == 0 or abs(self.ordinal) > 31:
+            raise InvalidBusinessDayTriggerError(
+                "BusinessDayTrigger ordinal must be between -31 and -1 or 1 and 31."
+            )
+        if self.hour < 0 or self.hour > 23:
+            raise InvalidBusinessDayTriggerError(
+                "BusinessDayTrigger hour must be between 0 and 23."
+            )
+        if self.minute < 0 or self.minute > 59:
+            raise InvalidBusinessDayTriggerError(
+                "BusinessDayTrigger minute must be between 0 and 59."
+            )
+
+    def next_after_with_calendar(
+        self,
+        reference: Instant,
+        *,
+        timezone: Timezone,
+        calendar: BusinessCalendar,
+    ) -> Instant:
+        """Return the next monthly ordinal business-day occurrence."""
+
+        local_reference = timezone.to_local(reference)
+
+        for month_offset in range(self._MAX_SEARCH_MONTHS + 1):
+            year, month = _shift_month(
+                local_reference.year,
+                local_reference.month,
+                month_offset,
+            )
+            candidate_date = self._business_date_for_month(
+                year=year,
+                month=month,
+                calendar=calendar,
+            )
+            if candidate_date is None:
+                continue
+
+            local_candidate = datetime(
+                candidate_date.year,
+                candidate_date.month,
+                candidate_date.day,
+                self.hour,
+                self.minute,
+            )
+            candidate = self._resolve_local_candidate(
+                local_candidate,
+                timezone=timezone,
+            )
+            if candidate is not None and candidate > reference:
+                return candidate
+
+        raise BusinessDaySearchLimitError(
+            "BusinessDayTrigger produced no occurrence within the bounded search horizon."
+        )
+
+    def _business_date_for_month(
+        self,
+        *,
+        year: int,
+        month: int,
+        calendar: BusinessCalendar,
+    ) -> date | None:
+        last_day = monthrange(year, month)[1]
+        working_dates = tuple(
+            candidate
+            for day in range(1, last_day + 1)
+            if calendar.is_working_day(candidate := date(year, month, day))
+        )
+        index = self.ordinal - 1 if self.ordinal > 0 else self.ordinal
+        try:
+            return working_dates[index]
+        except IndexError:
+            return None
+
+    def _resolve_local_candidate(
+        self,
+        local_candidate: datetime,
+        *,
+        timezone: Timezone,
+    ) -> Instant | None:
+        if self.ambiguous_time is CronAmbiguousTimePolicy.RAISE:
+            fold: int | None = None
+        elif self.ambiguous_time is CronAmbiguousTimePolicy.FIRST:
+            fold = 0
+        else:
+            fold = 1
+
+        try:
+            return timezone.resolve_local(local_candidate, fold=fold)
+        except NonexistentLocalTimeError:
+            if self.nonexistent_time is CronNonexistentTimePolicy.SKIP:
+                return None
+            raise
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,6 +347,12 @@ class CronTrigger:
                 return None
             raise
 
+
+
+def _shift_month(year: int, month: int, offset: int) -> tuple[int, int]:
+    zero_based = (year * 12 + (month - 1)) + offset
+    shifted_year, shifted_month = divmod(zero_based, 12)
+    return shifted_year, shifted_month + 1
 
 def _parse_cron_field(
     expression: str,

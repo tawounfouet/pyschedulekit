@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import inspect
 from enum import Enum
+
 from pyschedulekit.api import (
     AnyOfTrigger,
-    AsyncPythonTargetRegistry,
     AsyncioExecutor,
+    AsyncPythonTargetRegistry,
     BusinessCalendar,
     BusinessDayTrigger,
     CalendarRef,

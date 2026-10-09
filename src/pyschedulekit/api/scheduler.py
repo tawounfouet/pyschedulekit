@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from pyschedulekit.api.results import RunPendingResult
 from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
+from pyschedulekit.application.calendar_resolution import resolve_calendar_binding
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import ConcurrencyCoordinator
 from pyschedulekit.application.execution_runner import ExecutionRunner
@@ -66,6 +67,7 @@ from pyschedulekit.infrastructure.asyncio_executor import (
     AsyncioExecutor,
     AsyncPythonTargetRegistry,
 )
+from pyschedulekit.infrastructure.calendar import InMemoryCalendarProvider
 from pyschedulekit.infrastructure.cancellation import InMemoryCancellationController
 from pyschedulekit.infrastructure.executor_registry import ExecutorRegistry
 from pyschedulekit.infrastructure.http_executor import (
@@ -81,6 +83,7 @@ from pyschedulekit.infrastructure.memory import InMemoryUnitOfWorkFactory
 from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
 from pyschedulekit.infrastructure.runtime import EventLoopWaiter
 from pyschedulekit.infrastructure.time import SystemClock
+from pyschedulekit.ports.calendar import CalendarProvider
 from pyschedulekit.ports.executor import Executor
 from pyschedulekit.ports.observability import ObservationSink
 from pyschedulekit.ports.outbox import OutboxPublisher
@@ -96,6 +99,7 @@ class Scheduler:
         *,
         clock: Clock | None = None,
         uow_factory: UnitOfWorkFactory | None = None,
+        calendar_provider: CalendarProvider | None = None,
         registry: PythonTargetRegistry | None = None,
         http_registry: HttpTargetRegistry | None = None,
         executors: Mapping[str, Executor] | None = None,
@@ -110,6 +114,9 @@ class Scheduler:
         self._clock: Clock = clock if clock is not None else SystemClock()
         self._uow_factory: UnitOfWorkFactory = (
             uow_factory if uow_factory is not None else InMemoryUnitOfWorkFactory()
+        )
+        self._calendar_provider: CalendarProvider = (
+            calendar_provider if calendar_provider is not None else InMemoryCalendarProvider()
         )
         self._registry = registry if registry is not None else PythonTargetRegistry()
         self._async_registry = AsyncPythonTargetRegistry()
@@ -167,6 +174,7 @@ class Scheduler:
         self._operations = SchedulerOperations(
             clock=self._clock,
             uow_factory=self._uow_factory,
+            calendar_provider=self._calendar_provider,
         )
         self._retention_service = RetentionService(
             clock=self._clock,
@@ -224,6 +232,7 @@ class Scheduler:
             uow_factory=self._uow_factory,
             scheduler_engine=SchedulerEngine(
                 uow_factory=self._uow_factory,
+                calendar_provider=self._calendar_provider,
                 materialization_coordinator=self._materialization_coordinator,
             ),
             concurrency_coordinator=ConcurrencyCoordinator(
@@ -337,19 +346,25 @@ class Scheduler:
             )
             effective_retry = retry if retry is not None else RetryPolicy.none()
 
+            definition = ScheduleDefinition(
+                target=target_ref,
+                trigger=trigger,
+                timezone=effective_timezone,
+                calendar=calendar,
+                misfire=effective_misfire,
+                concurrency=effective_concurrency,
+                retry=effective_retry,
+                timeout=timeout,
+            )
+            resolved_calendar = resolve_calendar_binding(
+                definition.calendar,
+                self._calendar_provider,
+            )
             schedule = Schedule.create(
                 schedule_id=schedule_id,
-                definition=ScheduleDefinition(
-                    target=target_ref,
-                    trigger=trigger,
-                    timezone=effective_timezone,
-                    calendar=calendar,
-                    misfire=effective_misfire,
-                    concurrency=effective_concurrency,
-                    retry=effective_retry,
-                    timeout=timeout,
-                ),
+                definition=definition,
                 reference=self._clock.now(),
+                calendar=resolved_calendar,
             )
 
             with self._uow_factory() as uow:

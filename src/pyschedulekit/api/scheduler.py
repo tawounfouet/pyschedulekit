@@ -46,6 +46,7 @@ from pyschedulekit.application.shutdown import (
     ShutdownResult,
 )
 from pyschedulekit.application.wakeup import WakeUpPlanner
+from pyschedulekit.domain.calendar import CalendarSnapshotRef
 from pyschedulekit.domain.claim import WorkerId
 from pyschedulekit.domain.concurrency import ConcurrencyPolicy
 from pyschedulekit.domain.execution import ExecutionId, ExecutionState
@@ -305,6 +306,7 @@ class Scheduler:
         trigger: Trigger,
         id: str | None = None,
         timezone: Timezone | None = None,
+        calendar: CalendarSnapshotRef | None = None,
         misfire: MisfirePolicy | None = None,
         concurrency: ConcurrencyPolicy | None = None,
         retry: RetryPolicy | None = None,
@@ -341,6 +343,7 @@ class Scheduler:
                     target=target_ref,
                     trigger=trigger,
                     timezone=effective_timezone,
+                    calendar=calendar,
                     misfire=effective_misfire,
                     concurrency=effective_concurrency,
                     retry=effective_retry,

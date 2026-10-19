@@ -255,9 +255,7 @@ def test_v1_02c_every_supported_sqlite_schema_migrates_to_v8(
             "SELECT schedule_id, state, generation FROM schedule_materialization_leases "
             "WHERE schedule_id = 'legacy-schedule'"
         ).fetchone()
-        assert lease == (
-            ("legacy-schedule", "released", 5) if version >= 7 else None
-        )
+        assert lease == (("legacy-schedule", "released", 5) if version >= 7 else None)
 
 
 def test_v1_02c_manifest_matches_executable_fixture_baseline() -> None:

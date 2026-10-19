@@ -67,8 +67,8 @@ read-property structure of 21 stable operation-result types and their transitive
 V1-02.A  Persistence Version Floor & Policy          COMPLETE
 V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
 V1-02.C  SQLite Forward Migration Qualification      COMPLETE
-V1-02.D  Codec Migration & Semantic Equivalence      NEXT
-V1-02.E  PostgreSQL Evolution / Rolling Upgrade      PLANNED
+V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
+V1-02.E  PostgreSQL Evolution / Rolling Upgrade      NEXT
 V1-02.F  Backup / Rollback / Operations Contract     PLANNED
 V1-02.G  Final Persistence Compatibility Review      PLANNED
 ```
@@ -86,6 +86,9 @@ physical SQLite fixtures for schemas v1 through v7, protects both compressed and
 and proves every supported entry point migrates through the production chain to v8 while
 preserving integrity, foreign keys, the durable core graph, coordination rows, fencing
 generations and retention completion timestamps.
+[V1-02.D](./V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) proves
+ScheduleDefinition v1/v2 migrate to canonical v3 without domain or occurrence-semantic drift,
+and qualifies semantic round trips for Trigger envelopes, SQL values and business calendars.
 
 ## Operating rules
 
@@ -105,4 +108,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-02.C SQLite forward migration qualification complete. V1-02.D Codec Migration & Semantic Equivalence is next.
+**Status:** V1-02.D codec migration and semantic equivalence complete. V1-02.E PostgreSQL Evolution / Rolling Upgrade is next.

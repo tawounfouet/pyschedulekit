@@ -116,7 +116,8 @@ POST-06 Chaos / Fault Injection       ✅
   V1-02 Persistence Compatibility    🚧 in progress
     V1-02.A Version Floor & Policy    ✅
     V1-02.B Golden Fixtures           ✅
-    V1-02.C SQLite Migration          ⏭ next
+    V1-02.C SQLite Migration          ✅
+    V1-02.D Codec Equivalence         ⏭ next
   V1-03 Platform/Security Gates      ⬜ planned
   V1-04 Consumer/Release Rehearsal   ⬜ planned
   V1-05 Final GO/NO-GO               ⬜ planned
@@ -181,4 +182,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-19 — V1-02.B golden compatibility fixtures complete; V1-02.C SQLite forward migration qualification is next and the `v1.0.0` verdict remains NO-GO.
+**Last refreshed:** 2026-10-19 — V1-02.C SQLite forward migration qualification complete; V1-02.D codec migration and semantic equivalence is next and the `v1.0.0` verdict remains NO-GO.

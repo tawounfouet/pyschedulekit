@@ -279,6 +279,30 @@ V1_PROTECTED_CONTRACT_ELEMENTS = (
     "stable-secondary-namespaces",
 )
 
+V1_PUBLIC_RESULT_TYPES = (
+    "AdmissionSnapshot",
+    "CleanupResult",
+    "ConcurrencyDecision",
+    "CrashRecoveryError",
+    "CrashRecoveryResult",
+    "ExecutionPolicySnapshot",
+    "ExecutionRunSnapshot",
+    "ExecutionSnapshot",
+    "ExecutorOutcome",
+    "Failure",
+    "OutboxDispatchResult",
+    "OutboxPublishError",
+    "ReconciliationIssue",
+    "ReconciliationResult",
+    "RetryDecision",
+    "RunPendingError",
+    "RunPendingResult",
+    "ScheduleSnapshot",
+    "SchedulerHealth",
+    "SchedulerReadiness",
+    "ShutdownResult",
+)
+
 V1_BREAKING_CHANGE_CLASSES = (
     "change-documented-runtime-meaning",
     "change-enum-value",

@@ -423,6 +423,10 @@ Stable names, signatures, Protocols, Enums, exception categories, result fields,
 documented runtime semantics are SemVer-protected within one major. Stable breaking removals
 are reserved for the next major version.
 
+The exact field/property baseline for the 21 public operation-result structures is recorded
+by [V1-01.G Executable Contract Snapshots](../v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md)
+and enforced by `tests/architecture/test_v1_result_contract_snapshots.py`.
+
 ## Legacy root compatibility names
 
 The following names exist only as legacy root-level compatibility redirects and are **not

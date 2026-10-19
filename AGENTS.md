@@ -136,7 +136,10 @@ V1-01.E Protocol / Enum / Exception Freeze now protects exported structural Prot
 non-exception diagnostic `*Error` records. V1-01.F Compatibility & Deprecation Policy is
 complete: `docs/v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md` is the canonical 1.x
 SemVer/typing/deprecation policy, with stable breaking changes reserved for the next major.
-V1-01.G Executable Contract Snapshots is next. Do not bump the version, create `v1.0.0`, or
-expand the public feature surface during V1-01.
+V1-01.G Executable Contract Snapshots is complete: 21 stable operation-result structures
+have exact field/property snapshots in
+`tests/architecture/test_v1_result_contract_snapshots.py`. V1-01.H Final Public Contract
+Review is next. Do not bump the version, create `v1.0.0`, or expand the public feature
+surface during V1-01.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

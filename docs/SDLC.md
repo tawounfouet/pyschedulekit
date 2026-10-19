@@ -113,7 +113,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
   V1-01.D Constructor / Method Signature Freeze    ✅
   V1-01.E Protocol / Enum / Exception Freeze       ✅
   V1-01.F Compatibility & Deprecation Policy        ✅
-  V1-01.G Executable Contract Snapshots             ⏭ NEXT
+  V1-01.G Executable Contract Snapshots             ✅
+  V1-01.H Final Public Contract Review               ⏭ NEXT
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -135,7 +136,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
 - **V1-01.D** : baseline exécutable de 39 constructeurs/factories + 53 méthodes ; noms, modes d’appel et valeurs par défaut sont désormais surveillés par CI.
 - **V1-01.E** : Protocols exportés, 14 Enums publics et catégories d’exceptions sont désormais figés par tests d’architecture.
 - **V1-01.F** : la politique canonique [Compatibility & Deprecation](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) protège l’API stable, le typing et les dépréciations sur toute la major 1.x ; les suppressions incompatibles sont réservées à la major suivante.
-- **Étape active** : V1-01.G Executable Contract Snapshots.
+- **V1-01.G** : 21 structures publiques de sortie ont désormais leurs champs et propriétés de lecture figés par snapshot exécutable ; voir [Executable Contract Snapshots](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md).
+- **Étape active** : V1-01.H Final Public Contract Review.
 
 ---
 
@@ -164,8 +166,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
 5. V1-01.D — Constructor / Method Signature Freeze ✅ ;
 6. V1-01.E — Protocol / Enum / Exception Freeze ✅ ;
 7. V1-01.F — Compatibility & Deprecation Policy ✅ ;
-8. V1-01.G — Executable Contract Snapshots ⏭ ;
-9. V1-01.H — Final Public Contract Review ;
+8. V1-01.G — Executable Contract Snapshots ✅ ;
+9. V1-01.H — Final Public Contract Review ⏭ ;
 10. V1-02 — Persistence Compatibility Contract ;
 11. V1-03 — Platform, Warning and Security Gates ;
 12. V1-04 — Consumer and Stable-Release Rehearsal ;
@@ -202,8 +204,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — référence technique.
 - [`V1-00 Readiness Audit`](./v1/V1-00_READINESS_AUDIT.md) — verdict, preuves et findings 1.0.
 - [`V1-01.F Compatibility & Deprecation Policy`](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) — promesse SemVer/typing et cycle de dépréciation 1.x.
+- [`V1-01.G Executable Contract Snapshots`](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md) — champs et propriétés stables des résultats publics.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-01.F Compatibility & Deprecation Policy.*
+*Dernière mise à jour : 2026-10-19 — V1-01.G Executable Contract Snapshots.*

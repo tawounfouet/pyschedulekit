@@ -91,10 +91,12 @@ The 0.3.x calendar and 0.4.x composite-trigger sequences are complete. `AnyOfTri
 now a stable public primitive for a bounded, duplicate-free union of pure temporal rules.
 
 The [V1-00 readiness audit](./docs/v1/V1-00_READINESS_AUDIT.md) has started the 1.0
-stabilization sequence. Runtime qualification is green and the canonical
+stabilization sequence. Runtime qualification is green, the canonical
 [1.x compatibility/deprecation policy](./docs/v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md)
-is now frozen. The current `v1.0.0` verdict remains **NO-GO** until executable result
-snapshots and the final public-contract review are complete, then the persistence support
+is frozen, and
+[V1-01.G executable result snapshots](./docs/v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md)
+now protect 21 stable operation-result structures. The current `v1.0.0` verdict remains
+**NO-GO** until the final public-contract review is complete, then the persistence support
 floor, platform/security gates and stable GitHub Release path are closed.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.

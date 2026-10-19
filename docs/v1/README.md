@@ -40,8 +40,8 @@ V1-01.C  Secondary Namespace Policy                  COMPLETE
 V1-01.D  Constructor / Method Signature Freeze       COMPLETE
 V1-01.E  Protocol / Enum / Exception Freeze          COMPLETE
 V1-01.F  Compatibility & Deprecation Policy          COMPLETE
-V1-01.G  Executable Contract Snapshots               NEXT
-V1-01.H  Final Public Contract Review                 PLANNED
+V1-01.G  Executable Contract Snapshots               COMPLETE
+V1-01.H  Final Public Contract Review                 NEXT
 ```
 
 [V1-01.A](./V1-01A_PUBLIC_API_INVENTORY.md) records the exact current namespace inventory.
@@ -56,6 +56,8 @@ modes and defaults. [V1-01.E](./V1-01E_PROTOCOL_ENUM_EXCEPTION_FREEZE.md) freeze
 exported Protocol members, all public Enum names/values and the stable exception catch
 categories. [V1-01.F](./V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) defines the canonical
 1.x SemVer, typing and deprecation rules, including next-major-only removal for stable API.
+[V1-01.G](./V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md) freezes the exact field and public
+read-property structure of 21 stable operation-result types and their transitive records.
 
 ## Operating rules
 
@@ -75,4 +77,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-01.F compatibility/deprecation policy recorded and executable. V1-01.G Executable Contract Snapshots is next.
+**Status:** V1-01.G executable result-contract snapshots recorded. V1-01.H Final Public Contract Review is next.

@@ -68,8 +68,8 @@ V1-02.A  Persistence Version Floor & Policy          COMPLETE
 V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
 V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
-V1-02.E  PostgreSQL Evolution / Rolling Upgrade      NEXT
-V1-02.F  Backup / Rollback / Operations Contract     PLANNED
+V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
+V1-02.F  Backup / Rollback / Operations Contract     NEXT
 V1-02.G  Final Persistence Compatibility Review      PLANNED
 ```
 
@@ -89,6 +89,11 @@ generations and retention completion timestamps.
 [V1-02.D](./V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) proves
 ScheduleDefinition v1/v2 migrate to canonical v3 without domain or occurrence-semantic drift,
 and qualifies semantic round trips for Trigger envelopes, SQL values and business calendars.
+[V1-02.E](./V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) freezes the
+PostgreSQL 1.x rollout contract: same-contract schema-v1 overlap is live-qualified, arbitrary
+N/N+1 overlap requires explicit release-pair evidence, schema-changing upgrades drain by
+default, and any overlap-safe change must follow expand/migrate/contract with bidirectional
+reader/writer compatibility.
 
 ## Operating rules
 
@@ -108,4 +113,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-02.D codec migration and semantic equivalence complete. V1-02.E PostgreSQL Evolution / Rolling Upgrade is next.
+**Status:** V1-02.E PostgreSQL evolution / rolling-upgrade contract complete. V1-02.F Backup / Rollback / Operations Contract is next.

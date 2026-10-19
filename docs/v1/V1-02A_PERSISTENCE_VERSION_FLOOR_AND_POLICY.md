@@ -283,8 +283,8 @@ V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
 V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
-V1-02.F  Backup / Rollback / Operations Contract     NEXT
-V1-02.G  Final Persistence Compatibility Review      PLANNED
+V1-02.F  Backup / Rollback / Operations Contract     COMPLETE
+V1-02.G  Final Persistence Compatibility Review      NEXT
 ```
 
 ## Deliberate boundary
@@ -304,5 +304,5 @@ Those are addressed by the remaining V1-02 lots where applicable.
 ---
 
 **Status:** V1-02.A persistence floors remain frozen. V1-02.B through V1-02.D are complete;
-V1-02.E PostgreSQL evolution is complete; the active persistence step is
-**V1-02.F — Backup / Rollback / Operations Contract**.
+V1-02.E PostgreSQL evolution is complete; V1-02.F backup/rollback/operations is complete; the active persistence step is
+**V1-02.G — Final Persistence Compatibility Review**.

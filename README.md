@@ -94,11 +94,12 @@ The [V1-00 readiness audit](./docs/v1/V1-00_READINESS_AUDIT.md) has started the 
 stabilization sequence. Runtime qualification is green and **V1-01 Public Contract Freeze is
 complete**: compatibility/deprecation policy, callable/structural snapshots and the final
 [63-root / 41 API-only contract](./docs/v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) are now
-applied. V1-02.A has frozen every currently versioned persistence read floor at v1, and
-V1-02.B now protects released/pre-1.0 serialization bytes with immutable golden fixtures.
-The current `v1.0.0` verdict remains **NO-GO** until database migration/semantic-equivalence
-and operations evidence, platform/security gates and the stable GitHub Release path are
-closed by V1-02 through V1-05.
+applied. V1-02.A has frozen every currently versioned persistence read floor at v1,
+V1-02.B protects released/pre-1.0 serialization bytes with immutable golden fixtures, and
+V1-02.C now proves physical SQLite schemas v1 through v7 migrate to v8 with durable state
+preserved. The current `v1.0.0` verdict remains **NO-GO** until codec semantic-equivalence,
+PostgreSQL/operations evidence, platform/security gates and the stable GitHub Release path
+are closed by V1-02 through V1-05.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 

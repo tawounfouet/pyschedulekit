@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import sqlite3
 
-SCHEMA_VERSION = 8
+from pyschedulekit.infrastructure.persistence_versions import SQLITE_RUNTIME_SCHEMA_VERSION
+
+SCHEMA_VERSION = SQLITE_RUNTIME_SCHEMA_VERSION
 
 _TABLES_V2_SQL = """
 CREATE TABLE schedules (

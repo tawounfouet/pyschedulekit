@@ -5,14 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from pyschedulekit import (
-    Duration,
-    ExecutorOutcome,
-    ExecutorRegistry,
-    IntervalTrigger,
-    Scheduler,
-    TargetRef,
-)
+from pyschedulekit import Duration, IntervalTrigger, Scheduler, TargetRef
+from pyschedulekit.api import ExecutorOutcome, ExecutorRegistry
 from pyschedulekit.domain.time import Instant
 from pyschedulekit.ports.cancellation import CancellationToken
 from pyschedulekit.ports.executor import PreparedTarget

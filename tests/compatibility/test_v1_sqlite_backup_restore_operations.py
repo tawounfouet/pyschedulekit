@@ -164,9 +164,7 @@ def test_v1_02f_sqlite_interrupted_v7_to_v8_migration_rolls_back_atomically(
         columns = {
             str(row[1]) for row in connection.execute("PRAGMA table_info(executions)").fetchall()
         }
-        schema_rows = connection.execute(
-            "SELECT singleton, version FROM pyschedulekit_schema"
-        ).fetchall()
+        schema_rows = connection.execute("SELECT version FROM pyschedulekit_schema").fetchall()
 
     assert "completed_at" not in columns
-    assert schema_rows == [(1, 7)]
+    assert schema_rows == [(7,)]

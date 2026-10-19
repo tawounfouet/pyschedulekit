@@ -66,8 +66,8 @@ read-property structure of 21 stable operation-result types and their transitive
 ```text
 V1-02.A  Persistence Version Floor & Policy          COMPLETE
 V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
-V1-02.C  SQLite Forward Migration Qualification      NEXT
-V1-02.D  Codec Migration & Semantic Equivalence      PLANNED
+V1-02.C  SQLite Forward Migration Qualification      COMPLETE
+V1-02.D  Codec Migration & Semantic Equivalence      NEXT
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      PLANNED
 V1-02.F  Backup / Rollback / Operations Contract     PLANNED
 V1-02.G  Final Persistence Compatibility Review      PLANNED
@@ -100,4 +100,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-02.B immutable golden compatibility fixtures complete. V1-02.C SQLite Forward Migration Qualification is next.
+**Status:** V1-02.C SQLite forward migration qualification complete. V1-02.D Codec Migration & Semantic Equivalence is next.

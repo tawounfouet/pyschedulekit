@@ -20,8 +20,8 @@ from pyschedulekit.domain.schedule import (
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
 from pyschedulekit.infrastructure import sqlite_schema
-from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 from pyschedulekit.infrastructure.persistence_versions import SQLITE_RUNTIME_SCHEMA_VERSION
+from pyschedulekit.infrastructure.sqlite import SqliteUnitOfWorkFactory
 
 FIXTURE_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "persistence" / "v1" / "sqlite"
 

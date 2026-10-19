@@ -286,7 +286,7 @@ RPO/RTO
 
 | Guarantee | Executable evidence |
 |---|---|
-| frozen version floors | `tests/architecture/test_v1_persistence_contract.py` |
+| frozen version floors | `tests/architecture/test_v1_persistence_compatibility_policy.py` |
 | immutable JSON fixtures | `tests/compatibility/test_v1_golden_persistence_fixtures.py` |
 | SQLite v1→v8 migration | `tests/compatibility/test_v1_sqlite_forward_migrations.py` |
 | codec semantic equivalence | `tests/compatibility/test_v1_codec_semantic_equivalence.py` |

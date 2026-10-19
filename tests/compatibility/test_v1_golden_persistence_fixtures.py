@@ -12,11 +12,16 @@ from pyschedulekit.domain.triggers import AnyOfTrigger, BusinessDayTrigger, Inte
 from pyschedulekit.infrastructure.calendar_codec import (
     decode_business_calendar,
     decode_business_calendar_collection,
+    encode_business_calendar,
+    encode_business_calendar_collection,
 )
 from pyschedulekit.infrastructure.sql_codec import (
     decode_execution_result,
     decode_retry_policy,
     decode_schedule_definition,
+    encode_execution_result,
+    encode_retry_policy,
+    encode_schedule_definition,
 )
 
 FIXTURE_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "persistence" / "v1"
@@ -195,3 +200,24 @@ def test_pre1_calendar_value_and_collection_fixtures_remain_readable() -> None:
         ("finance-days", 2),
         ("market", 1),
     ]
+
+
+def test_unchanged_writers_reproduce_the_golden_bytes_exactly() -> None:
+    retry_text = _fixture(f"{RELEASED}/retry_policy_v1_exponential.json")
+    result_text = _fixture(f"{RELEASED}/execution_result_v1_failure.json")
+    definition_text = _fixture(f"{PRE1}/schedule_definition_v3_composite.json")
+    calendar_text = _fixture(f"{PRE1}/calendar_value_v1.json")
+    collection_text = _fixture(f"{PRE1}/calendar_collection_v1.json")
+
+    retry = decode_retry_policy(retry_text)
+    result = decode_execution_result(result_text)
+    definition = decode_schedule_definition(definition_text)
+    calendar = decode_business_calendar(calendar_text)
+    calendars = decode_business_calendar_collection(collection_text)
+
+    assert encode_retry_policy(retry) + "\n" == retry_text
+    assert result is not None
+    assert encode_execution_result(result) + "\n" == result_text
+    assert encode_schedule_definition(definition) + "\n" == definition_text
+    assert encode_business_calendar(calendar) + "\n" == calendar_text
+    assert encode_business_calendar_collection(calendars) + "\n" == collection_text

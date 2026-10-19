@@ -7,13 +7,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from pyschedulekit import (
-    CrashRecoveryIncompleteError,
-    Duration,
-    FixedBackoff,
-    RetryPolicy,
-    Scheduler,
-)
+from pyschedulekit import Duration, FixedBackoff, RetryPolicy, Scheduler
+from pyschedulekit.api import CrashRecoveryIncompleteError
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.recovery import CrashRecoveryService
 from pyschedulekit.domain.execution import AttemptState, ExecutionState

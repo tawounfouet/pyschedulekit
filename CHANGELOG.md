@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-02.C SQLite Forward Migration Qualification: seven immutable compressed
+  physical SQLite databases now cover runtime schemas v1 through v7. Compatibility tests
+  verify compressed/raw SHA-256, historical table/column shape, migration through the real
+  production chain to v8, integrity/FK checks, retention completed_at backfill and semantic
+  preservation of Schedule, Request, Execution, Attempt, outbox, claims, admission locks and
+  materialization leases where those records existed.
+
 - Added V1-02.B Immutable Golden Compatibility Fixtures: seven append-only,
   SHA-256-protected persisted JSON fixtures now capture the public `v0.1.0a3` SQL-codec
   format and the immutable pre-1.0 `945ec173…` ScheduleDefinition/Trigger/calendar formats.

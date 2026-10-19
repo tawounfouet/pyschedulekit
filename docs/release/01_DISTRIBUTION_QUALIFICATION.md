@@ -63,7 +63,7 @@ For the wheel it checks:
 - `pyschedulekit/py.typed` is present;
 - metadata name is `pyschedulekit`;
 - metadata version matches the runtime version;
-- `Requires-Python` is exactly `>=3.11`.
+- `Requires-Python` is exactly `>=3.11,<3.15`.
 
 For the sdist it checks:
 

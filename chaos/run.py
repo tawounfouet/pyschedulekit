@@ -20,12 +20,12 @@ from pyschedulekit import (
     FixedBackoff,
     Instant,
     IntervalTrigger,
-    OutboxMessage,
     RetryPolicy,
     Scheduler,
     SqliteUnitOfWorkFactory,
     TargetRef,
 )
+from pyschedulekit.api import OutboxMessage
 from pyschedulekit.application.admission_lock import ScheduleAdmissionLockCoordinator
 from pyschedulekit.application.claims import ExecutionClaimCoordinator
 from pyschedulekit.application.concurrency import AdmissionResult, ConcurrencyCoordinator

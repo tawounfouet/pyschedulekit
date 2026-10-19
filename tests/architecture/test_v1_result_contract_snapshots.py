@@ -1,10 +1,11 @@
 """V1-01.G executable field snapshots for stable public result objects."""
 
 from dataclasses import fields
+from importlib import import_module
 
-from pyschedulekit import api
 from pyschedulekit.api._manifest import V1_PUBLIC_RESULT_TYPES
 
+api = import_module("pyschedulekit.api")
 
 EXPECTED_FIELDS = {
     "AdmissionSnapshot": (

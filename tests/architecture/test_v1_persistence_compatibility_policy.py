@@ -18,6 +18,7 @@ from pyschedulekit.infrastructure.persistence_versions import (
     V1_PERSISTENCE_CURRENT_WRITE_VERSIONS,
     V1_PERSISTENCE_VERSION_FLOORS,
 )
+from pyschedulekit.infrastructure.postgres_schema import SCHEMA_VERSION as POSTGRES_SCHEMA_VERSION
 from pyschedulekit.infrastructure.sql_codec import (
     _CODEC_VERSION,
     _SCHEDULE_DEFINITION_CODEC_VERSION,
@@ -82,6 +83,7 @@ def test_v1_02a_runtime_versions_match_the_contract() -> None:
     assert SQLITE_CALENDAR_SCHEMA_VERSION == 1
 
     assert SQLITE_SCHEMA_VERSION == SQLITE_RUNTIME_SCHEMA_VERSION
+    assert POSTGRES_SCHEMA_VERSION == POSTGRES_RUNTIME_SCHEMA_VERSION
     assert _CODEC_VERSION == SQL_VALUE_CODEC_VERSION
     assert _SCHEDULE_DEFINITION_CODEC_VERSION == SCHEDULE_DEFINITION_CODEC_VERSION
     assert _TRIGGER_CODEC_VERSION == TRIGGER_CODEC_VERSION

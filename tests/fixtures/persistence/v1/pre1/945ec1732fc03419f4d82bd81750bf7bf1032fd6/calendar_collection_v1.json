@@ -1,0 +1,1 @@
+{"calendars":[{"extra_working_days":["2026-12-26"],"holidays":["2026-01-01","2026-12-25"],"reference":"finance-days","revision":2,"schema_version":1,"working_weekdays":[0,1,2,3,4]},{"extra_working_days":["2026-05-03"],"holidays":["2026-05-01"],"reference":"market","revision":1,"schema_version":1,"working_weekdays":[0,1,2,3,4,5]}],"schema_version":1}

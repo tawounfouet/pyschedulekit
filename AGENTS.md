@@ -122,9 +122,9 @@ domain calendar rules to a holiday library, database, HTTP service, or global mu
 provider.
 V1-00 readiness audit is complete and records a NO-GO for an immediate `v1.0.0`; the runtime
 foundation is green. V1-01 has frozen the Python public contract and V1-02.A has frozen the
-persistence read floors. Golden compatibility fixtures, migration/operations evidence,
-Python 3.14/warning/security gates and stable-release workflow behavior remain tracked in
-`docs/v1/`. V1-01.A Public API Inventory & Classification is complete:
+persistence read floors. SQLite migration, codec semantic-equivalence, PostgreSQL evolution and operations evidence,
+plus Python 3.14/warning/security gates and stable-release workflow behavior, remain tracked
+in `docs/v1/`. V1-01.A Public API Inventory & Classification is complete:
 `api/_manifest.py` now records the exact root/API, PostgreSQL, testing and experimental
 surfaces plus their provisional V1 classifications, enforced by an architecture test.
 V1-01.B Root/API Stable Candidate Review is complete: all 104 primary candidates remain
@@ -146,7 +146,11 @@ Review is complete: the runtime now applies the 63-name compact root, retains al
 names in `pyschedulekit.api`, removes the 11 pre-1.0 root redirects, and marks the primary
 contract frozen. V1-02.A Persistence Version Floor & Policy is complete: all currently
 versioned persistence surfaces have a frozen 1.x read floor of v1, with current writer
-versions centralized in `infrastructure/persistence_versions.py`; V1-02.B immutable golden
-fixtures is next. Do not bump the version or create `v1.0.0` before V1-05.
+versions centralized in `infrastructure/persistence_versions.py`. V1-02.B Immutable Golden
+Compatibility Fixtures is complete: seven append-only JSON fixtures under
+`tests/fixtures/persistence/v1/` are provenance- and SHA-256-protected, covering public
+`v0.1.0a3` plus immutable pre-1.0 formats. V1-02.C SQLite Forward Migration Qualification
+is next. Never regenerate or edit a merged golden fixture to satisfy a new writer; add a new
+versioned fixture instead. Do not bump the version or create `v1.0.0` before V1-05.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

@@ -7,7 +7,7 @@ name = "pyschedulekit"
 dynamic = ["version"]
 description = "A domain-first Python scheduling framework built to make scheduling semantics explicit, testable, and durable."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.15"
 license = { text = "MIT" }
 authors = [
   { name = "PyScheduleKit contributors" },
@@ -22,6 +22,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Typing :: Typed",
 ]
@@ -51,6 +52,10 @@ release = [
 Homepage = "https://github.com/tawounfouet/pyschedulekit"
 Repository = "https://github.com/tawounfouet/pyschedulekit"
 Issues = "https://github.com/tawounfouet/pyschedulekit/issues"
+
+[tool.pyschedulekit.platform]
+supported-python-minors = ["3.11", "3.12", "3.13", "3.14"]
+newest-supported-python = "3.14"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

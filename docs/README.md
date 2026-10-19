@@ -118,7 +118,7 @@ POST-06 Chaos / Fault Injection       ✅
 1.0 Readiness
   V1-00 Readiness Audit              ✅ NO-GO recorded
   V1-01 Public Contract Freeze       ✅ complete
-  V1-02 Persistence Compatibility    🚧 in progress
+  V1-02 Persistence Compatibility    ✅ complete
     V1-02.A Version Floor & Policy    ✅
     V1-02.B Golden Fixtures           ✅
     V1-02.C SQLite Migration          ✅

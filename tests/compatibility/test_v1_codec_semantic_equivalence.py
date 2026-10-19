@@ -32,8 +32,7 @@ from pyschedulekit.domain.retry import (
     RetryEvaluator,
     RetryPolicy,
 )
-from pyschedulekit.domain.schedule import ScheduleDefinition
-from pyschedulekit.domain.time import Duration, Instant
+from pyschedulekit.domain.time import Duration, Instant, Timezone
 from pyschedulekit.domain.trigger import CalendarAwareTrigger, Trigger
 from pyschedulekit.domain.triggers import AnyOfTrigger, BusinessDayTrigger
 from pyschedulekit.infrastructure.calendar_codec import (
@@ -96,7 +95,7 @@ def _business_day_trace(
     references: tuple[Instant, ...],
     *,
     calendar: BusinessCalendar,
-    timezone,
+    timezone: Timezone,
 ) -> tuple[Instant, ...]:
     return tuple(
         trigger.next_after_with_calendar(

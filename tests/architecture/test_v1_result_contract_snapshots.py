@@ -2,7 +2,7 @@
 
 from dataclasses import fields
 
-import pyschedulekit.api as api
+from pyschedulekit import api
 from pyschedulekit.api._manifest import V1_PUBLIC_RESULT_TYPES
 
 
@@ -213,7 +213,7 @@ def _property_names(type_name: str) -> tuple[str, ...]:
 
 
 def test_v1_01g_result_type_inventory_is_exact() -> None:
-    assert V1_PUBLIC_RESULT_TYPES == tuple(sorted(EXPECTED_FIELDS))
+    assert tuple(sorted(EXPECTED_FIELDS)) == V1_PUBLIC_RESULT_TYPES
 
 
 def test_v1_01g_public_result_fields_are_frozen() -> None:

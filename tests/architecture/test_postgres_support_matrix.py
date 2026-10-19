@@ -16,4 +16,4 @@ def test_postgres_ci_qualifies_supported_major_versions() -> None:
     assert '"tests/integration/infrastructure/test_adapter_parity.py"' in workflow
     assert '"src/pyschedulekit/infrastructure/persistence_versions.py"' in workflow
     assert '"tests/architecture/test_v1_postgres_rolling_upgrade_policy.py"' in workflow
-    assert '"tests/architecture/test_v1_postgres_rolling_upgrade_policy.py" \\' in workflow
+    assert "tests/architecture/test_v1_postgres_rolling_upgrade_policy.py \\" in workflow

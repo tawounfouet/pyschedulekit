@@ -189,10 +189,12 @@ SQLite schemas v1 through v7 migrating to v8 with integrity and durable-state pr
 persisted JSON preserves domain and behavioral semantics through migration/round-trip.
 [V1-02.E](../v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) freezes the PostgreSQL
 rolling-upgrade contract and live-qualifies same-contract overlap/fencing on 16/17/18.
-[V1-02.F](../v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) now qualifies backup,
+[V1-02.F](../v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) qualifies backup,
 restore rehearsal, interrupted-migration rollback and explicit GO/ABORT operations for
-SQLite and PostgreSQL. Final persistence review, platform/security gates and stable GitHub
-Release behavior remain open.
+SQLite and PostgreSQL.
+[V1-02.G](../v1/V1-02G_FINAL_PERSISTENCE_COMPATIBILITY_REVIEW.md) now closes the persistence
+compatibility contract and marks V1-F04 CLOSED. Platform/security gates, consumer/release
+rehearsal and stable GitHub Release behavior remain open.
 
 Closure is organized as V1-01 through V1-05 in the
 [1.0 readiness roadmap](../v1/README.md).

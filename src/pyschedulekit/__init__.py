@@ -1,5 +1,7 @@
 """Stable convenience imports for PyScheduleKit."""
 
+# ruff: noqa: I001
+
 from __future__ import annotations
 
 from pyschedulekit._version import __version__ as __version__

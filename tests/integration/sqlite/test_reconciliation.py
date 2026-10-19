@@ -7,7 +7,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from pyschedulekit import ReconciliationIncompleteError, RetryPolicy, Scheduler
+from pyschedulekit import RetryPolicy, Scheduler
+from pyschedulekit.api import ReconciliationIncompleteError
 from pyschedulekit.application.execution_service import ExecutionService
 from pyschedulekit.application.reconciliation import ReconciliationService
 from pyschedulekit.domain.execution import ExecutionState

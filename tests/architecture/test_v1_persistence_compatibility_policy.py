@@ -26,7 +26,6 @@ from pyschedulekit.infrastructure.sql_codec import (
 )
 from pyschedulekit.infrastructure.sqlite_schema import SCHEMA_VERSION as SQLITE_SCHEMA_VERSION
 
-
 EXPECTED_FLOORS = {
     "calendar-collection-codec": 1,
     "calendar-value-codec": 1,

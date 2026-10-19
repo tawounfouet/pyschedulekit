@@ -118,7 +118,9 @@ def test_v1_02g_readiness_audit_marks_v1_f04_closed() -> None:
 def test_v1_02g_navigation_closes_v1_02_and_advances_to_v1_03() -> None:
     readme = (REPO_ROOT / "docs" / "v1" / "README.md").read_text(encoding="utf-8")
     assert "V1-02  Persistence Compatibility Contract      COMPLETE" in readme
-    assert "V1-03  Platform, Warning and Security Gates    NEXT" in readme
+    assert "V1-03  Platform, Warning and Security Gates    IN PROGRESS" in readme
+    assert "V1-03.A  Python 3.14 & Support Window               COMPLETE" in readme
+    assert "V1-03.B  Warning-Clean Runtime / Tests              NEXT" in readme
     assert "V1-02.G  Final Persistence Compatibility Review      COMPLETE" in readme
 
     final_review = (

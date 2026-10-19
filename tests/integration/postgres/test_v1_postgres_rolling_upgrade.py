@@ -23,8 +23,8 @@ from pyschedulekit.domain.schedule import (
 )
 from pyschedulekit.domain.time import Duration, Instant
 from pyschedulekit.domain.triggers import IntervalTrigger
-from pyschedulekit.infrastructure.postgres import PostgresUnitOfWorkFactory
 from pyschedulekit.infrastructure.persistence_versions import POSTGRES_RUNTIME_SCHEMA_VERSION
+from pyschedulekit.infrastructure.postgres import PostgresUnitOfWorkFactory
 
 POSTGRES_DSN = os.getenv("PYSCHEDULEKIT_TEST_POSTGRES_DSN")
 

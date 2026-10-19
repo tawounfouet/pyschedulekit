@@ -30,6 +30,7 @@ SNAPSHOT / HISTORY
 | [SQLite migration qualification](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) | Physical historical databases migrated and preserved through schema v8 |
 | [Codec semantic equivalence](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) | Legacy/current JSON values preserve domain and decision behavior |
 | [PostgreSQL rolling upgrades](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) | Same-contract overlap and future N/N+1 rollout contract |
+| [Backup / rollback operations](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) | Verified backup/restore, rollback boundary and GO/ABORT contract |
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
@@ -122,7 +123,8 @@ POST-06 Chaos / Fault Injection       ✅
     V1-02.C SQLite Migration          ✅
     V1-02.D Codec Equivalence         ✅
     V1-02.E PostgreSQL Evolution      ✅
-    V1-02.F Backup / Rollback         ⏭ next
+    V1-02.F Backup / Rollback         ✅
+    V1-02.G Persistence Review        ⏭ next
   V1-03 Platform/Security Gates      ⬜ planned
   V1-04 Consumer/Release Rehearsal   ⬜ planned
   V1-05 Final GO/NO-GO               ⬜ planned
@@ -177,6 +179,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect physical SQLite migration evidence | [V1-02.C SQLite Migration](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) |
 | inspect codec migration semantic evidence | [V1-02.D Codec Equivalence](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) |
 | inspect PostgreSQL rollout compatibility | [V1-02.E PostgreSQL Rolling Upgrade](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) |
+| inspect persistence backup/restore runbook | [V1-02.F Backup / Rollback](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule
@@ -190,4 +193,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-19 — V1-02.E PostgreSQL evolution / rolling upgrade complete; V1-02.F backup / rollback / operations is next and the `v1.0.0` verdict remains NO-GO.
+**Last refreshed:** 2026-10-19 — V1-02.F backup / rollback / operations complete; V1-02.G final persistence compatibility review is next and the `v1.0.0` verdict remains NO-GO.

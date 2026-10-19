@@ -174,11 +174,12 @@ No public package publication is required to progress through those milestones.
 ## 1.0.0 activation gate
 
 The [V1-00 Readiness Audit](../v1/V1-00_READINESS_AUDIT.md) records the current gate as
-**NO-GO**. Runtime qualification is green. The canonical Python compatibility/deprecation
-rules are now frozen by
-[V1-01.F](../v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md), while executable result-field
-snapshots, final public-contract application, persistence support floor, platform/security
-gates and stable GitHub Release behavior remain open.
+**NO-GO**. Runtime qualification is green and V1-01 has completed the Python public-contract
+freeze: the canonical compatibility/deprecation rules are frozen by
+[V1-01.F](../v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md), result structures by
+[V1-01.G](../v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md), and the final 63/41 namespace
+split is applied by [V1-01.H](../v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md). Persistence
+support floor, platform/security gates and stable GitHub Release behavior remain open.
 
 Closure is organized as V1-01 through V1-05 in the
 [1.0 readiness roadmap](../v1/README.md).

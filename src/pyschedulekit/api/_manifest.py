@@ -250,6 +250,50 @@ ROOT_METADATA_V1_POLICY = "stable-presence"
 LEGACY_ROOT_REDIRECT_V1_POLICY = "remove-before-v1.0.0"
 UNLISTED_SUBMODULE_V1_POLICY = "internal-no-compatibility"
 
+V1_STABLE_COMPATIBILITY_POLICY = {
+    "additive-public-api": "minor-or-major",
+    "breaking-public-change": "next-major-only",
+    "compatible-bug-fix": "patch-minor-or-major",
+    "persistence-floor": "frozen-for-major-after-v1-02",
+    "public-typing": "previously-valid-consumer-typing-remains-valid",
+    "stable-public-api": "semver-protected-within-major",
+}
+
+V1_DEPRECATION_POLICY = {
+    "changelog-required": True,
+    "migration-guidance-required": True,
+    "minimum-prior-stable-releases": 1,
+    "removal-boundary": "next-major-only",
+    "warning-category": "PyScheduleKitDeprecationWarning",
+}
+
+V1_PROTECTED_CONTRACT_ELEMENTS = (
+    "callable-signatures",
+    "documented-runtime-semantics",
+    "enum-members-and-values",
+    "exception-catch-categories",
+    "protocol-members",
+    "public-names",
+    "public-result-fields",
+    "public-typing-contracts",
+    "stable-secondary-namespaces",
+)
+
+V1_BREAKING_CHANGE_CLASSES = (
+    "change-documented-runtime-meaning",
+    "change-enum-value",
+    "change-exception-catch-category",
+    "invalidate-previously-valid-typing",
+    "make-optional-parameter-required",
+    "narrow-accepted-input-contract",
+    "remove-or-rename-public-name",
+    "remove-protocol-member",
+    "remove-public-result-field",
+    "rename-parameter",
+    "restrict-parameter-calling-mode",
+    "widen-return-contract-incompatibly",
+)
+
 LEGACY_ROOT_NAMES = (
     "AdmissionLockOwnershipError",
     "AdmissionToken",

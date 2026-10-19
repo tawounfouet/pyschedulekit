@@ -112,7 +112,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
   V1-01.C Secondary Namespace Policy              ✅
   V1-01.D Constructor / Method Signature Freeze    ✅
   V1-01.E Protocol / Enum / Exception Freeze       ✅
-  V1-01.F Compatibility & Deprecation Policy        ⏭ NEXT
+  V1-01.F Compatibility & Deprecation Policy        ✅
+  V1-01.G Executable Contract Snapshots             ⏭ NEXT
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -133,7 +134,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
 - **V1-01.C** : `postgres` est stable-optional, `testing` stable-testing, `experimental` hors SemVer ; `__version__` reste stable en présence et les 11 redirects legacy doivent disparaître avant `1.0.0`.
 - **V1-01.D** : baseline exécutable de 39 constructeurs/factories + 53 méthodes ; noms, modes d’appel et valeurs par défaut sont désormais surveillés par CI.
 - **V1-01.E** : Protocols exportés, 14 Enums publics et catégories d’exceptions sont désormais figés par tests d’architecture.
-- **Étape active** : V1-01.F Compatibility & Deprecation Policy.
+- **V1-01.F** : la politique canonique [Compatibility & Deprecation](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) protège l’API stable, le typing et les dépréciations sur toute la major 1.x ; les suppressions incompatibles sont réservées à la major suivante.
+- **Étape active** : V1-01.G Executable Contract Snapshots.
 
 ---
 
@@ -161,11 +163,13 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
 4. V1-01.C — Secondary Namespace Policy ✅ ;
 5. V1-01.D — Constructor / Method Signature Freeze ✅ ;
 6. V1-01.E — Protocol / Enum / Exception Freeze ✅ ;
-7. V1-01.F — Compatibility & Deprecation Policy ⏭ ;
-8. V1-02 — Persistence Compatibility Contract ;
-9. V1-03 — Platform, Warning and Security Gates ;
-10. V1-04 — Consumer and Stable-Release Rehearsal ;
-11. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
+7. V1-01.F — Compatibility & Deprecation Policy ✅ ;
+8. V1-01.G — Executable Contract Snapshots ⏭ ;
+9. V1-01.H — Final Public Contract Review ;
+10. V1-02 — Persistence Compatibility Contract ;
+11. V1-03 — Platform, Warning and Security Gates ;
+12. V1-04 — Consumer and Stable-Release Rehearsal ;
+13. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
 
 Aucune publication PyPI intermédiaire n'est autorisée pour franchir ces étapes. Le tag
 `v1.0.0` reste interdit avant un GO explicite en V1-05.
@@ -197,8 +201,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`ANALYSE_CRITIQUE.md`](./audit/2026-10-08/ANALYSE_CRITIQUE.md) — verdict et notes /10.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md) — référence technique.
 - [`V1-00 Readiness Audit`](./v1/V1-00_READINESS_AUDIT.md) — verdict, preuves et findings 1.0.
+- [`V1-01.F Compatibility & Deprecation Policy`](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) — promesse SemVer/typing et cycle de dépréciation 1.x.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-09 — V1-01.E Protocol / Enum / Exception Freeze.*
+*Dernière mise à jour : 2026-10-19 — V1-01.F Compatibility & Deprecation Policy.*

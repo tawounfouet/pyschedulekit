@@ -134,7 +134,9 @@ constructors/factories and 53 public methods with executable name/kind/default s
 V1-01.E Protocol / Enum / Exception Freeze now protects exported structural Protocols,
 14 public Enum name/value sets and public exception catch categories, including the
 non-exception diagnostic `*Error` records. V1-01.F Compatibility & Deprecation Policy is
-next. Do not bump the version, create `v1.0.0`, or expand the public feature surface during
-V1-01.
+complete: `docs/v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md` is the canonical 1.x
+SemVer/typing/deprecation policy, with stable breaking changes reserved for the next major.
+V1-01.G Executable Contract Snapshots is next. Do not bump the version, create `v1.0.0`, or
+expand the public feature surface during V1-01.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

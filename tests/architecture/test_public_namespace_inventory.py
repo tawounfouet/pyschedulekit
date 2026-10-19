@@ -8,8 +8,10 @@ import pyschedulekit.testing as testing
 from pyschedulekit.api._manifest import (
     EXPERIMENTAL_PUBLIC_NAMES,
     POSTGRES_PUBLIC_NAMES,
+    API_ONLY_V1_PUBLIC_NAMES,
     PUBLIC_NAMESPACE_CLASSIFICATIONS,
     ROOT_METADATA_NAMES,
+    ROOT_V1_PUBLIC_NAMES,
     STABLE_PUBLIC_NAMES,
     TESTING_PUBLIC_NAMES,
 )
@@ -17,8 +19,8 @@ from pyschedulekit.api._manifest import (
 
 def test_v1_01a_namespace_classifications_are_exact() -> None:
     assert PUBLIC_NAMESPACE_CLASSIFICATIONS == {
-        "pyschedulekit": "stable-candidate",
-        "pyschedulekit.api": "stable-candidate",
+        "pyschedulekit": "stable",
+        "pyschedulekit.api": "stable",
         "pyschedulekit.postgres": "stable-optional",
         "pyschedulekit.testing": "stable-testing",
         "pyschedulekit.experimental": "experimental",
@@ -50,13 +52,17 @@ def test_v1_01a_inventory_counts_and_sets_are_stable() -> None:
 
 def test_v1_01a_runtime_exports_match_the_inventory() -> None:
     assert public_api.__all__ == list(STABLE_PUBLIC_NAMES)
-    assert pyschedulekit.__all__ == [*STABLE_PUBLIC_NAMES, *ROOT_METADATA_NAMES]
+    assert pyschedulekit.__all__ == [*ROOT_V1_PUBLIC_NAMES, *ROOT_METADATA_NAMES]
     assert postgres.__all__ == list(POSTGRES_PUBLIC_NAMES)
     assert testing.__all__ == list(TESTING_PUBLIC_NAMES)
     assert experimental.__all__ == list(EXPERIMENTAL_PUBLIC_NAMES)
 
-    for name in STABLE_PUBLIC_NAMES:
+    for name in ROOT_V1_PUBLIC_NAMES:
         assert getattr(pyschedulekit, name) is getattr(public_api, name)
+
+    for name in API_ONLY_V1_PUBLIC_NAMES:
+        assert hasattr(public_api, name)
+        assert not hasattr(pyschedulekit, name)
 
     for name in ROOT_METADATA_NAMES:
         assert hasattr(pyschedulekit, name)

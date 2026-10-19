@@ -272,9 +272,13 @@ Les limites encore structurelles sont différentes :
    fige son snapshot à la construction ; le provider SQLite possède un schéma isolé pouvant
    coexister dans le même fichier que la persistence runtime du Scheduler. Aucun provider
    HTTP/SaaS n'est implicite.
-9. **Surface alpha** — `0.1.x` reste une série alpha. La stabilité `1.0` (migrations,
-   compatibility policy, long-term SemVer guarantees) n'est pas encore promise. Le
-   [V1-00 Readiness Audit](./v1/V1-00_READINESS_AUDIT.md) inventorie les preuves et blockers
-   à fermer avant cette promesse.
+9. **Surface alpha** — `0.1.x` reste une série alpha. La politique de compatibilité
+   Python 1.x est désormais canonique dans
+   [V1-01.F Compatibility & Deprecation Policy](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) :
+   l'API stable et le typing sont protégés par SemVer sur la major, et les suppressions
+   incompatibles sont réservées à la major suivante. La promesse `1.0.0` complète reste
+   cependant inactive tant que le plancher de compatibilité persistence et les gates de
+   release V1-02 → V1-05 ne sont pas fermés. Le
+   [V1-00 Readiness Audit](./v1/V1-00_READINESS_AUDIT.md) inventorie ces blockers.
 
 Ces limites appartiennent à la trajectoire pré-1.0 / Phase II et seront traitées par lots dédiés. Leur traitement n'est plus lié à une publication intermédiaire `0.x`.

@@ -216,19 +216,20 @@ promise unless that symbol is explicitly re-exported through a stable public nam
 
 Persisted data compatibility is a separate but related contract.
 
-V1-02 will define the exact minimum readable versions for SQLite schema, schedule
-definitions, Trigger envelopes, calendar codecs and PostgreSQL schema evolution.
+V1-02.A now defines the exact minimum readable versions for SQLite schema, shared SQL
+value codecs, ScheduleDefinition, Trigger envelopes, calendar codecs/provider schema and
+PostgreSQL schema evolution.
 
-V1-01.F establishes the governing rule in advance:
+V1-01.F established the governing rule in advance, and V1-02.A applies it:
 
-> Once V1-02 declares the 1.0 persistence floor, that readable floor is protected for the
-> remainder of the 1.x major line.
+> The declared 1.x persistence read floor is protected for the remainder of the 1.x major
+> line.
 
-Raising that floor inside 1.x is a breaking compatibility event. Unknown future persisted
-versions continue to fail closed unless an explicit migration exists.
+Every currently versioned persistence surface has a frozen floor of v1. Raising that floor
+inside 1.x is a breaking compatibility event. Unknown future persisted versions continue to
+fail closed unless an explicit migration exists.
 
-The exact floor is intentionally not invented in V1-01.F; it remains the responsibility of
-V1-02.
+See [V1-02.A Persistence Version Floor & Policy](./V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md).
 
 ## Machine-readable policy
 

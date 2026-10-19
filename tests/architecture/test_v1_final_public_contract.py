@@ -28,9 +28,7 @@ def test_v1_01h_primary_contract_is_final_and_exact() -> None:
     assert tuple(sorted(ROOT_V1_PUBLIC_NAMES)) == ROOT_V1_PUBLIC_NAMES
     assert tuple(sorted(API_ONLY_V1_PUBLIC_NAMES)) == API_ONLY_V1_PUBLIC_NAMES
     assert set(ROOT_V1_PUBLIC_NAMES).isdisjoint(API_ONLY_V1_PUBLIC_NAMES)
-    assert set(ROOT_V1_PUBLIC_NAMES) | set(API_ONLY_V1_PUBLIC_NAMES) == set(
-        STABLE_PUBLIC_NAMES
-    )
+    assert set(ROOT_V1_PUBLIC_NAMES) | set(API_ONLY_V1_PUBLIC_NAMES) == set(STABLE_PUBLIC_NAMES)
 
 
 def test_v1_01h_runtime_root_is_the_compact_surface() -> None:

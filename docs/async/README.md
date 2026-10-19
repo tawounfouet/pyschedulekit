@@ -32,12 +32,8 @@ Async support is therefore an execution-adapter capability, not a second schedul
 ## Public surface
 
 ```python
-from pyschedulekit import (
-    AsyncioExecutor,
-    AsyncPythonTargetRegistry,
-    Scheduler,
-    TargetRef,
-)
+from pyschedulekit import Scheduler, TargetRef
+from pyschedulekit.api import AsyncioExecutor, AsyncPythonTargetRegistry
 ```
 
 ### Automatic registration

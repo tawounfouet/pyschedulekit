@@ -67,3 +67,29 @@ V1_POSTGRES_ROLLING_UPGRADE_GATES = (
     "unknown-future-schema-fail-closed",
     "postgres-16-17-18-live-qualification",
 )
+
+
+V1_PERSISTENCE_OPERATIONS_POLICY = {
+    "backup-before-format-change": "required",
+    "backup-integrity-verification": "required",
+    "go-no-go": "explicit-preflight-and-postflight-gates",
+    "migration-interruption": "transactional-step-or-fail-closed",
+    "postgres-backup": "native-postgres-backup-required",
+    "postgres-restore-rehearsal": "pg-dump-pg-restore-live-ci",
+    "restore-rehearsal-before-release": "required",
+    "rollback-mode": "restore-known-good-backup-not-in-place-downgrade",
+    "rpo-rto": "application-owned",
+    "sqlite-backup": "sqlite-backup-api-or-consistent-offline-copy",
+    "post-restore-verification": "schema-integrity-domain-smoke-required",
+}
+
+V1_PERSISTENCE_OPERATIONS_GATES = (
+    "backup-artifact-created",
+    "backup-integrity-verified",
+    "restore-rehearsal-passed",
+    "sqlite-interrupted-migration-rollback",
+    "post-restore-schema-verification",
+    "post-restore-domain-smoke",
+    "postgres-16-17-18-backup-restore-rehearsal",
+    "explicit-go-abort-criteria",
+)

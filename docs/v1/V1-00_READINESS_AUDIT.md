@@ -153,15 +153,25 @@ whole public surface.
 namespaces; add focused signature/Protocol snapshots for contracts the project is willing to
 support throughout 1.x.
 
-### V1-F04 — Persistence compatibility floor lacks a 1.x promise — P0
+### V1-F04 — Persistence compatibility floor lacks a 1.x promise — CLOSED
 
-SQLite migrations, Schedule-definition migration and strict codec versions are executable,
-but the repository does not state whether all alpha-era versions remain readable throughout
-1.x. Tests synthesize most legacy payloads using current helpers.
+**Original priority:** P0
 
-**Closure:** define minimum supported versions and upgrade rules, commit golden fixtures from
-the public `0.1.0a3` and final pre-1.0 formats, and exercise them across SQLite/PostgreSQL as
-applicable.
+The original audit found strong versioning mechanisms but no durable 1.x support promise.
+
+**Closed by V1-02.A through V1-02.G** on 2026-10-19:
+
+- V1-02.A freezes every current persistence read floor at v1 for the full 1.x lifetime;
+- V1-02.B adds immutable SHA-256-protected released/pre-1.0 JSON fixtures;
+- V1-02.C adds immutable physical SQLite v1-v7 fixtures and proves every forward path to v8;
+- V1-02.D proves codec/domain/behavior semantic equivalence across supported generations;
+- V1-02.E freezes PostgreSQL evolution and rolling-overlap rules with live 16/17/18 evidence;
+- V1-02.F qualifies SQLite/PostgreSQL backup, restore and rollback operations;
+- V1-02.G performs the final cross-contract review and records a V1-02 GO.
+
+The stable contract now explicitly freezes readable floors, future-version fail-closed behavior,
+writer-evolution requirements, mixed-worker overlap rules, backup requirements and rollback
+boundaries. No waiver is required.
 
 ### V1-F05 — Release identity is intentionally not activated — P0 at V1-05
 

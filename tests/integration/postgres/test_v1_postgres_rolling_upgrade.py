@@ -96,18 +96,17 @@ def test_v1_02e_concurrent_schema_v1_bootstrap_is_serialized() -> None:
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = current_schema()
-                  AND table_name LIKE 'pyschedulekit_%'
-                   OR table_schema = current_schema()
-                      AND table_name IN (
-                          'schedules',
-                          'execution_requests',
-                          'executions',
-                          'attempts',
-                          'outbox_messages',
-                          'execution_claims',
-                          'schedule_admission_locks',
-                          'schedule_materialization_leases'
-                      )
+                  AND table_name IN (
+                      'pyschedulekit_schema',
+                      'schedules',
+                      'execution_requests',
+                      'executions',
+                      'attempts',
+                      'outbox_messages',
+                      'execution_claims',
+                      'schedule_admission_locks',
+                      'schedule_materialization_leases'
+                  )
                 """
             ).fetchall()
         }

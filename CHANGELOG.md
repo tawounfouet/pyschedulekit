@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-02.F Backup / Rollback / Operations Contract: SQLite online-backup restore
+  rehearsal and injected v7→v8 interruption now prove backup viability and transactional
+  rollback; PostgreSQL CI performs pg_dump/pg_restore restore rehearsals on 16/17/18 using
+  matching server-native tools; machine-readable GO/ABORT, restore-known-good-backup,
+  post-restore verification and application-owned RPO/RTO boundaries are frozen.
+
 - Added V1-02.E PostgreSQL Evolution / Rolling Upgrade: machine-readable rollout policy
   now distinguishes same-contract schema-v1 overlap from explicit N/N+1 release-pair overlap,
   requires bidirectional reader/writer compatibility for rolling deployment, defaults schema

@@ -278,7 +278,10 @@ Les limites encore structurelles sont différentes :
    v1 conservent leurs comportements observables après round-trip. V1-02.E fixe enfin la
    frontière rolling PostgreSQL : overlap same-contract v1 qualifié, N/N+1 soumis à preuve
    bidirectionnelle explicite, migration de schéma drainée par défaut et expand/migrate/contract
-   obligatoire si un overlap est revendiqué.
+   obligatoire si un overlap est revendiqué. V1-02.F ajoute le contrat opératoire : backup
+   vérifié avant changement de format, restore rehearsal, rollback par restauration d'un état
+   connu, atomicité d'une migration SQLite interrompue et rehearsal pg_dump/pg_restore sur
+   PostgreSQL 16/17/18.
 8. **Adapters de calendriers** — CAL-05 ajoute `FileCalendarProvider` et
    `SqliteCalendarProvider` au port existant. Les deux reconstruisent des
    `BusinessCalendar` immutables via un codec JSON strict et versionné. Le provider File
@@ -290,8 +293,8 @@ Les limites encore structurelles sont différentes :
    [V1-01.F Compatibility & Deprecation Policy](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) :
    l'API stable et le typing sont protégés par SemVer sur la major, et les suppressions
    incompatibles sont réservées à la major suivante. La promesse `1.0.0` complète reste
-   cependant inactive tant que le contrat backup/rollback/opérations et la revue persistence
-   finale de V1-02, ainsi que les gates de release V1-03 → V1-05, ne sont pas fermés. Le
+   cependant inactive tant que la revue persistence finale V1-02.G, ainsi que les gates de
+   release V1-03 → V1-05, ne sont pas fermés. Le
    [V1-00 Readiness Audit](./v1/V1-00_READINESS_AUDIT.md) inventorie ces blockers.
 
 Ces limites appartiennent à la trajectoire pré-1.0 / Phase II et seront traitées par lots dédiés. Leur traitement n'est plus lié à une publication intermédiaire `0.x`.

@@ -1,1 +1,1 @@
-{"payload":{"backoff":{"initial_delay_seconds":2,"kind":"exponential","max_delay_seconds":20,"multiplier":3},"max_attempts":4,"retryable_categories":["timeout","transient"]},"version":1}
+{"payload":{"backoff":{"initial_delay_seconds":2.0,"kind":"exponential","max_delay_seconds":20.0,"multiplier":3},"max_attempts":4,"retryable_categories":["timeout","transient"]},"version":1}

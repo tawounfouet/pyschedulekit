@@ -121,8 +121,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
   V1-02.C SQLite Forward Migration Qualification      ✅
   V1-02.D Codec Migration & Semantic Equivalence      ✅
   V1-02.E PostgreSQL Evolution / Rolling Upgrade      ✅
-  V1-02.F Backup / Rollback / Operations Contract     ⏭ NEXT
-  V1-02.G Final Persistence Compatibility Review      ⬜
+  V1-02.F Backup / Rollback / Operations Contract     ✅
+  V1-02.G Final Persistence Compatibility Review      ⏭ NEXT
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -151,7 +151,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 - **V1-02.C** : sept bases SQLite physiques immuables couvrent les schémas v1 à v7 ; hashes compressés/bruts, intégrité SQLite, FK, migration réelle vers v8 et préservation du graphe durable sont vérifiés. Voir [SQLite Forward Migration Qualification](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md).
 - **V1-02.D** : ScheduleDefinition v1/v2 → v3 est qualifié sans dérive de domaine ni de comportement ; SQL values, Trigger envelopes et calendriers v1 conservent leurs sémantiques après round-trip. Voir [Codec Migration & Semantic Equivalence](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md).
 - **V1-02.E** : overlap PostgreSQL same-contract qualifié en live sur 16/17/18, bootstrap concurrent sérialisé, fencing monotone, stale owner rejeté, future schema fail-closed ; toute paire N/N+1 exige une preuve explicite ou un drain complet. Voir [PostgreSQL Evolution / Rolling Upgrade](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md).
-- **Étape active** : V1-02.F Backup / Rollback / Operations Contract.
+- **V1-02.F** : backup/restore SQLite qualifié, rollback transactionnel v7→v8 injecté, restore rehearsal PostgreSQL via pg_dump/pg_restore sur 16/17/18, critères GO/ABORT et frontière RPO/RTO documentés. Voir [Backup / Rollback / Operations Contract](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md).
+- **Étape active** : V1-02.G Final Persistence Compatibility Review.
 
 ---
 
@@ -187,8 +188,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 12. V1-02.C — SQLite Forward Migration Qualification ✅ ;
 13. V1-02.D — Codec Migration & Semantic Equivalence ✅ ;
 14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ✅ ;
-15. V1-02.F — Backup / Rollback / Operations Contract ⏭ ;
-16. V1-02.G — Final Persistence Compatibility Review ;
+15. V1-02.F — Backup / Rollback / Operations Contract ✅ ;
+16. V1-02.G — Final Persistence Compatibility Review ⏭ ;
 17. V1-03 — Platform, Warning and Security Gates ;
 18. V1-04 — Consumer and Stable-Release Rehearsal ;
 19. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
@@ -231,8 +232,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`V1-02.C SQLite Forward Migration Qualification`](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) — bases physiques v1-v7, migration vers v8 et préservation sémantique.
 - [`V1-02.D Codec Migration & Semantic Equivalence`](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) — migration JSON v1/v2→v3 et invariance comportementale des codecs 1.x.
 - [`V1-02.E PostgreSQL Evolution / Rolling Upgrade`](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) — overlap same-contract, fencing et protocole N/N+1.
+- [`V1-02.F Backup / Rollback / Operations Contract`](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) — backup vérifié, restore rehearsal, rollback boundary et critères GO/ABORT.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-02.E PostgreSQL Evolution / Rolling Upgrade ; V1-02.F next.*
+*Dernière mise à jour : 2026-10-19 — V1-02.F Backup / Rollback / Operations Contract ; V1-02.G next.*

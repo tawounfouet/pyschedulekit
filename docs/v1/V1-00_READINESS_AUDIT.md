@@ -182,13 +182,15 @@ for `v1.0.0` fails with a source/tag mismatch, which is the correct fail-closed 
 **Closure:** only after V1-01 through V1-04, update version, classifier, hard-coded package
 assertions and changelog atomically, then run Release Readiness on `main`.
 
-### V1-F06 — Python 3.14 is not in the declared qualification matrix — P1
+### V1-F06 — Python 3.14 is not in the declared qualification matrix — P1 — CLOSED
 
-The full suite passes locally on CPython 3.14.5, but CI, clean-install qualification and
-package classifiers stop at 3.13 while `requires-python = ">=3.11"` has no upper bound.
+The original audit found that CI, clean-install qualification and package classifiers stopped
+at 3.13 while `requires-python = ">=3.11"` had no upper bound.
 
-**Closure:** add Python 3.14 to CI and wheel/sdist clean-install matrices, update classifiers,
-and decide an explicit Python support-window policy.
+**Closure:** V1-03.A adds Python 3.14 to CI and wheel/sdist clean-install matrices, adds the
+3.14 classifier, constrains metadata to `>=3.11,<3.15`, and freezes an executable
+3.11→3.14 support-window policy. See
+[V1-03.A Python 3.14 & Support Window](./V1-03A_PYTHON_314_SUPPORT_WINDOW.md).
 
 ### V1-F07 — The test suite is not warning-clean on Python 3.14 — P1
 

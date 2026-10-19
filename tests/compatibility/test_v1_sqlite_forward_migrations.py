@@ -20,10 +20,10 @@ FIXTURE_ROOT = Path(__file__).resolve().parents[1] / "fixtures" / "persistence" 
 EXPECTED_FIXTURES = {
     1: (
         "sqlite_schema_v1.db.xz",
-        1344,
-        "d3dce29ca2af8ce20526fbad3fed81b625dd558826fc21b4023f373d220f245d",
+        1320,
+        "5f428ff935934c848e47f7b23b80805c72c70e8b80d64cd7365fd90c13ebea2c",
         40960,
-        "6883235eb603e79cc393070f604f321811848544e7a9c0f1ef3642f781533c79",
+        "0a759eccb6d9339621f69ea22d4bc1ce405c247e2c77a8882687fb047621ddc5",
     ),
     2: (
         "sqlite_schema_v2.db.xz",

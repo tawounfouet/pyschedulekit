@@ -865,29 +865,40 @@ Executor adapters still return normalized `ExecutorOutcome` values; retry, timeo
 
 ## Public API stability
 
-LOT-34 defines the first explicit compatibility boundary for PyScheduleKit.
+V1-01 freezes the public Python contract that will be activated by the first stable release.
 
-The canonical stable namespace is:
+The canonical complete stable namespace is:
 
 ```python
 import pyschedulekit.api as psk
 ```
 
-For convenience, the same stable symbols are re-exported at the package root:
+The package root is intentionally smaller and contains the 63 common scheduling conveniences:
 
 ```python
 from pyschedulekit import Scheduler, IntervalTrigger, RetryPolicy
 ```
 
-The exact stable symbol set is machine-readable and CI-enforced through `pyschedulekit.api._manifest.STABLE_PUBLIC_NAMES`.
+The exact contract is machine-readable and CI-enforced:
 
-Low-level coordination primitives that were historically available at the package root now live under:
+```text
+pyschedulekit             63 stable convenience names + __version__
+pyschedulekit.api        104 stable names
+                         ├── 63 root conveniences
+                         └── 41 advanced API-only names
+```
+
+Advanced extension ports, executor composition types and detailed diagnostics are imported
+from `pyschedulekit.api` rather than the package root.
+
+Low-level coordination primitives remain explicitly experimental:
 
 ```python
 from pyschedulekit.experimental import ExecutionClaim, ScheduleAdmissionLock
 ```
 
-Legacy root access remains temporarily compatible through `PyScheduleKitDeprecationWarning`, but experimental APIs are not covered by compatibility guarantees.
+The former pre-1.0 legacy root redirects have been removed. Experimental APIs are not covered
+by the stable 1.x compatibility promise.
 
 Public `Scheduler` methods return immutable snapshots/results rather than mutable domain aggregates. In particular, `run_pending()` and `cancel_execution()` no longer leak mutable `Execution` Aggregate Roots.
 

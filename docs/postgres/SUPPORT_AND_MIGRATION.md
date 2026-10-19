@@ -262,6 +262,27 @@ For a 16 → 17 or 17 → 18 upgrade:
 
 PyScheduleKit does not automate PostgreSQL server upgrades.
 
+## V1-02.F backup / restore operations
+
+[V1-02.F Backup / Rollback / Operations Contract](../v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md)
+requires a verified backup and restore rehearsal before any format-changing release.
+
+The live PostgreSQL CI now performs a matching-major custom-format `pg_dump` and
+`pg_restore` rehearsal on PostgreSQL 16, 17 and 18. It seeds a real durable Schedule,
+destroys the live public schema, restores the dump, reconstructs
+`PostgresUnitOfWorkFactory`, and verifies the Schedule again.
+
+Rollback is explicitly:
+
+```text
+restore known-good pre-upgrade backup
+```
+
+not an in-place downgrade of a newer schema.
+
+Detailed operator steps are in
+[Persistence Backup / Restore Runbook](../operations/PERSISTENCE_BACKUP_RESTORE_RUNBOOK.md).
+
 ## SQLite → PostgreSQL
 
 PyScheduleKit does **not** currently provide an automated SQLite-to-PostgreSQL data migration
@@ -323,4 +344,4 @@ No credentials belong in PyScheduleKit source or repository configuration.
 
 ---
 
-**Status:** PG-05 production hardening contract + V1-02.E rolling-upgrade policy.
+**Status:** PG-05 production hardening contract + V1-02.E rolling-upgrade policy + V1-02.F backup/restore operations.

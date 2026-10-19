@@ -181,6 +181,11 @@ Current PostgreSQL persistence schema:
 SCHEMA_VERSION = 1
 ```
 
+V1-02.A freezes the PyScheduleKit 1.x PostgreSQL schema read floor at v1. Any future schema
+version introduced during 1.x must retain an explicit forward path from v1. The complete
+persistence-floor policy is defined in
+[V1-02.A Persistence Version Floor & Policy](../v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md).
+
 Bootstrap behavior is deliberately fail-closed:
 
 ```text

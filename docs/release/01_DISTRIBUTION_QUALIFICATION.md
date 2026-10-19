@@ -63,7 +63,7 @@ For the wheel it checks:
 - `pyschedulekit/py.typed` is present;
 - metadata name is `pyschedulekit`;
 - metadata version matches the runtime version;
-- `Requires-Python` is exactly `>=3.11`.
+- `Requires-Python` is exactly `>=3.11,<3.15`.
 
 For the sdist it checks:
 
@@ -85,6 +85,7 @@ A second job downloads those exact bytes and tests this matrix:
 Python 3.11     ✅      ✅
 Python 3.12     ✅      ✅
 Python 3.13     ✅      ✅
+Python 3.14     ✅      ✅
 ```
 
 Each matrix entry performs:
@@ -137,4 +138,4 @@ CI
 Distribution Qualification
 ```
 
-and all six clean-install matrix entries pass from the same built artifact set.
+and all eight clean-install matrix entries pass from the same built artifact set.

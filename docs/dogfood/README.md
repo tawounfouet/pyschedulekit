@@ -39,9 +39,11 @@ under the GitHub source checkout**.
 wheel × Python 3.11
 wheel × Python 3.12
 wheel × Python 3.13
+wheel × Python 3.14
 sdist × Python 3.11
 sdist × Python 3.12
 sdist × Python 3.13
+sdist × Python 3.14
 ```
 
 Every cell executes the same consumer application.

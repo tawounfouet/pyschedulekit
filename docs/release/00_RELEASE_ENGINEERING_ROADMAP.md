@@ -55,7 +55,7 @@ Every candidate intended for eventual public release must preserve these propert
 2. `python -m build` produces exactly one wheel and one source distribution;
 3. the wheel is pure Python: `py3-none-any`;
 4. wheel and sdist versions equal `pyschedulekit.__version__`;
-5. metadata declares `Requires-Python >=3.11`;
+5. metadata declares the qualified window `Requires-Python >=3.11,<3.15`;
 6. the PEP 561 `py.typed` marker ships in both distribution formats;
 7. `twine check --strict` accepts every artifact;
 8. wheel and sdist install successfully in clean environments;
@@ -86,7 +86,8 @@ clean-install matrix
       │
       ├── Python 3.11 ─ wheel + sdist
       ├── Python 3.12 ─ wheel + sdist
-      └── Python 3.13 ─ wheel + sdist
+      ├── Python 3.13 ─ wheel + sdist
+      └── Python 3.14 ─ wheel + sdist
       │
       ▼
 installed-package smoke test

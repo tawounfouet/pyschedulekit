@@ -102,9 +102,9 @@ semantics, and V1-02.E now freezes the PostgreSQL rolling-upgrade boundary with 
 same-contract overlap/fencing qualification on 16/17/18, V1-02.F qualifies backup,
 restore rehearsal, interrupted-migration rollback and explicit GO/ABORT operations across
 SQLite and PostgreSQL, and V1-02.G has now closed the full persistence compatibility contract
-with V1-F04 marked CLOSED. The current `v1.0.0` verdict remains **NO-GO** while V1-03
-platform/warning/security gates, V1-04 consumer/release rehearsal and V1-05 final activation
-remain open.
+with V1-F04 marked CLOSED. V1-03.A now closes the Python 3.14 support gap with an explicit
+3.11–3.14 window. The current `v1.0.0` verdict remains **NO-GO** while warning/security
+gates, V1-04 consumer/release rehearsal and V1-05 final activation remain open.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 
@@ -946,7 +946,7 @@ but does not enforce timing thresholds. See
 ## Installed-package dogfooding
 
 Distribution Qualification executes a real consumer application against every clean-installed
-wheel/sdist on Python 3.11, 3.12 and 3.13. See
+wheel/sdist on Python 3.11, 3.12, 3.13 and 3.14. See
 [`docs/dogfood/README.md`](./docs/dogfood/README.md).
 
 ## API reference
@@ -973,7 +973,7 @@ Every cookbook example is executed by the test suite.
 
 ## Development
 
-Target baseline: **Python 3.11+**.
+Supported Python window: **3.11–3.14** (`Requires-Python >=3.11,<3.15`).
 
 ```bash
 python -m venv .venv

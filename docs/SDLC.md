@@ -123,6 +123,12 @@ V1-02 Persistence Compatibility Contract             ✅ COMPLETE
   V1-02.E PostgreSQL Evolution / Rolling Upgrade      ✅
   V1-02.F Backup / Rollback / Operations Contract     ✅
   V1-02.G Final Persistence Compatibility Review      ✅
+V1-03 Platform, Warning and Security Gates            🚧 IN PROGRESS
+  V1-03.A Python 3.14 & Support Window                ✅
+  V1-03.B Warning-Clean Runtime / Tests               ⏭ NEXT
+  V1-03.C Dependency Vulnerability Gate               ⬜
+  V1-03.D GitHub Actions / Runner Deprecation Gate    ⬜
+  V1-03.E Final Platform & Security Review            ⬜
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -130,7 +136,7 @@ V1-02 Persistence Compatibility Contract             ✅ COMPLETE
 - **Politique de publication** : aucun nouveau package PyPI avant une version stable
   `>=1.0.0`; alpha/beta/rc restent non publiables.
 - **Quality gates** : Ruff ✅ · mypy strict ✅ · pytest ✅ · coverage ≥85 ✅.
-- **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13.
+- **Distribution Qualification** : wheel/sdist ✅ sur Python 3.11 / 3.12 / 3.13 / 3.14.
 - **Findings B1–B12** : aucun finding ouvert.
 - **PG-03 qualifié** : contrat partagé InMemory/SQLite/PostgreSQL, 130 tests PostgreSQL live, couverture PostgreSQL 87,88% avec floor 85%.
 - **PG-04 qualifié** : 138 tests PostgreSQL live, Scheduler/run_pending, retry, outbox, reconciliation, crash recovery et contention multi-worker; couverture PostgreSQL 88,59%.
@@ -153,7 +159,9 @@ V1-02 Persistence Compatibility Contract             ✅ COMPLETE
 - **V1-02.E** : overlap PostgreSQL same-contract qualifié en live sur 16/17/18, bootstrap concurrent sérialisé, fencing monotone, stale owner rejeté, future schema fail-closed ; toute paire N/N+1 exige une preuve explicite ou un drain complet. Voir [PostgreSQL Evolution / Rolling Upgrade](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md).
 - **V1-02.F** : backup/restore SQLite qualifié, rollback transactionnel v7→v8 injecté, restore rehearsal PostgreSQL via pg_dump/pg_restore sur 16/17/18, critères GO/ABORT et frontière RPO/RTO documentés. Voir [Backup / Rollback / Operations Contract](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md).
 - **V1-02.G** : revue finale persistence complète ; floors, writers, fixtures, migrations, équivalence sémantique, rolling PostgreSQL et opérations backup/restore sont cohérents ; V1-F04 est CLOSED.
-- **Étape active** : V1-03 Platform, Warning and Security Gates.
+
+- **V1-03.A** : fenêtre Python stable figée à 3.11→3.14, metadata `>=3.11,<3.15`, classifier 3.14, CI et wheel/sdist clean-install sur les quatre minors ; V1-F06 fermé. Voir [Python 3.14 & Support Window](./v1/V1-03A_PYTHON_314_SUPPORT_WINDOW.md).
+- **Étape active** : V1-03.B Warning-Clean Runtime / Tests.- **Étape active** : V1-03 Platform, Warning and Security Gates.
 
 ---
 
@@ -239,4 +247,4 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-02.G Final Persistence Compatibility Review ; V1-03 next.*
+*Dernière mise à jour : 2026-10-19 — V1-03.A Python 3.14 & Support Window ; V1-03.B next.*

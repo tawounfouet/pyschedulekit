@@ -8,6 +8,10 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-03.A Python 3.14 & Support Window: the stable Python platform window is now
+  explicitly 3.11 through 3.14, package metadata is bounded to `>=3.11,<3.15`, Python 3.14
+  is qualified in the normal CI and wheel/sdist clean-install matrices, and V1-F06 is closed.
+
 - Added V1-02.G Final Persistence Compatibility Review: cross-contract architecture
   evidence now verifies readable floors versus current writers, required persistence artifacts,
   PostgreSQL rollout/operations policies and final navigation; V1-F04 is marked CLOSED,

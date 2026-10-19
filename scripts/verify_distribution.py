@@ -57,9 +57,11 @@ def _validate_wheel(dist_dir: Path) -> Path:
         metadata.get("Version") == __version__,
         "Wheel metadata version does not match runtime.",
     )
+    requires_python = metadata.get("Requires-Python") or ""
+    requires_python_parts = {part.strip() for part in requires_python.split(",") if part.strip()}
     _require(
-        metadata.get("Requires-Python") == ">=3.11",
-        "Wheel metadata must declare Requires-Python >=3.11.",
+        requires_python_parts == {">=3.11", "<3.15"},
+        "Wheel metadata must declare the exact Python window >=3.11,<3.15.",
     )
     return wheel
 

@@ -345,16 +345,11 @@ def test_v1_02d_calendar_value_semantics_survive_round_trip() -> None:
 
 
 def test_v1_02d_calendar_collection_semantics_survive_round_trip() -> None:
-    source = decode_business_calendar_collection(
-        _fixture(f"{PRE1}/calendar_collection_v1.json")
-    )
+    source = decode_business_calendar_collection(_fixture(f"{PRE1}/calendar_collection_v1.json"))
     after = decode_business_calendar_collection(encode_business_calendar_collection(source))
 
     assert after == source
-    assert [
-        (calendar.calendar_ref.value, calendar.revision.value)
-        for calendar in after
-    ] == [
+    assert [(calendar.calendar_ref.value, calendar.revision.value) for calendar in after] == [
         ("finance-days", 2),
         ("market", 1),
     ]

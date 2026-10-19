@@ -31,6 +31,7 @@ SNAPSHOT / HISTORY
 | [Codec semantic equivalence](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) | Legacy/current JSON values preserve domain and decision behavior |
 | [PostgreSQL rolling upgrades](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) | Same-contract overlap and future N/N+1 rollout contract |
 | [Backup / rollback operations](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) | Verified backup/restore, rollback boundary and GO/ABORT contract |
+| [Final persistence review](./v1/V1-02G_FINAL_PERSISTENCE_COMPATIBILITY_REVIEW.md) | V1-02 GO/COMPLETE and V1-F04 closure |
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
@@ -124,8 +125,8 @@ POST-06 Chaos / Fault Injection       ✅
     V1-02.D Codec Equivalence         ✅
     V1-02.E PostgreSQL Evolution      ✅
     V1-02.F Backup / Rollback         ✅
-    V1-02.G Persistence Review        ⏭ next
-  V1-03 Platform/Security Gates      ⬜ planned
+    V1-02.G Persistence Review        ✅
+  V1-03 Platform/Security Gates      ⏭ next
   V1-04 Consumer/Release Rehearsal   ⬜ planned
   V1-05 Final GO/NO-GO               ⬜ planned
         ↓
@@ -193,4 +194,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-19 — V1-02.F backup / rollback / operations complete; V1-02.G final persistence compatibility review is next and the `v1.0.0` verdict remains NO-GO.
+**Last refreshed:** 2026-10-19 — V1-02 persistence compatibility contract complete; V1-03 platform, warning and security gates are next and the `v1.0.0` verdict remains NO-GO.

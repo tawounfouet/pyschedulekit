@@ -8,6 +8,11 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-02.D Codec Migration & Semantic Equivalence: compatibility tests now prove
+  ScheduleDefinition v1/v2 payloads migrate to canonical v3 without changing domain values or
+  occurrence behavior; current Trigger envelopes, SQL value codecs and BusinessCalendar
+  codecs preserve decision/working-day semantics across round trips.
+
 - Added V1-02.C SQLite Forward Migration Qualification: seven immutable compressed
   physical SQLite databases now cover runtime schemas v1 through v7. Compatibility tests
   verify compressed/raw SHA-256, historical table/column shape, migration through the real

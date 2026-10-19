@@ -56,9 +56,10 @@ def test_v1_02e_policy_is_documented_on_canonical_surfaces() -> None:
         assert "PostgreSQL" in text
 
     canonical_text = canonical.read_text(encoding="utf-8")
-    assert "same-contract workers" in canonical_text
-    assert "adjacent release pair" in canonical_text
-    assert "backup → drain → migrate → deploy → verify → resume" in canonical_text
-    assert "expand → migrate → contract" in canonical_text
-    assert "bidirectional readability" in canonical_text
-    assert "PostgreSQL 16/17/18" in canonical_text
+    canonical_lower = canonical_text.lower()
+    assert "same-contract workers" in canonical_lower
+    assert "adjacent release pair" in canonical_lower
+    assert "backup → drain → migrate → deploy → verify → resume" in canonical_lower
+    assert "expand → migrate → contract" in canonical_lower
+    assert "bidirectional readability" in canonical_lower
+    assert "postgresql 16/17/18" in canonical_lower

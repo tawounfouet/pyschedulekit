@@ -28,8 +28,10 @@ CI order (`.github/workflows/ci.yml`, Python 3.11/3.12/3.13):
 - **Public API is a tested contract.** Changing any exported name requires updating all of:
   `src/pyschedulekit/api/_manifest.py` (`STABLE_PUBLIC_NAMES`, must stay sorted + unique),
   `src/pyschedulekit/api/__init__.py`, `src/pyschedulekit/__init__.py`.
-  `tests/unit/api/test_public_api_contract.py` enforces exact `__all__` match, object
-  identity between root and `pyschedulekit.api`, and legacy-name deprecation redirects.
+  `tests/unit/api/test_public_api_contract.py` and V1 architecture tests enforce the exact
+  63-name root, the complete 104-name `pyschedulekit.api` surface, object identity for root
+  conveniences, API-only advanced names, and physical absence of the 11 removed legacy root
+  redirects.
 - **Version is asserted verbatim.** Single source: `src/pyschedulekit/_version.py`.
   `tests/test_package.py` hard-codes the version string and compares it to installed
   metadata — bumping the version means editing that test, and the package must be
@@ -55,10 +57,10 @@ Layered, domain-first (`domain` → `application` → `ports` → `infrastructur
 - `ports/` — interfaces (persistence, executor, clock, observability).
 - `infrastructure/` — SQLite persistence (`sqlite_schema.py`), local/HTTP/routing
   executors, runtime loop.
-- `api/` — the **stable** surface: `import pyschedulekit.api as psk`; the package root
-  mirrors it for convenience.
-- `experimental/` — no compatibility promise before 1.0; deprecated root names warn and
-  redirect here.
+- `api/` — the **complete stable** 104-name surface: `import pyschedulekit.api as psk`.
+  The package root intentionally exposes only the 63 common convenience names.
+- `experimental/` — explicitly outside the 1.x SemVer promise; the former 11 legacy root
+  redirects were removed by V1-01.H.
 - `testing/` — shipped helpers for consumers (`MutableClock`, `FixedClock`, test triggers);
   use these instead of sleeping or monkeypatching `datetime`.
 
@@ -139,7 +141,9 @@ SemVer/typing/deprecation policy, with stable breaking changes reserved for the 
 V1-01.G Executable Contract Snapshots is complete: 21 stable operation-result structures
 have exact field/property snapshots in
 `tests/architecture/test_v1_result_contract_snapshots.py`. V1-01.H Final Public Contract
-Review is next. Do not bump the version, create `v1.0.0`, or expand the public feature
-surface during V1-01.
+Review is complete: the runtime now applies the 63-name compact root, retains all 104 stable
+names in `pyschedulekit.api`, removes the 11 pre-1.0 root redirects, and marks the primary
+contract frozen. V1-02 Persistence Compatibility Contract is next. Do not bump the version
+or create `v1.0.0` before V1-05.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

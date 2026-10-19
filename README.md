@@ -99,11 +99,12 @@ V1-02.B protects released/pre-1.0 serialization bytes with immutable golden fixt
 V1-02.C proves physical SQLite schemas v1 through v7 migrate to v8 with durable state
 preserved, V1-02.D proves legacy/current persisted JSON retains domain and behavioral
 semantics, and V1-02.E now freezes the PostgreSQL rolling-upgrade boundary with live
-same-contract overlap/fencing qualification on 16/17/18, and V1-02.F now qualifies backup,
+same-contract overlap/fencing qualification on 16/17/18, V1-02.F qualifies backup,
 restore rehearsal, interrupted-migration rollback and explicit GO/ABORT operations across
-SQLite and PostgreSQL. The current `v1.0.0` verdict remains **NO-GO** until the final
-persistence review, platform/security gates and stable GitHub Release path are closed by
-V1-02 through V1-05.
+SQLite and PostgreSQL, and V1-02.G has now closed the full persistence compatibility contract
+with V1-F04 marked CLOSED. The current `v1.0.0` verdict remains **NO-GO** while V1-03
+platform/warning/security gates, V1-04 consumer/release rehearsal and V1-05 final activation
+remain open.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 

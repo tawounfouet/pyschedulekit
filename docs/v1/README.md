@@ -8,7 +8,7 @@ stable compatibility promise.
 ```text
 Runtime and domain qualification   GREEN
 Public contract freeze             FROZEN
-Persistence support policy         OPEN
+Persistence support policy         IN PROGRESS
 Stable release activation          OPEN
 Overall v1.0.0 decision             NO-GO
 ```
@@ -25,7 +25,7 @@ The evidence and findings are recorded in the
 ```text
 V1-00  Readiness Audit                         COMPLETE
 V1-01  Public Contract Freeze                  COMPLETE
-V1-02  Persistence Compatibility Contract      NEXT
+V1-02  Persistence Compatibility Contract      IN PROGRESS
 V1-03  Platform, Warning and Security Gates    PLANNED
 V1-04  Consumer and Stable-Release Rehearsal   PLANNED
 V1-05  Final GO/NO-GO and 1.0.0 Activation     PLANNED
@@ -61,6 +61,23 @@ read-property structure of 21 stable operation-result types and their transitive
 [V1-01.H](./V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) applies the final 63-name root, keeps
 41 advanced names API-only, removes all 11 pre-1.0 root redirects and closes V1-01.
 
+## V1-02 breakdown
+
+```text
+V1-02.A  Persistence Version Floor & Policy          COMPLETE
+V1-02.B  Immutable Golden Compatibility Fixtures     NEXT
+V1-02.C  SQLite Forward Migration Qualification      PLANNED
+V1-02.D  Codec Migration & Semantic Equivalence      PLANNED
+V1-02.E  PostgreSQL Evolution / Rolling Upgrade      PLANNED
+V1-02.F  Backup / Rollback / Operations Contract     PLANNED
+V1-02.G  Final Persistence Compatibility Review      PLANNED
+```
+
+[V1-02.A](./V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) freezes the 1.x minimum
+readable versions for SQLite, PostgreSQL, shared SQL values, ScheduleDefinition, Trigger
+envelopes and calendar persistence. The floor is v1 for every currently versioned surface;
+current writers remain SQLite v8, ScheduleDefinition v3 and v1 for the other listed formats.
+
 ## Operating rules
 
 - do not bump the package to `1.0.0` before V1-05;
@@ -79,4 +96,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-01 Public Contract Freeze complete. V1-02 Persistence Compatibility Contract is next.
+**Status:** V1-02.A persistence version floors complete. V1-02.B Immutable Golden Compatibility Fixtures is next.

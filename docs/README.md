@@ -25,6 +25,7 @@ SNAPSHOT / HISTORY
 | [1.x compatibility policy](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) | Canonical SemVer, typing and deprecation contract |
 | [1.x result snapshots](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md) | Executable field/property baseline for public operation results |
 | [Final public contract](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) | Applied 63/41 stable namespace split and V1-01 closure |
+| [Persistence version floors](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) | Frozen 1.x readable floors and persistence evolution rules |
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
@@ -111,7 +112,9 @@ POST-06 Chaos / Fault Injection       ✅
 1.0 Readiness
   V1-00 Readiness Audit              ✅ NO-GO recorded
   V1-01 Public Contract Freeze       ✅ complete
-  V1-02 Persistence Compatibility    ⏭ next
+  V1-02 Persistence Compatibility    🚧 in progress
+    V1-02.A Version Floor & Policy    ✅
+    V1-02.B Golden Fixtures           ⏭ next
   V1-03 Platform/Security Gates      ⬜ planned
   V1-04 Consumer/Release Rehearsal   ⬜ planned
   V1-05 Final GO/NO-GO               ⬜ planned
@@ -161,6 +164,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | understand the future 1.x compatibility promise | [V1-01.F Compatibility Policy](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) |
 | inspect frozen result/snapshot structures | [V1-01.G Contract Snapshots](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md) |
 | inspect the final stable namespace split | [V1-01.H Final Contract Review](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) |
+| inspect frozen persistence floors and evolution rules | [V1-02.A Persistence Floors](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule
@@ -174,4 +178,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-19 — V1-01 Public Contract Freeze complete; V1-02 Persistence Compatibility Contract is next and the `v1.0.0` verdict remains NO-GO.
+**Last refreshed:** 2026-10-19 — V1-02.A persistence floors complete; V1-02.B golden compatibility fixtures are next and the `v1.0.0` verdict remains NO-GO.

@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-02.A Persistence Version Floor & Policy: every currently versioned
+  persistence surface now has a machine-readable 1.x read floor of v1; current writer
+  versions are centralized for SQLite, PostgreSQL, shared SQL values, ScheduleDefinition,
+  Trigger envelopes and calendar persistence; future versions fail closed, downgrade
+  readability is not guaranteed, mixed-version workers require explicit overlap evidence,
+  and cross-adapter data migration remains unsupported.
+
 - Added V1-01.H Final Public Contract Review: the runtime now applies the final
   63-name package root while preserving all 104 stable names in `pyschedulekit.api`; the
   41 advanced contracts are API-only, the 11 pre-1.0 legacy root redirects are physically

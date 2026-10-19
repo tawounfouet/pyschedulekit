@@ -12,9 +12,13 @@ from pyschedulekit.domain.calendar import (
     CalendarRevision,
 )
 from pyschedulekit.errors import PyScheduleKitConfigurationError
+from pyschedulekit.infrastructure.persistence_versions import (
+    CALENDAR_COLLECTION_CODEC_VERSION,
+    CALENDAR_VALUE_CODEC_VERSION,
+)
 
-_CALENDAR_CODEC_VERSION = 1
-_CALENDAR_COLLECTION_CODEC_VERSION = 1
+_CALENDAR_CODEC_VERSION = CALENDAR_VALUE_CODEC_VERSION
+_CALENDAR_COLLECTION_CODEC_VERSION = CALENDAR_COLLECTION_CODEC_VERSION
 _CALENDAR_FIELDS = frozenset(
     {
         "schema_version",

@@ -94,8 +94,10 @@ The [V1-00 readiness audit](./docs/v1/V1-00_READINESS_AUDIT.md) has started the 
 stabilization sequence. Runtime qualification is green and **V1-01 Public Contract Freeze is
 complete**: compatibility/deprecation policy, callable/structural snapshots and the final
 [63-root / 41 API-only contract](./docs/v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) are now
-applied. The current `v1.0.0` verdict remains **NO-GO** until the persistence support floor,
-platform/security gates and stable GitHub Release path are closed by V1-02 through V1-05.
+applied. V1-02.A has also frozen every currently versioned persistence read floor at v1.
+The current `v1.0.0` verdict remains **NO-GO** until golden compatibility fixtures,
+migration/operations evidence, platform/security gates and the stable GitHub Release path are
+closed by V1-02 through V1-05.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 

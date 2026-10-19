@@ -20,6 +20,7 @@ from pyschedulekit.infrastructure.calendar_codec import (
     decode_business_calendar_collection,
     encode_business_calendar,
 )
+from pyschedulekit.infrastructure.persistence_versions import SQLITE_CALENDAR_SCHEMA_VERSION
 
 
 class InMemoryCalendarProvider:
@@ -149,7 +150,7 @@ class FileCalendarProvider:
 class SqliteCalendarProvider:
     """Versioned BusinessCalendar provider backed by an isolated SQLite store."""
 
-    _SCHEMA_VERSION = 1
+    _SCHEMA_VERSION = SQLITE_CALENDAR_SCHEMA_VERSION
 
     def __init__(self, database: str | Path) -> None:
         self._database = str(database)

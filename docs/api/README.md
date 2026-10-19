@@ -146,6 +146,10 @@ write. Unsupported future Schedule-definition or Trigger versions fail closed.
 This migration contract is internal persistence behavior; it does not add a public migration
 method or change the `Scheduler.add_schedule()` API.
 
+V1-02.A freezes the 1.x read floor at v1 for ScheduleDefinition, Trigger envelopes, shared
+SQL values, runtime database schemas and calendar persistence. See
+[V1-02.A Persistence Version Floor & Policy](../v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md).
+
 ## CAL-05 provider adapters
 
 `FileCalendarProvider(path)` loads one strict versioned JSON collection at construction.

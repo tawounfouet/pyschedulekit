@@ -279,9 +279,9 @@ V1-02 is intentionally split so policy is fixed before fixtures and migration ev
 
 ```text
 V1-02.A  Persistence Version Floor & Policy          COMPLETE
-V1-02.B  Immutable Golden Compatibility Fixtures     NEXT
-V1-02.C  SQLite Forward Migration Qualification      PLANNED
-V1-02.D  Codec Migration & Semantic Equivalence      PLANNED
+V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
+V1-02.C  SQLite Forward Migration Qualification      COMPLETE
+V1-02.D  Codec Migration & Semantic Equivalence      NEXT
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      PLANNED
 V1-02.F  Backup / Rollback / Operations Contract     PLANNED
 V1-02.G  Final Persistence Compatibility Review      PLANNED
@@ -303,5 +303,5 @@ Those are addressed by the remaining V1-02 lots where applicable.
 
 ---
 
-**Status:** V1-02.A persistence floors are frozen. Next:
-**V1-02.B — Immutable Golden Compatibility Fixtures**.
+**Status:** V1-02.A persistence floors remain frozen. V1-02.B and V1-02.C are complete;
+the active persistence step is **V1-02.D — Codec Migration & Semantic Equivalence**.

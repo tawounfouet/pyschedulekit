@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "source_baseline": "3cd1787d8a3fb15bd790daad50d1432294b32f19",
+  "compression": "xz",
+  "policy": {
+    "mutation": "append-only",
+    "migration_target": 8,
+    "fixture_kind": "physical-sqlite-database",
+    "copy_before_migration": true
+  },
+  "fixtures": [
+    {
+      "version": 1,
+      "file": "sqlite_schema_v1.db.xz",
+      "compressed_size": 1320,
+      "compressed_sha256": "5f428ff935934c848e47f7b23b80805c72c70e8b80d64cd7365fd90c13ebea2c",
+      "raw_size": 40960,
+      "raw_sha256": "0a759eccb6d9339621f69ea22d4bc1ce405c247e2c77a8882687fb047621ddc5"
+    },
+    {
+      "version": 2,
+      "file": "sqlite_schema_v2.db.xz",
+      "compressed_size": 2104,
+      "compressed_sha256": "34d2d9dc61a08e7316d9e73fb6b0246f0d7eaa100c6ad8d3bf0d415781f0864b",
+      "raw_size": 81920,
+      "raw_sha256": "e8c65dff44bae7dd6c41763cfa250f154f0fd5c1bd94bb164e1824ca44667f9e"
+    },
+    {
+      "version": 3,
+      "file": "sqlite_schema_v3.db.xz",
+      "compressed_size": 2408,
+      "compressed_sha256": "0ba04dbc828aabdf9063653456547ad67e43c3975dbb95a86f96b0765d5b3efe",
+      "raw_size": 94208,
+      "raw_sha256": "89a7e510a08ca54ac6304c129ad9c5d90e3b9907a8dfb28e7d1c59bb69ac5f8d"
+    },
+    {
+      "version": 4,
+      "file": "sqlite_schema_v4.db.xz",
+      "compressed_size": 2664,
+      "compressed_sha256": "f6b6d974be342e17a96a0626cae5fd12af4a1ce239ca36666170964a39cc2fc4",
+      "raw_size": 110592,
+      "raw_sha256": "98298c155f13c4204263ae97550d9e58d6dedd61bf14ea230f78f60507ee6db4"
+    },
+    {
+      "version": 5,
+      "file": "sqlite_schema_v5.db.xz",
+      "compressed_size": 2840,
+      "compressed_sha256": "0a437c050624de8bfa5b9061020ef468bb510df0ab04733b5bf906ba72881627",
+      "raw_size": 126976,
+      "raw_sha256": "f440260e934696457f45ba532dc2042458c1b18cc2719e251593a5563e6525e2"
+    },
+    {
+      "version": 6,
+      "file": "sqlite_schema_v6.db.xz",
+      "compressed_size": 2872,
+      "compressed_sha256": "b73f4236498c0e78dcfeda5cd36aacd44f0b6915b8fe800972a2b208b1c33654",
+      "raw_size": 126976,
+      "raw_sha256": "83aaa42b892e846c422242c12da39a824731256234f4c625bf8204ba4b06586d"
+    },
+    {
+      "version": 7,
+      "file": "sqlite_schema_v7.db.xz",
+      "compressed_size": 3108,
+      "compressed_sha256": "50bde5adc60c63a657e86c5475a452d5a8aae37004eb96ddca320c16967b0f4e",
+      "raw_size": 147456,
+      "raw_sha256": "b9570c1346b63ea3aa4ce342f08a36a489f09009044a03431b407a7972c97747"
+    }
+  ]
+}

@@ -118,8 +118,8 @@ V1-01 Public Contract Freeze                    ✅ COMPLETE
 V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
   V1-02.A Persistence Version Floor & Policy          ✅
   V1-02.B Immutable Golden Compatibility Fixtures      ✅
-  V1-02.C SQLite Forward Migration Qualification      ⏭ NEXT
-  V1-02.D Codec Migration & Semantic Equivalence      ⬜
+  V1-02.C SQLite Forward Migration Qualification      ✅
+  V1-02.D Codec Migration & Semantic Equivalence      ⏭ NEXT
   V1-02.E PostgreSQL Evolution / Rolling Upgrade      ⬜
   V1-02.F Backup / Rollback / Operations Contract     ⬜
   V1-02.G Final Persistence Compatibility Review      ⬜
@@ -148,7 +148,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 - **V1-01.H** : contrat public final appliqué — 63 noms root, 41 noms avancés API-only, 104 noms stables au total, 11 redirects legacy supprimés ; voir [Final Public Contract Review](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md).
 - **V1-02.A** : floors de lecture 1.x figés à v1 pour SQLite runtime, PostgreSQL runtime, codec SQL générique, ScheduleDefinition, Trigger envelopes, codecs calendriers et schéma SQLite calendrier ; versions d'écriture centralisées et règles d'évolution exécutables. Voir [Persistence Version Floor & Policy](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md).
 - **V1-02.B** : sept fixtures golden append-only couvrent le format public `v0.1.0a3` et le checkpoint pre-1.0 `945ec173…`; leurs SHA-256 sont figés par manifest + test, les anciens codecs restent lisibles et les writers inchangés doivent reproduire exactement les mêmes bytes. Voir [Immutable Golden Compatibility Fixtures](./v1/V1-02B_IMMUTABLE_GOLDEN_COMPATIBILITY_FIXTURES.md).
-- **Étape active** : V1-02.C SQLite Forward Migration Qualification.
+- **V1-02.C** : sept bases SQLite physiques immuables couvrent les schémas v1 à v7 ; hashes compressés/bruts, intégrité SQLite, FK, migration réelle vers v8 et préservation du graphe durable sont vérifiés. Voir [SQLite Forward Migration Qualification](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md).
+- **Étape active** : V1-02.D Codec Migration & Semantic Equivalence.
 
 ---
 
@@ -181,8 +182,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 9. V1-01.H — Final Public Contract Review ✅ ;
 10. V1-02.A — Persistence Version Floor & Policy ✅ ;
 11. V1-02.B — Immutable Golden Compatibility Fixtures ✅ ;
-12. V1-02.C — SQLite Forward Migration Qualification ⏭ ;
-13. V1-02.D — Codec Migration & Semantic Equivalence ;
+12. V1-02.C — SQLite Forward Migration Qualification ✅ ;
+13. V1-02.D — Codec Migration & Semantic Equivalence ⏭ ;
 14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ;
 15. V1-02.F — Backup / Rollback / Operations Contract ;
 16. V1-02.G — Final Persistence Compatibility Review ;
@@ -225,8 +226,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`V1-01.H Final Public Contract Review`](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) — surface finale 63/41, redirects legacy supprimés et clôture V1-01.
 - [`V1-02.A Persistence Version Floor & Policy`](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) — floors 1.x, versions d'écriture et règles d'évolution persistence.
 - [`V1-02.B Immutable Golden Compatibility Fixtures`](./v1/V1-02B_IMMUTABLE_GOLDEN_COMPATIBILITY_FIXTURES.md) — fixtures historiques append-only, provenance et hashes.
+- [`V1-02.C SQLite Forward Migration Qualification`](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) — bases physiques v1-v7, migration vers v8 et préservation sémantique.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-02.B Immutable Golden Compatibility Fixtures ; V1-02.C next.*
+*Dernière mise à jour : 2026-10-19 — V1-02.C SQLite Forward Migration Qualification ; V1-02.D next.*

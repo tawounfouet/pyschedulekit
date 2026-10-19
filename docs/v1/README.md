@@ -66,8 +66,8 @@ read-property structure of 21 stable operation-result types and their transitive
 ```text
 V1-02.A  Persistence Version Floor & Policy          COMPLETE
 V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
-V1-02.C  SQLite Forward Migration Qualification      NEXT
-V1-02.D  Codec Migration & Semantic Equivalence      PLANNED
+V1-02.C  SQLite Forward Migration Qualification      COMPLETE
+V1-02.D  Codec Migration & Semantic Equivalence      NEXT
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      PLANNED
 V1-02.F  Backup / Rollback / Operations Contract     PLANNED
 V1-02.G  Final Persistence Compatibility Review      PLANNED
@@ -81,6 +81,11 @@ current writers remain SQLite v8, ScheduleDefinition v3 and v1 for the other lis
 SHA-256-protected serialization fixtures from the public `v0.1.0a3` format and immutable
 pre-1.0 commit `945ec173…`, and proves both legacy readability and exact byte reproduction
 for unchanged writers.
+[V1-02.C](./V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) commits seven immutable
+physical SQLite fixtures for schemas v1 through v7, protects both compressed and raw bytes,
+and proves every supported entry point migrates through the production chain to v8 while
+preserving integrity, foreign keys, the durable core graph, coordination rows, fencing
+generations and retention completion timestamps.
 
 ## Operating rules
 
@@ -100,4 +105,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-02.B immutable golden compatibility fixtures complete. V1-02.C SQLite Forward Migration Qualification is next.
+**Status:** V1-02.C SQLite forward migration qualification complete. V1-02.D Codec Migration & Semantic Equivalence is next.

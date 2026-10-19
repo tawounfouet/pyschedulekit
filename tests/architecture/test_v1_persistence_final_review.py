@@ -110,9 +110,7 @@ def test_v1_02g_all_required_persistence_evidence_exists() -> None:
 
 
 def test_v1_02g_readiness_audit_marks_v1_f04_closed() -> None:
-    audit = (REPO_ROOT / "docs" / "v1" / "V1-00_READINESS_AUDIT.md").read_text(
-        encoding="utf-8"
-    )
+    audit = (REPO_ROOT / "docs" / "v1" / "V1-00_READINESS_AUDIT.md").read_text(encoding="utf-8")
     assert "V1-F04 — Persistence compatibility floor lacks a 1.x promise — CLOSED" in audit
     assert "Closed by V1-02.A through V1-02.G" in audit
 

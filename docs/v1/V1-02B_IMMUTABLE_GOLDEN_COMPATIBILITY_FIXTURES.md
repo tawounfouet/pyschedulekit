@@ -204,8 +204,8 @@ V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
 V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
-V1-02.F  Backup / Rollback / Operations Contract     NEXT
-V1-02.G  Final Persistence Compatibility Review      PLANNED
+V1-02.F  Backup / Rollback / Operations Contract     COMPLETE
+V1-02.G  Final Persistence Compatibility Review      NEXT
 ```
 
 ## Deliberate boundary
@@ -222,4 +222,4 @@ V1-02.B does not:
 ---
 
 **Status:** V1-02.B golden fixtures remain qualified; V1-02.C and V1-02.D are complete.
-Next: **V1-02.F — Backup / Rollback / Operations Contract**.
+Next: **V1-02.G — Final Persistence Compatibility Review**.

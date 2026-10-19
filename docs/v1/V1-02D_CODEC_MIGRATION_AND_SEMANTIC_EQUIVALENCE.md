@@ -291,8 +291,8 @@ V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
 V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
-V1-02.F  Backup / Rollback / Operations Contract     NEXT
-V1-02.G  Final Persistence Compatibility Review      PLANNED
+V1-02.F  Backup / Rollback / Operations Contract     COMPLETE
+V1-02.G  Final Persistence Compatibility Review      NEXT
 ```
 
 ## Deliberate boundary
@@ -312,4 +312,4 @@ Those concerns remain with V1-02.E through V1-02.G where applicable.
 ---
 
 **Status:** V1-02.D complete once the semantic-equivalence suite passes the full CI and
-distribution qualification. Next: **V1-02.F — Backup / Rollback / Operations Contract**.
+distribution qualification. Next: **V1-02.G — Final Persistence Compatibility Review**.

@@ -14,6 +14,9 @@ on:
       - "tests/architecture/test_postgres_public_boundary.py"
       - "tests/architecture/test_postgres_coverage_policy.py"
       - "tests/architecture/test_v1_postgres_rolling_upgrade_policy.py"
+      - "tests/architecture/test_v1_persistence_operations_policy.py"
+      - "scripts/qualification/postgres_backup_restore_probe.py"
+      - "scripts/qualification/postgres_backup_restore_rehearsal.sh"
       - ".coveragerc-postgres"
       - ".github/workflows/postgres.yml"
       - "pyproject.toml"
@@ -28,6 +31,9 @@ on:
       - "tests/architecture/test_postgres_public_boundary.py"
       - "tests/architecture/test_postgres_coverage_policy.py"
       - "tests/architecture/test_v1_postgres_rolling_upgrade_policy.py"
+      - "tests/architecture/test_v1_persistence_operations_policy.py"
+      - "scripts/qualification/postgres_backup_restore_probe.py"
+      - "scripts/qualification/postgres_backup_restore_rehearsal.sh"
       - ".coveragerc-postgres"
       - ".github/workflows/postgres.yml"
       - "pyproject.toml"
@@ -63,6 +69,7 @@ jobs:
 
     env:
       PYSCHEDULEKIT_TEST_POSTGRES_DSN: postgresql://postgres@localhost:5432/pyschedulekit
+      PYSCHEDULEKIT_TEST_POSTGRES_MAJOR: ${{ matrix.postgres }}
 
     steps:
       - name: Checkout
@@ -88,7 +95,11 @@ jobs:
             tests/architecture/test_postgres_public_boundary.py \
             tests/architecture/test_postgres_coverage_policy.py \
             tests/architecture/test_v1_postgres_rolling_upgrade_policy.py \
+            tests/architecture/test_v1_persistence_operations_policy.py \
             --cov=pyschedulekit.infrastructure.postgres \
             --cov=pyschedulekit.infrastructure.postgres_schema \
             --cov-config=.coveragerc-postgres \
             --cov-report=term-missing
+
+      - name: Rehearse PostgreSQL backup and restore
+        run: bash scripts/qualification/postgres_backup_restore_rehearsal.sh

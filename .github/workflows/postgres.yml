@@ -7,11 +7,13 @@ on:
     paths:
       - "src/pyschedulekit/infrastructure/postgres*.py"
       - "src/pyschedulekit/infrastructure/sql_codec.py"
+      - "src/pyschedulekit/infrastructure/persistence_versions.py"
       - "tests/integration/postgres/**"
       - "tests/integration/infrastructure/test_adapter_parity.py"
       - "tests/architecture/test_postgres_optional_dependency.py"
       - "tests/architecture/test_postgres_public_boundary.py"
       - "tests/architecture/test_postgres_coverage_policy.py"
+      - "tests/architecture/test_v1_postgres_rolling_upgrade_policy.py"
       - ".coveragerc-postgres"
       - ".github/workflows/postgres.yml"
       - "pyproject.toml"
@@ -19,11 +21,13 @@ on:
     paths:
       - "src/pyschedulekit/infrastructure/postgres*.py"
       - "src/pyschedulekit/infrastructure/sql_codec.py"
+      - "src/pyschedulekit/infrastructure/persistence_versions.py"
       - "tests/integration/postgres/**"
       - "tests/integration/infrastructure/test_adapter_parity.py"
       - "tests/architecture/test_postgres_optional_dependency.py"
       - "tests/architecture/test_postgres_public_boundary.py"
       - "tests/architecture/test_postgres_coverage_policy.py"
+      - "tests/architecture/test_v1_postgres_rolling_upgrade_policy.py"
       - ".coveragerc-postgres"
       - ".github/workflows/postgres.yml"
       - "pyproject.toml"
@@ -83,6 +87,7 @@ jobs:
             tests/architecture/test_postgres_optional_dependency.py \
             tests/architecture/test_postgres_public_boundary.py \
             tests/architecture/test_postgres_coverage_policy.py \
+            tests/architecture/test_v1_postgres_rolling_upgrade_policy.py \
             --cov=pyschedulekit.infrastructure.postgres \
             --cov=pyschedulekit.infrastructure.postgres_schema \
             --cov-config=.coveragerc-postgres \

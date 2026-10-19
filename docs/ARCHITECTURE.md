@@ -49,9 +49,9 @@
 
 | Composant | Hébergement | Particularité |
 |---|---|---|
-| Paquet `pyschedulekit` | PyPI : dernière version publique `0.1.0a3`; les versions source pré-1.0 peuvent avancer sans publication | Wheel/sdist, **0 dépendance runtime**, Python ≥ 3.11 |
+| Paquet `pyschedulekit` | PyPI : dernière version publique `0.1.0a3`; les versions source pré-1.0 peuvent avancer sans publication | Wheel/sdist, **0 dépendance runtime**, Python 3.11–3.14 (`>=3.11,<3.15`) |
 | Processus d'exécution | **chez le consommateur** (aucun serveur fourni) | Un ou N travailleurs ouvrant le même fichier SQLite |
-| CI qualité | GitHub Actions `ci.yml` (push/PR), matrice 3.11-3.13 | `ruff check → ruff format --check → mypy src → pytest --cov` |
+| CI qualité | GitHub Actions `ci.yml` (push/PR), matrice 3.11-3.14 | `ruff check → ruff format --check → mypy src → pytest --cov` |
 | Qualification | `distribution.yml` : wheel+sdist, clean-install, smoke hors arbre | Empêche de tester l'arbre source par accident |
 | Release publique | stable `>=1.0.0` uniquement : qualification → PyPI Trusted Publishing → vérification → GitHub Release/provenance | les milestones `0.x` et préversions restent internes et ne publient pas sur PyPI |
 

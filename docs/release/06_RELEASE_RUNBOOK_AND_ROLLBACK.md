@@ -151,7 +151,7 @@ TestPyPI may be used manually for experiments, but it is not a release gate.
 ```text
 SOURCE
 [ ] main contains the exact intended release commit
-[ ] CI green on Python 3.11 / 3.12 / 3.13
+[ ] CI green on Python 3.11 / 3.12 / 3.13 / 3.14
 [ ] Distribution Qualification green
 [ ] package version is 1.0.0
 [ ] CHANGELOG.md contains a dated `## [1.0.0] - YYYY-MM-DD` section

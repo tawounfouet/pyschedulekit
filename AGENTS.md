@@ -122,7 +122,7 @@ domain calendar rules to a holiday library, database, HTTP service, or global mu
 provider.
 V1-00 readiness audit is complete and records a NO-GO for an immediate `v1.0.0`; the runtime
 foundation is green. V1-01 has frozen the Python public contract and V1-02.A has frozen the
-persistence read floors. PostgreSQL evolution and operations evidence, plus Python 3.14/warning/security gates and
+persistence read floors. Backup/rollback/operations persistence evidence, plus Python 3.14/warning/security gates and
 stable-release workflow behavior, remain tracked in `docs/v1/`. V1-01.A Public API Inventory & Classification is complete:
 `api/_manifest.py` now records the exact root/API, PostgreSQL, testing and experimental
 surfaces plus their provisional V1 classifications, enforced by an architecture test.
@@ -154,7 +154,10 @@ compressed/raw hashes and full forward migration to v8 preserving durable state.
 Codec Migration & Semantic Equivalence is complete: legacy ScheduleDefinition v1/v2 payloads
 migrate to v3 without domain/occurrence drift, while SQL values, Trigger envelopes and
 calendar codecs preserve behavioral semantics. V1-02.E PostgreSQL Evolution / Rolling Upgrade
-is next. Never regenerate or edit a merged golden or SQLite fixture to satisfy a new writer;
+is complete: schema-v1 same-contract overlap is live-qualified on PostgreSQL 16/17/18,
+bootstrap is transaction-lock serialized, fencing takeover is monotonic, stale owners fail,
+and arbitrary N/N+1 overlap requires explicit release-pair evidence. V1-02.F Backup /
+Rollback / Operations Contract is next. Never regenerate or edit a merged golden or SQLite fixture to satisfy a new writer;
 add a new versioned fixture instead. Do not bump the
 version or create `v1.0.0` before V1-05.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,

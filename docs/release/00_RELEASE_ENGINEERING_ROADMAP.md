@@ -174,8 +174,11 @@ No public package publication is required to progress through those milestones.
 ## 1.0.0 activation gate
 
 The [V1-00 Readiness Audit](../v1/V1-00_READINESS_AUDIT.md) records the current gate as
-**NO-GO**. Runtime qualification is green; the public compatibility promise, persistence
-support floor, platform/security gates and stable GitHub Release behavior remain open.
+**NO-GO**. Runtime qualification is green. The canonical Python compatibility/deprecation
+rules are now frozen by
+[V1-01.F](../v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md), while executable result-field
+snapshots, final public-contract application, persistence support floor, platform/security
+gates and stable GitHub Release behavior remain open.
 
 Closure is organized as V1-01 through V1-05 in the
 [1.0 readiness roadmap](../v1/README.md).
@@ -184,7 +187,8 @@ Before creating `v1.0.0`, all of the following must be true:
 
 - source version and changelog are `1.0.0`;
 - CI and distribution qualification are green;
-- compatibility and migration policy are finalized;
+- the Python compatibility/deprecation policy is finalized;
+- persistence migration/support policy is finalized;
 - the public API contract is stable;
 - release workflow behavior for a stable GitHub Release has been qualified;
 - PyPI Trusted Publisher identity is still valid;

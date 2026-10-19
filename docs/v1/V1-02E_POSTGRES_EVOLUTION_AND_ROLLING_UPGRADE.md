@@ -343,10 +343,10 @@ V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
 V1-02.F  Backup / Rollback / Operations Contract     COMPLETE
-V1-02.G  Final Persistence Compatibility Review      NEXT
+V1-02.G  Final Persistence Compatibility Review      COMPLETE
 ```
 
 ---
 
 **Status:** V1-02.E complete once architecture, CI, Distribution Qualification and live
-PostgreSQL 16/17/18 qualification are green. Next: **V1-02.G — Final Persistence Compatibility Review**.
+PostgreSQL 16/17/18 qualification are green. V1-02.G final persistence compatibility review is complete; V1-02 is closed and V1-03 is next.

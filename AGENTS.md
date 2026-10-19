@@ -143,7 +143,9 @@ have exact field/property snapshots in
 `tests/architecture/test_v1_result_contract_snapshots.py`. V1-01.H Final Public Contract
 Review is complete: the runtime now applies the 63-name compact root, retains all 104 stable
 names in `pyschedulekit.api`, removes the 11 pre-1.0 root redirects, and marks the primary
-contract frozen. V1-02 Persistence Compatibility Contract is next. Do not bump the version
-or create `v1.0.0` before V1-05.
+contract frozen. V1-02.A Persistence Version Floor & Policy is complete: all currently
+versioned persistence surfaces have a frozen 1.x read floor of v1, with current writer
+versions centralized in `infrastructure/persistence_versions.py`; V1-02.B immutable golden
+fixtures is next. Do not bump the version or create `v1.0.0` before V1-05.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,
 and must never break the base zero-runtime-dependency root import.

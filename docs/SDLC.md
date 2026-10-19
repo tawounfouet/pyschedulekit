@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — V1-01 Public Contract Freeze
+## 4. État courant — V1-02 Persistence Compatibility Contract
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -115,6 +115,14 @@ V1-01 Public Contract Freeze                    ✅ COMPLETE
   V1-01.F Compatibility & Deprecation Policy        ✅
   V1-01.G Executable Contract Snapshots             ✅
   V1-01.H Final Public Contract Review               ✅
+V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
+  V1-02.A Persistence Version Floor & Policy          ✅
+  V1-02.B Immutable Golden Compatibility Fixtures     ⏭ NEXT
+  V1-02.C SQLite Forward Migration Qualification      ⬜
+  V1-02.D Codec Migration & Semantic Equivalence      ⬜
+  V1-02.E PostgreSQL Evolution / Rolling Upgrade      ⬜
+  V1-02.F Backup / Rollback / Operations Contract     ⬜
+  V1-02.G Final Persistence Compatibility Review      ⬜
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -138,7 +146,8 @@ V1-01 Public Contract Freeze                    ✅ COMPLETE
 - **V1-01.F** : la politique canonique [Compatibility & Deprecation](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) protège l’API stable, le typing et les dépréciations sur toute la major 1.x ; les suppressions incompatibles sont réservées à la major suivante.
 - **V1-01.G** : 21 structures publiques de sortie ont désormais leurs champs et propriétés de lecture figés par snapshot exécutable ; voir [Executable Contract Snapshots](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md).
 - **V1-01.H** : contrat public final appliqué — 63 noms root, 41 noms avancés API-only, 104 noms stables au total, 11 redirects legacy supprimés ; voir [Final Public Contract Review](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md).
-- **Étape active** : V1-02 Persistence Compatibility Contract.
+- **V1-02.A** : floors de lecture 1.x figés à v1 pour SQLite runtime, PostgreSQL runtime, codec SQL générique, ScheduleDefinition, Trigger envelopes, codecs calendriers et schéma SQLite calendrier ; versions d'écriture centralisées et règles d'évolution exécutables. Voir [Persistence Version Floor & Policy](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md).
+- **Étape active** : V1-02.B Immutable Golden Compatibility Fixtures.
 
 ---
 
@@ -169,10 +178,16 @@ V1-01 Public Contract Freeze                    ✅ COMPLETE
 7. V1-01.F — Compatibility & Deprecation Policy ✅ ;
 8. V1-01.G — Executable Contract Snapshots ✅ ;
 9. V1-01.H — Final Public Contract Review ✅ ;
-10. V1-02 — Persistence Compatibility Contract ⏭ ;
-11. V1-03 — Platform, Warning and Security Gates ;
-12. V1-04 — Consumer and Stable-Release Rehearsal ;
-13. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
+10. V1-02.A — Persistence Version Floor & Policy ✅ ;
+11. V1-02.B — Immutable Golden Compatibility Fixtures ⏭ ;
+12. V1-02.C — SQLite Forward Migration Qualification ;
+13. V1-02.D — Codec Migration & Semantic Equivalence ;
+14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ;
+15. V1-02.F — Backup / Rollback / Operations Contract ;
+16. V1-02.G — Final Persistence Compatibility Review ;
+17. V1-03 — Platform, Warning and Security Gates ;
+18. V1-04 — Consumer and Stable-Release Rehearsal ;
+19. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
 
 Aucune publication PyPI intermédiaire n'est autorisée pour franchir ces étapes. Le tag
 `v1.0.0` reste interdit avant un GO explicite en V1-05.
@@ -207,8 +222,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`V1-01.F Compatibility & Deprecation Policy`](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) — promesse SemVer/typing et cycle de dépréciation 1.x.
 - [`V1-01.G Executable Contract Snapshots`](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md) — champs et propriétés stables des résultats publics.
 - [`V1-01.H Final Public Contract Review`](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) — surface finale 63/41, redirects legacy supprimés et clôture V1-01.
+- [`V1-02.A Persistence Version Floor & Policy`](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) — floors 1.x, versions d'écriture et règles d'évolution persistence.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-01.H Final Public Contract Review ; V1-02 next.*
+*Dernière mise à jour : 2026-10-19 — V1-02.A Persistence Version Floor & Policy ; V1-02.B next.*

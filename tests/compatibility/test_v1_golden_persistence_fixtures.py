@@ -186,9 +186,7 @@ def test_pre1_schedule_definition_v3_trigger_envelopes_remain_readable() -> None
 
 def test_pre1_calendar_value_and_collection_fixtures_remain_readable() -> None:
     calendar = decode_business_calendar(_fixture(f"{PRE1}/calendar_value_v1.json"))
-    calendars = decode_business_calendar_collection(
-        _fixture(f"{PRE1}/calendar_collection_v1.json")
-    )
+    calendars = decode_business_calendar_collection(_fixture(f"{PRE1}/calendar_collection_v1.json"))
 
     assert calendar.calendar_ref.value == "market"
     assert calendar.revision.value == 1

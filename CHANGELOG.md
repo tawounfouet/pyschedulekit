@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-02.B Immutable Golden Compatibility Fixtures: seven append-only,
+  SHA-256-protected persisted JSON fixtures now capture the public `v0.1.0a3` SQL-codec
+  format and the immutable pre-1.0 `945ec173…` ScheduleDefinition/Trigger/calendar formats.
+  Compatibility tests enforce exact inventory and hashes, legacy v1/v2 readability, and
+  byte-for-byte reproduction for writer versions that remain unchanged.
+
 - Added V1-02.A Persistence Version Floor & Policy: every currently versioned
   persistence surface now has a machine-readable 1.x read floor of v1; current writer
   versions are centralized for SQLite, PostgreSQL, shared SQL values, ScheduleDefinition,

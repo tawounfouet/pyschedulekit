@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "policy": {
+    "mutation": "append-only",
+    "released_fixture_source": "immutable-release-ref",
+    "pre1_fixture_source": "immutable-commit-sha",
+    "database_fixture_scope": "V1-02.C"
+  },
+  "sources": {
+    "released-v0.1.0a3": {
+      "source_ref": "v0.1.0a3",
+      "source_version": "0.1.0a3",
+      "evidence": [
+        "src/pyschedulekit/infrastructure/sql_codec.py",
+        "tests/unit/infrastructure/test_sql_codec.py"
+      ]
+    },
+    "pre1-945ec173": {
+      "source_ref": "945ec1732fc03419f4d82bd81750bf7bf1032fd6",
+      "source_version": "0.1.0a4",
+      "evidence": [
+        "src/pyschedulekit/infrastructure/sql_codec.py",
+        "src/pyschedulekit/infrastructure/calendar_codec.py",
+        "tests/unit/infrastructure/test_sql_codec.py",
+        "tests/unit/infrastructure/test_calendar_codec.py"
+      ]
+    }
+  },
+  "fixture_sha256": {
+    "pre1/945ec1732fc03419f4d82bd81750bf7bf1032fd6/calendar_collection_v1.json": "17109696cf2f136d0c365340ea78d6cb98b28c4bc6705b007f29b3b7876508da",
+    "pre1/945ec1732fc03419f4d82bd81750bf7bf1032fd6/calendar_value_v1.json": "78d789a85abac4a51f8cc64f04dc34ef962ab6fd209ba43131f44e4e5cf710b7",
+    "pre1/945ec1732fc03419f4d82bd81750bf7bf1032fd6/schedule_definition_v2_business_day.json": "4a1325547e20560d30a78133952a20edc0159ef7db4eead6f2e604af4d65a385",
+    "pre1/945ec1732fc03419f4d82bd81750bf7bf1032fd6/schedule_definition_v3_composite.json": "c187efe72bb900130b77000b7ab78cb9eea5c74ae37c462de2c920cf3a93f5d7",
+    "released/v0.1.0a3/execution_result_v1_failure.json": "62e46920b10b6792f4b01bd68b58c376fbd66283e4e6d203e92a40b40a8325d4",
+    "released/v0.1.0a3/retry_policy_v1_exponential.json": "cf01bac60d2a4702460a5affdf9c31d67ae2b5dc79133c68ef010dd56038ac25",
+    "released/v0.1.0a3/schedule_definition_v1_interval.json": "107b0dfa5e047fca52fd2135979691c49d24476ee2c5d0e9218ea8eabee846bb"
+  }
+}

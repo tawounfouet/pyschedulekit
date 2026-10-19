@@ -6,9 +6,9 @@ import pyschedulekit.experimental as experimental
 import pyschedulekit.postgres as postgres
 import pyschedulekit.testing as testing
 from pyschedulekit.api._manifest import (
+    API_ONLY_V1_PUBLIC_NAMES,
     EXPERIMENTAL_PUBLIC_NAMES,
     POSTGRES_PUBLIC_NAMES,
-    API_ONLY_V1_PUBLIC_NAMES,
     PUBLIC_NAMESPACE_CLASSIFICATIONS,
     ROOT_METADATA_NAMES,
     ROOT_V1_PUBLIC_NAMES,

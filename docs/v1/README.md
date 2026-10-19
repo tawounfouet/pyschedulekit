@@ -81,6 +81,9 @@ current writers remain SQLite v8, ScheduleDefinition v3 and v1 for the other lis
 SHA-256-protected serialization fixtures from the public `v0.1.0a3` format and immutable
 pre-1.0 commit `945ec173…`, and proves both legacy readability and exact byte reproduction
 for unchanged writers.
+[V1-02.C](./V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) adds seven immutable physical
+SQLite fixtures for schemas v1 through v7 and proves every supported historical entry point
+migrates to v8 with integrity, foreign keys and durable business state preserved.
 
 ## Operating rules
 

@@ -14,7 +14,7 @@ pytest                           # always run from the repo root (see gotcha bel
 pytest tests/unit/domain/test_time_model.py::test_some_test   # single test
 ```
 
-CI order (`.github/workflows/ci.yml`, Python 3.11/3.12/3.13):
+CI order (`.github/workflows/ci.yml`, Python 3.11/3.12/3.13/3.14):
 `ruff check .` → `ruff format --check .` → `mypy src` → `pytest --cov=pyschedulekit`.
 
 - `pre-commit` hooks (`.pre-commit-config.yaml`) are local + `language: system` and run
@@ -100,7 +100,7 @@ Current POST-00 state:
 - failed implicit target registrations are compensated (B7);
 - `coverage.report.fail_under = 85` is enforced;
 - Ruff is pinned and GitHub Actions are SHA-pinned;
-- CI and Distribution Qualification are mandatory on Python 3.11 / 3.12 / 3.13;
+- CI and Distribution Qualification are mandatory on Python 3.11 / 3.12 / 3.13 / 3.14;
 - `v0.1.0a3` exists as an immutable GitHub prerelease with wheel, sdist and checksum.
 
 POST-00 is complete. The current development version is `0.1.0a4`.
@@ -162,8 +162,10 @@ and arbitrary N/N+1 overlap requires explicit release-pair evidence. V1-02.F Bac
 Rollback / Operations Contract is complete: SQLite backup/restore and interrupted migration
 rollback are executable, PostgreSQL pg_dump/pg_restore restore rehearsals run on 16/17/18,
 and rollback means restoring a known-good pre-upgrade backup rather than in-place downgrade.
-V1-02.G Final Persistence Compatibility Review is complete. V1-03 Platform, Warning and
-Security Gates is next. Never regenerate or edit a merged golden or SQLite fixture to satisfy a new writer;
+V1-02.G Final Persistence Compatibility Review is complete. V1-03.A Python 3.14 & Support
+Window is complete: the stable platform window is 3.11→3.14, package metadata is bounded to
+>=3.11,<3.15, and CI/distribution qualify all four minors. V1-03.B Warning-Clean Runtime /
+Tests is next. Never regenerate or edit a merged golden or SQLite fixture to satisfy a new writer;
 add a new versioned fixture instead. Do not bump the
 version or create `v1.0.0` before V1-05.
 PostgreSQL is public through `pyschedulekit.postgres`, supports PostgreSQL 16/17/18,

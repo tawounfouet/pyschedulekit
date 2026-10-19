@@ -409,7 +409,7 @@ V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
 V1-02.F  Backup / Rollback / Operations Contract     COMPLETE
-V1-02.G  Final Persistence Compatibility Review      NEXT
+V1-02.G  Final Persistence Compatibility Review      COMPLETE
 ~~~
 
 ## Deliberate boundary
@@ -430,4 +430,4 @@ Those are outside this lot.
 
 **Status:** V1-02.F complete once CI, Distribution Qualification, SQLite operational tests and
 PostgreSQL 16/17/18 backup/restore rehearsals are green. Next:
-**V1-02.G — Final Persistence Compatibility Review**.
+**V1-02.G — Final Persistence Compatibility Review** is complete; V1-02 is closed and V1-03 is next.

@@ -106,7 +106,7 @@ POST-06 Chaos / Fault Injection         ✅
 0.3.x CAL-05 Calendar Provider Adapters       ✅
 0.4.x CMP-00 → CMP-05 Composite Triggers       ✅
 V1-00 Readiness Audit                           ✅ NO-GO recorded
-V1-01 Public Contract Freeze                    🚧 IN PROGRESS
+V1-01 Public Contract Freeze                    ✅ COMPLETE
   V1-01.A Public API Inventory & Classification  ✅
   V1-01.B Root/API Stable Candidate Review       ✅
   V1-01.C Secondary Namespace Policy              ✅
@@ -114,7 +114,7 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
   V1-01.E Protocol / Enum / Exception Freeze       ✅
   V1-01.F Compatibility & Deprecation Policy        ✅
   V1-01.G Executable Contract Snapshots             ✅
-  V1-01.H Final Public Contract Review               ⏭ NEXT
+  V1-01.H Final Public Contract Review               ✅
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -132,12 +132,13 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
   fonctionnelle verts ; voir [V1-00 Readiness Audit](./v1/V1-00_READINESS_AUDIT.md).
 - **V1-01.A** : inventaire exécutable figé à 104 exports root/API, 2 PostgreSQL, 5 testing et 11 experimental/legacy ; classifications provisoires enregistrées dans le manifest.
 - **V1-01.B** : les 104 candidats primaires sont revus et partitionnés en 63 commodités root + 41 types avancés `pyschedulekit.api`-only, sans retrait de l’API avancée.
-- **V1-01.C** : `postgres` est stable-optional, `testing` stable-testing, `experimental` hors SemVer ; `__version__` reste stable en présence et les 11 redirects legacy doivent disparaître avant `1.0.0`.
+- **V1-01.C** : `postgres` est stable-optional, `testing` stable-testing, `experimental` hors SemVer ; `__version__` reste stable en présence et les 11 redirects legacy ont été supprimés avant `1.0.0`.
 - **V1-01.D** : baseline exécutable de 39 constructeurs/factories + 53 méthodes ; noms, modes d’appel et valeurs par défaut sont désormais surveillés par CI.
 - **V1-01.E** : Protocols exportés, 14 Enums publics et catégories d’exceptions sont désormais figés par tests d’architecture.
 - **V1-01.F** : la politique canonique [Compatibility & Deprecation](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) protège l’API stable, le typing et les dépréciations sur toute la major 1.x ; les suppressions incompatibles sont réservées à la major suivante.
 - **V1-01.G** : 21 structures publiques de sortie ont désormais leurs champs et propriétés de lecture figés par snapshot exécutable ; voir [Executable Contract Snapshots](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md).
-- **Étape active** : V1-01.H Final Public Contract Review.
+- **V1-01.H** : contrat public final appliqué — 63 noms root, 41 noms avancés API-only, 104 noms stables au total, 11 redirects legacy supprimés ; voir [Final Public Contract Review](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md).
+- **Étape active** : V1-02 Persistence Compatibility Contract.
 
 ---
 
@@ -167,8 +168,8 @@ V1-01 Public Contract Freeze                    🚧 IN PROGRESS
 6. V1-01.E — Protocol / Enum / Exception Freeze ✅ ;
 7. V1-01.F — Compatibility & Deprecation Policy ✅ ;
 8. V1-01.G — Executable Contract Snapshots ✅ ;
-9. V1-01.H — Final Public Contract Review ⏭ ;
-10. V1-02 — Persistence Compatibility Contract ;
+9. V1-01.H — Final Public Contract Review ✅ ;
+10. V1-02 — Persistence Compatibility Contract ⏭ ;
 11. V1-03 — Platform, Warning and Security Gates ;
 12. V1-04 — Consumer and Stable-Release Rehearsal ;
 13. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
@@ -205,8 +206,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`V1-00 Readiness Audit`](./v1/V1-00_READINESS_AUDIT.md) — verdict, preuves et findings 1.0.
 - [`V1-01.F Compatibility & Deprecation Policy`](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) — promesse SemVer/typing et cycle de dépréciation 1.x.
 - [`V1-01.G Executable Contract Snapshots`](./v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md) — champs et propriétés stables des résultats publics.
+- [`V1-01.H Final Public Contract Review`](./v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) — surface finale 63/41, redirects legacy supprimés et clôture V1-01.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-01.G Executable Contract Snapshots.*
+*Dernière mise à jour : 2026-10-19 — V1-01.H Final Public Contract Review ; V1-02 next.*

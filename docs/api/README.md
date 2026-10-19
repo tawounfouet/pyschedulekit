@@ -417,6 +417,12 @@ All framework errors derive from `PyScheduleKitError` or a more specific public 
 
 - `PyScheduleKitDeprecationWarning`
 
+The canonical 1.x compatibility rules are defined in
+[V1-01.F Compatibility & Deprecation Policy](../v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md).
+Stable names, signatures, Protocols, Enums, exception categories, result fields, typing and
+documented runtime semantics are SemVer-protected within one major. Stable breaking removals
+are reserved for the next major version.
+
 ## Legacy root compatibility names
 
 The following names exist only as legacy root-level compatibility redirects and are **not

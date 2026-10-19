@@ -1,7 +1,8 @@
 # PyScheduleKit Public API Reference
 
-This document describes the **stable public surface currently exported by
-`pyschedulekit` and `pyschedulekit.api`**.
+This document describes the **stable public surfaces exported by `pyschedulekit`
+and `pyschedulekit.api`**. The root is intentionally compact; the canonical advanced API
+contains the complete stable contract.
 
 The executable source of truth is
 [`src/pyschedulekit/api/_manifest.py`](../../src/pyschedulekit/api/_manifest.py).
@@ -26,12 +27,21 @@ import pyschedulekit.api as psk
 scheduler = psk.Scheduler()
 ```
 
-The root package mirrors the stable `pyschedulekit.api` surface.
+The final V1 contract is split deliberately:
 
-Pre-1.0 development may still evolve contracts, but exported stable names are already
-protected by manifest and identity tests. The project will make its full compatibility
-promise at `1.0.0`. The exact remaining freeze work is tracked by the
-[V1-00 readiness audit](../v1/V1-00_READINESS_AUDIT.md).
+```text
+pyschedulekit root       63 common convenience names + __version__
+pyschedulekit.api       104 stable names
+                        ├── 63 root conveniences
+                        └── 41 advanced API-only names
+```
+
+Use the package root for ordinary scheduling. Use `pyschedulekit.api` for extension ports,
+executor composition, detailed diagnostics and other advanced contracts.
+
+V1-01 has completed the public-contract freeze. The package remains pre-1.0 only because
+persistence compatibility, platform/security gates and stable-release activation are still
+tracked by V1-02 through V1-05.
 
 ## Scheduler facade
 
@@ -427,10 +437,10 @@ The exact field/property baseline for the 21 public operation-result structures 
 by [V1-01.G Executable Contract Snapshots](../v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md)
 and enforced by `tests/architecture/test_v1_result_contract_snapshots.py`.
 
-## Legacy root compatibility names
+## Experimental coordination names
 
-The following names exist only as legacy root-level compatibility redirects and are **not
-part of the stable public manifest**:
+The following names remain available only from `pyschedulekit.experimental` and are
+explicitly outside the 1.x SemVer promise:
 
 - `AdmissionLockOwnershipError`
 - `AdmissionToken`
@@ -444,7 +454,8 @@ part of the stable public manifest**:
 - `ScheduleAdmissionLockHandle`
 - `ScheduleAdmissionLockState`
 
-New code should not depend on these legacy root names.
+Their former pre-1.0 root redirects were removed by V1-01.H. Code that needs these
+experimental concepts must import them explicitly from `pyschedulekit.experimental`.
 
 ## Testing helpers
 

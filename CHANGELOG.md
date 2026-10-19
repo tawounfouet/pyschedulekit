@@ -111,6 +111,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Changed
 
+- Completed V1-01.H Final Public Contract Review: the package root now exposes exactly
+  63 stable convenience names plus `__version__`, all 104 stable names remain available
+  from `pyschedulekit.api`, 41 advanced contracts are API-only, and the 11 pre-1.0 legacy
+  root redirects are physically removed. Primary namespace classifications are now final
+  (`stable`), while experimental coordination names remain explicitly outside SemVer.
+
 - Deferred all future PyPI publication until the first stable `1.0.0`; pre-1.0 and prerelease versions remain development-only milestones qualified by CI.
 - Added an executable release policy gate so only canonical stable semantic versions `>=1.0.0` can reach the PyPI publishing job.
 - Reorganized current documentation under `docs/`, with `docs/README.md` as the canonical navigation hub and dated audit snapshots under `docs/audit/2026-10-08/`.

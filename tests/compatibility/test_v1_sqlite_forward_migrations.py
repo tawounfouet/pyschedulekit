@@ -139,7 +139,10 @@ def _columns(connection: sqlite3.Connection, table: str) -> set[str]:
 
 
 @pytest.mark.parametrize("version", range(1, 8))
-def test_v1_02c_physical_fixture_identity_and_historical_shape(version: int, tmp_path: Path) -> None:
+def test_v1_02c_physical_fixture_identity_and_historical_shape(
+    version: int,
+    tmp_path: Path,
+) -> None:
     database = _copy_fixture(version, tmp_path)
 
     with sqlite3.connect(database) as connection:
@@ -203,7 +206,7 @@ def test_v1_02c_every_supported_sqlite_schema_migrates_to_v8(
             SCHEMA_VERSION,
         )
         assert _tables(connection) == CURRENT_TABLES
-        assert CURRENT_INDEXES <= _indexes(connection)
+        assert _indexes(connection) >= CURRENT_INDEXES
 
         assert connection.execute(
             "SELECT id, state, revision, persistence_version FROM schedules"

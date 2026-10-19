@@ -119,8 +119,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
   V1-02.A Persistence Version Floor & Policy          ✅
   V1-02.B Immutable Golden Compatibility Fixtures      ✅
   V1-02.C SQLite Forward Migration Qualification      ✅
-  V1-02.D Codec Migration & Semantic Equivalence      ⏭ NEXT
-  V1-02.E PostgreSQL Evolution / Rolling Upgrade      ⬜
+  V1-02.D Codec Migration & Semantic Equivalence      ✅
+  V1-02.E PostgreSQL Evolution / Rolling Upgrade      ⏭ NEXT
   V1-02.F Backup / Rollback / Operations Contract     ⬜
   V1-02.G Final Persistence Compatibility Review      ⬜
 ```
@@ -149,7 +149,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 - **V1-02.A** : floors de lecture 1.x figés à v1 pour SQLite runtime, PostgreSQL runtime, codec SQL générique, ScheduleDefinition, Trigger envelopes, codecs calendriers et schéma SQLite calendrier ; versions d'écriture centralisées et règles d'évolution exécutables. Voir [Persistence Version Floor & Policy](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md).
 - **V1-02.B** : sept fixtures golden append-only couvrent le format public `v0.1.0a3` et le checkpoint pre-1.0 `945ec173…`; leurs SHA-256 sont figés par manifest + test, les anciens codecs restent lisibles et les writers inchangés doivent reproduire exactement les mêmes bytes. Voir [Immutable Golden Compatibility Fixtures](./v1/V1-02B_IMMUTABLE_GOLDEN_COMPATIBILITY_FIXTURES.md).
 - **V1-02.C** : sept bases SQLite physiques immuables couvrent les schémas v1 à v7 ; hashes compressés/bruts, intégrité SQLite, FK, migration réelle vers v8 et préservation du graphe durable sont vérifiés. Voir [SQLite Forward Migration Qualification](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md).
-- **Étape active** : V1-02.D Codec Migration & Semantic Equivalence.
+- **V1-02.D** : ScheduleDefinition v1/v2 → v3 est qualifié sans dérive de domaine ni de comportement ; SQL values, Trigger envelopes et calendriers v1 conservent leurs sémantiques après round-trip. Voir [Codec Migration & Semantic Equivalence](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md).
+- **Étape active** : V1-02.E PostgreSQL Evolution / Rolling Upgrade.
 
 ---
 
@@ -183,8 +184,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 10. V1-02.A — Persistence Version Floor & Policy ✅ ;
 11. V1-02.B — Immutable Golden Compatibility Fixtures ✅ ;
 12. V1-02.C — SQLite Forward Migration Qualification ✅ ;
-13. V1-02.D — Codec Migration & Semantic Equivalence ⏭ ;
-14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ;
+13. V1-02.D — Codec Migration & Semantic Equivalence ✅ ;
+14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ⏭ ;
 15. V1-02.F — Backup / Rollback / Operations Contract ;
 16. V1-02.G — Final Persistence Compatibility Review ;
 17. V1-03 — Platform, Warning and Security Gates ;
@@ -227,8 +228,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`V1-02.A Persistence Version Floor & Policy`](./v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) — floors 1.x, versions d'écriture et règles d'évolution persistence.
 - [`V1-02.B Immutable Golden Compatibility Fixtures`](./v1/V1-02B_IMMUTABLE_GOLDEN_COMPATIBILITY_FIXTURES.md) — fixtures historiques append-only, provenance et hashes.
 - [`V1-02.C SQLite Forward Migration Qualification`](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) — bases physiques v1-v7, migration vers v8 et préservation sémantique.
+- [`V1-02.D Codec Migration & Semantic Equivalence`](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) — migration JSON v1/v2→v3 et invariance comportementale des codecs 1.x.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-02.C SQLite Forward Migration Qualification ; V1-02.D next.*
+*Dernière mise à jour : 2026-10-19 — V1-02.D Codec Migration & Semantic Equivalence ; V1-02.E next.*

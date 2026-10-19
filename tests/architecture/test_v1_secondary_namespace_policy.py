@@ -20,7 +20,7 @@ def test_v1_01c_secondary_namespace_policies_are_exact() -> None:
     }
 
     assert ROOT_METADATA_V1_POLICY == "stable-presence"
-    assert LEGACY_ROOT_REDIRECT_V1_POLICY == "remove-before-v1.0.0"
+    assert LEGACY_ROOT_REDIRECT_V1_POLICY == "removed-before-v1.0.0"
     assert UNLISTED_SUBMODULE_V1_POLICY == "internal-no-compatibility"
 
 

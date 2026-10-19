@@ -2,13 +2,8 @@
 
 from datetime import UTC, datetime
 
-from pyschedulekit import (
-    Duration,
-    InMemoryObservationSink,
-    Instant,
-    IntervalTrigger,
-    Scheduler,
-)
+from pyschedulekit import Duration, Instant, IntervalTrigger, Scheduler
+from pyschedulekit.api import InMemoryObservationSink
 from pyschedulekit.testing import MutableClock
 
 

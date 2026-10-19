@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.H Final Public Contract Review: the runtime now applies the final
+  63-name package root while preserving all 104 stable names in `pyschedulekit.api`; the
+  41 advanced contracts are API-only, the 11 pre-1.0 legacy root redirects are physically
+  removed, primary namespaces are classified stable, and the public contract is marked
+  frozen. Repository consumers and current documentation are aligned with the final split.
+
 - Added V1-01.G Executable Contract Snapshots: 21 stable public operation-result types
   now have exact field-order snapshots, with public computed result properties protected as
   well. The transitive output closure covers run-pending, execution, recovery,
@@ -110,6 +116,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 - Added acceptance tests that execute every cookbook script under CI.
 
 ### Changed
+
+- Completed V1-01.H Final Public Contract Review: the package root now exposes exactly
+  63 stable convenience names plus `__version__`, all 104 stable names remain available
+  from `pyschedulekit.api`, 41 advanced contracts are API-only, and the 11 pre-1.0 legacy
+  root redirects are physically removed. Primary namespace classifications are now final
+  (`stable`), while experimental coordination names remain explicitly outside SemVer.
 
 - Deferred all future PyPI publication until the first stable `1.0.0`; pre-1.0 and prerelease versions remain development-only milestones qualified by CI.
 - Added an executable release policy gate so only canonical stable semantic versions `>=1.0.0` can reach the PyPI publishing job.

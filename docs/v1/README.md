@@ -7,7 +7,7 @@ stable compatibility promise.
 
 ```text
 Runtime and domain qualification   GREEN
-Public contract freeze             OPEN
+Public contract freeze             FROZEN
 Persistence support policy         OPEN
 Stable release activation          OPEN
 Overall v1.0.0 decision             NO-GO
@@ -24,8 +24,8 @@ The evidence and findings are recorded in the
 
 ```text
 V1-00  Readiness Audit                         COMPLETE
-V1-01  Public Contract Freeze                  IN PROGRESS
-V1-02  Persistence Compatibility Contract      PLANNED
+V1-01  Public Contract Freeze                  COMPLETE
+V1-02  Persistence Compatibility Contract      NEXT
 V1-03  Platform, Warning and Security Gates    PLANNED
 V1-04  Consumer and Stable-Release Rehearsal   PLANNED
 V1-05  Final GO/NO-GO and 1.0.0 Activation     PLANNED
@@ -41,7 +41,7 @@ V1-01.D  Constructor / Method Signature Freeze       COMPLETE
 V1-01.E  Protocol / Enum / Exception Freeze          COMPLETE
 V1-01.F  Compatibility & Deprecation Policy          COMPLETE
 V1-01.G  Executable Contract Snapshots               COMPLETE
-V1-01.H  Final Public Contract Review                 NEXT
+V1-01.H  Final Public Contract Review                 COMPLETE
 ```
 
 [V1-01.A](./V1-01A_PUBLIC_API_INVENTORY.md) records the exact current namespace inventory.
@@ -58,6 +58,8 @@ categories. [V1-01.F](./V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) defines the 
 1.x SemVer, typing and deprecation rules, including next-major-only removal for stable API.
 [V1-01.G](./V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md) freezes the exact field and public
 read-property structure of 21 stable operation-result types and their transitive records.
+[V1-01.H](./V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) applies the final 63-name root, keeps
+41 advanced names API-only, removes all 11 pre-1.0 root redirects and closes V1-01.
 
 ## Operating rules
 
@@ -77,4 +79,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-01.G executable result-contract snapshots recorded. V1-01.H Final Public Contract Review is next.
+**Status:** V1-01 Public Contract Freeze complete. V1-02 Persistence Compatibility Contract is next.

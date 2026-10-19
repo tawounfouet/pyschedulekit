@@ -203,9 +203,9 @@ Points clés :
 
 Pas d'UI ni de CLI : l'interface est l'API publique.
 
-- **Façade stable** : `api/scheduler.py::Scheduler` — ciblage (`register_target`, `register_http_target`, `add_schedule`), pilotage (`pause/resume/cancel_schedule`, `cancel_execution`), exécution (`run_pending`, `run_forever`, `stop`, `shutdown`), opérations (`recover`, `reconcile`, `dispatch_outbox`, `cleanup`), observation (`inspect_*`, `health`, `readiness`, `last_*`, `cycles_completed`). L'ensemble des noms exportés est gelé par `api/_manifest.STABLE_PUBLIC_NAMES` + test `tests/unit/api/test_public_api_contract.py`.
-- **Erreurs** : arbre unique dans `errors.py` + exceptions métier par couche (`DuplicateScheduleError`, `PersistenceConflictError`, `InvalidExecutionTransitionError`, `ClaimOwnershipError`, …) ; les anciens noms racine émettent `DeprecationWarning` et redirigent (`__init__.py:105-119`).
-- **`experimental/`** : claims/admission/`LatenessStatus` — imports explicites, **aucune promesse de compatibilité** avant 1.0.
+- **Façade stable** : `api/scheduler.py::Scheduler` — ciblage (`register_target`, `register_http_target`, `add_schedule`), pilotage (`pause/resume/cancel_schedule`, `cancel_execution`), exécution (`run_pending`, `run_forever`, `stop`, `shutdown`), opérations (`recover`, `reconcile`, `dispatch_outbox`, `cleanup`), observation (`inspect_*`, `health`, `readiness`, `last_*`, `cycles_completed`). Le contrat final V1 expose 104 noms via `pyschedulekit.api`, dont 63 sont réexportés comme commodités au package root ; cette partition est gelée par `api/_manifest.py` et les tests V1-01.
+- **Erreurs** : arbre unique dans `errors.py` + catégories publiques normalisées. Les erreurs spécialisées avancées restent disponibles via `pyschedulekit.api` sans agrandir le root.
+- **`experimental/`** : claims/admission/`LatenessStatus` — imports explicites, **aucune promesse SemVer**. Les 11 redirects root pré-1.0 ont été supprimés en V1-01.H.
 - **`testing/`** : `MutableClock`, `FixedClock`, triggers de test — les consommateurs doivent piloter le temps avec ces helpers plutôt que de monkeypatcher `datetime`.
 - **Persistance côté utilisateur** : aucun localStorage/cookie ; seule la config du constructeur `Scheduler(...)` et le fichier SQLite (chemin choisi par l'appelant) persistent.
 

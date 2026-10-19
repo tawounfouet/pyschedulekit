@@ -9,13 +9,13 @@ from urllib.error import HTTPError
 from pyschedulekit import (
     Duration,
     HttpRequestSpec,
-    InMemoryObservationSink,
     Instant,
     IntervalTrigger,
     RetryPolicy,
     Scheduler,
     TargetRef,
 )
+from pyschedulekit.api import InMemoryObservationSink
 from pyschedulekit.domain.execution import ExecutionState
 from pyschedulekit.domain.time import Duration as DomainDuration
 from pyschedulekit.ports.cancellation import CancellationToken

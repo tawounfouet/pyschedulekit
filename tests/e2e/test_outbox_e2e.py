@@ -2,14 +2,8 @@
 
 from datetime import UTC, datetime
 
-from pyschedulekit import (
-    Duration,
-    IntervalTrigger,
-    OutboxMessage,
-    OutboxState,
-    Scheduler,
-    SqliteUnitOfWorkFactory,
-)
+from pyschedulekit import Duration, IntervalTrigger, Scheduler, SqliteUnitOfWorkFactory
+from pyschedulekit.api import OutboxMessage, OutboxState
 from pyschedulekit.testing import MutableClock
 
 

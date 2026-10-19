@@ -13,7 +13,6 @@ import tempfile
 import threading
 import time
 import traceback
-import warnings
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -30,12 +29,9 @@ from pyschedulekit import (
     FixedBackoff,
     HttpMethod,
     HttpRequestSpec,
-    InMemoryObservationSink,
     Instant,
     IntervalTrigger,
     MisfirePolicy,
-    OutboxState,
-    PyScheduleKitDeprecationWarning,
     RetentionPolicy,
     RetryPolicy,
     Scheduler,
@@ -45,6 +41,7 @@ from pyschedulekit import (
     TargetRef,
     Timezone,
 )
+from pyschedulekit.api import InMemoryObservationSink, OutboxState
 from pyschedulekit.domain.execution import ExecutionId
 from pyschedulekit.domain.execution_request import RequestId
 from pyschedulekit.domain.occurrence import OccurrenceKey
@@ -821,11 +818,11 @@ def routing_custom_executor() -> None:
 def public_api_contract() -> None:
     assert psk.Scheduler is psk.api.Scheduler
     assert psk.Duration is psk.api.Duration
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        legacy = psk.ExecutionClaim  # legacy root name -> experimental redirect
-        assert legacy is not None
-    assert any(issubclass(w.category, PyScheduleKitDeprecationWarning) for w in caught), caught
+    assert not hasattr(psk, "ExecutionClaim")
+
+    from pyschedulekit.experimental import ExecutionClaim
+
+    assert ExecutionClaim is not None
 
 
 # 29. testing helpers ------------------------------------------------------

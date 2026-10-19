@@ -15,16 +15,19 @@ from pyschedulekit import (
     Duration,
     ExecutionNotFoundError,
     IntervalTrigger,
-    PyScheduleKitDeprecationWarning,
     PyScheduleKitNotFoundError,
     PyScheduleKitStateError,
     PyScheduleKitTargetError,
     RuntimeAlreadyRunningError,
     ScheduleNotFoundError,
     Scheduler,
-    TargetResolutionError,
 )
-from pyschedulekit.api._manifest import LEGACY_ROOT_NAMES, STABLE_PUBLIC_NAMES
+from pyschedulekit.api._manifest import (
+    API_ONLY_V1_PUBLIC_NAMES,
+    LEGACY_ROOT_NAMES,
+    ROOT_V1_PUBLIC_NAMES,
+    STABLE_PUBLIC_NAMES,
+)
 from pyschedulekit.testing import MutableClock
 
 
@@ -36,20 +39,25 @@ def test_t_public_api_001_manifest_is_sorted_unique_and_exact() -> None:
     assert tuple(sorted(STABLE_PUBLIC_NAMES)) == STABLE_PUBLIC_NAMES
     assert len(STABLE_PUBLIC_NAMES) == len(set(STABLE_PUBLIC_NAMES))
     assert public_api.__all__ == list(STABLE_PUBLIC_NAMES)
-    assert pyschedulekit.__all__ == [*STABLE_PUBLIC_NAMES, "__version__"]
+    assert pyschedulekit.__all__ == [*ROOT_V1_PUBLIC_NAMES, "__version__"]
 
-    for name in STABLE_PUBLIC_NAMES:
+    for name in ROOT_V1_PUBLIC_NAMES:
         assert getattr(pyschedulekit, name) is getattr(public_api, name)
+
+    for name in API_ONLY_V1_PUBLIC_NAMES:
+        assert hasattr(public_api, name)
+        assert not hasattr(pyschedulekit, name)
 
     assert not set(LEGACY_ROOT_NAMES).intersection(STABLE_PUBLIC_NAMES)
     assert not set(LEGACY_ROOT_NAMES).intersection(pyschedulekit.__all__)
 
 
-def test_t_public_api_002_legacy_root_names_warn_and_resolve_to_experimental() -> None:
+def test_t_public_api_002_legacy_root_names_are_removed_before_v1() -> None:
     for name in LEGACY_ROOT_NAMES:
-        with pytest.warns(PyScheduleKitDeprecationWarning, match="experimental"):
-            root_value = getattr(pyschedulekit, name)
-        assert root_value is getattr(experimental, name)
+        assert not hasattr(pyschedulekit, name)
+        with pytest.raises(AttributeError):
+            getattr(pyschedulekit, name)
+        assert getattr(experimental, name) is not None
 
 
 def test_t_public_api_003_public_error_hierarchy_is_catchable_by_category() -> None:
@@ -59,8 +67,8 @@ def test_t_public_api_003_public_error_hierarchy_is_catchable_by_category() -> N
     assert issubclass(ExecutionNotFoundError, LookupError)
     assert issubclass(RuntimeAlreadyRunningError, PyScheduleKitStateError)
     assert issubclass(RuntimeAlreadyRunningError, RuntimeError)
-    assert issubclass(TargetResolutionError, PyScheduleKitTargetError)
-    assert issubclass(TargetResolutionError, RuntimeError)
+    assert issubclass(public_api.TargetResolutionError, PyScheduleKitTargetError)
+    assert issubclass(public_api.TargetResolutionError, RuntimeError)
 
 
 def test_t_public_api_004_scheduler_signature_parameter_contract() -> None:

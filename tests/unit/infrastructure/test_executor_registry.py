@@ -6,7 +6,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from pyschedulekit import ExecutorRegistry, PyScheduleKitConfigurationError, TargetRef
+from pyschedulekit import PyScheduleKitConfigurationError, TargetRef
+from pyschedulekit.api import ExecutorRegistry
 from pyschedulekit.domain.time import Duration
 from pyschedulekit.infrastructure.routing_executor import RoutingExecutor
 from pyschedulekit.ports.cancellation import CancellationToken

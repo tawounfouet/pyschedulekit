@@ -32,7 +32,8 @@ The router does not hard-code those kinds. It resolves the current registry dyna
 A third-party executor only needs to satisfy the existing synchronous `Executor` protocol.
 
 ```python
-from pyschedulekit import ExecutorRegistry, Scheduler, TargetRef
+from pyschedulekit import Scheduler, TargetRef
+from pyschedulekit.api import ExecutorRegistry
 
 registry = ExecutorRegistry()
 scheduler = Scheduler(executor_registry=registry)

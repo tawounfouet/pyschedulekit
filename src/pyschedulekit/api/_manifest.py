@@ -233,8 +233,8 @@ TESTING_PUBLIC_NAMES = (
 )
 
 PUBLIC_NAMESPACE_CLASSIFICATIONS = {
-    "pyschedulekit": "stable-candidate",
-    "pyschedulekit.api": "stable-candidate",
+    "pyschedulekit": "stable",
+    "pyschedulekit.api": "stable",
     "pyschedulekit.postgres": "stable-optional",
     "pyschedulekit.testing": "stable-testing",
     "pyschedulekit.experimental": "experimental",
@@ -247,8 +247,10 @@ SECONDARY_NAMESPACE_V1_POLICIES = {
 }
 
 ROOT_METADATA_V1_POLICY = "stable-presence"
-LEGACY_ROOT_REDIRECT_V1_POLICY = "remove-before-v1.0.0"
+LEGACY_ROOT_REDIRECT_V1_POLICY = "removed-before-v1.0.0"
 UNLISTED_SUBMODULE_V1_POLICY = "internal-no-compatibility"
+
+V1_PUBLIC_CONTRACT_STATUS = "frozen"
 
 V1_STABLE_COMPATIBILITY_POLICY = {
     "additive-public-api": "minor-or-major",

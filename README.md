@@ -91,13 +91,11 @@ The 0.3.x calendar and 0.4.x composite-trigger sequences are complete. `AnyOfTri
 now a stable public primitive for a bounded, duplicate-free union of pure temporal rules.
 
 The [V1-00 readiness audit](./docs/v1/V1-00_READINESS_AUDIT.md) has started the 1.0
-stabilization sequence. Runtime qualification is green, the canonical
-[1.x compatibility/deprecation policy](./docs/v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md)
-is frozen, and
-[V1-01.G executable result snapshots](./docs/v1/V1-01G_EXECUTABLE_CONTRACT_SNAPSHOTS.md)
-now protect 21 stable operation-result structures. The current `v1.0.0` verdict remains
-**NO-GO** until the final public-contract review is complete, then the persistence support
-floor, platform/security gates and stable GitHub Release path are closed.
+stabilization sequence. Runtime qualification is green and **V1-01 Public Contract Freeze is
+complete**: compatibility/deprecation policy, callable/structural snapshots and the final
+[63-root / 41 API-only contract](./docs/v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md) are now
+applied. The current `v1.0.0` verdict remains **NO-GO** until the persistence support floor,
+platform/security gates and stable GitHub Release path are closed by V1-02 through V1-05.
 
 See `docs/release/00_RELEASE_ENGINEERING_ROADMAP.md` for the distribution roadmap.
 
@@ -865,29 +863,40 @@ Executor adapters still return normalized `ExecutorOutcome` values; retry, timeo
 
 ## Public API stability
 
-LOT-34 defines the first explicit compatibility boundary for PyScheduleKit.
+V1-01 freezes the public Python contract that will be activated by the first stable release.
 
-The canonical stable namespace is:
+The canonical complete stable namespace is:
 
 ```python
 import pyschedulekit.api as psk
 ```
 
-For convenience, the same stable symbols are re-exported at the package root:
+The package root is intentionally smaller and contains the 63 common scheduling conveniences:
 
 ```python
 from pyschedulekit import Scheduler, IntervalTrigger, RetryPolicy
 ```
 
-The exact stable symbol set is machine-readable and CI-enforced through `pyschedulekit.api._manifest.STABLE_PUBLIC_NAMES`.
+The exact contract is machine-readable and CI-enforced:
 
-Low-level coordination primitives that were historically available at the package root now live under:
+```text
+pyschedulekit             63 stable convenience names + __version__
+pyschedulekit.api        104 stable names
+                         ├── 63 root conveniences
+                         └── 41 advanced API-only names
+```
+
+Advanced extension ports, executor composition types and detailed diagnostics are imported
+from `pyschedulekit.api` rather than the package root.
+
+Low-level coordination primitives remain explicitly experimental:
 
 ```python
 from pyschedulekit.experimental import ExecutionClaim, ScheduleAdmissionLock
 ```
 
-Legacy root access remains temporarily compatible through `PyScheduleKitDeprecationWarning`, but experimental APIs are not covered by compatibility guarantees.
+The former pre-1.0 legacy root redirects have been removed. Experimental APIs are not covered
+by the stable 1.x compatibility promise.
 
 Public `Scheduler` methods return immutable snapshots/results rather than mutable domain aggregates. In particular, `run_pending()` and `cancel_execution()` no longer leak mutable `Execution` Aggregate Roots.
 

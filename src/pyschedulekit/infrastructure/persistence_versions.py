@@ -44,3 +44,26 @@ V1_PERSISTENCE_COMPATIBILITY_RULES = {
     "schema-upgrade-backup": "required-before-format-changing-upgrade",
     "writer-evolution": "forward-migration-and-golden-evidence-required",
 }
+
+
+V1_POSTGRES_ROLLING_UPGRADE_POLICY = {
+    "adjacent-release-overlap": "explicit-release-pair-qualification-required",
+    "contract-ddl-during-overlap": "forbidden",
+    "current-schema-overlap": "same-contract-workers-qualified",
+    "future-schema-policy": "fail-closed-until-explicit-migration-exists",
+    "migration-order-default": "backup-drain-migrate-deploy-verify-resume",
+    "overlap-safe-schema-change": "expand-migrate-contract-required",
+    "postgres-major-upgrade": "drain-and-upgrade-outside-framework",
+    "schema-bootstrap": "transaction-scoped-advisory-lock",
+    "schema-change-default": "drain-workers-before-migration",
+    "writer-reader-overlap": "bidirectional-readability-required",
+}
+
+V1_POSTGRES_ROLLING_UPGRADE_GATES = (
+    "concurrent-schema-bootstrap",
+    "same-contract-cross-worker-read-write",
+    "fencing-generation-monotonicity",
+    "stale-owner-rejection-after-takeover",
+    "unknown-future-schema-fail-closed",
+    "postgres-16-17-18-live-qualification",
+)

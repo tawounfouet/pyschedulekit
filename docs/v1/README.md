@@ -8,7 +8,7 @@ stable compatibility promise.
 ```text
 Runtime and domain qualification   GREEN
 Public contract freeze             FROZEN
-Persistence support policy         IN PROGRESS
+Persistence support policy         FROZEN
 Stable release activation          OPEN
 Overall v1.0.0 decision             NO-GO
 ```
@@ -25,8 +25,8 @@ The evidence and findings are recorded in the
 ```text
 V1-00  Readiness Audit                         COMPLETE
 V1-01  Public Contract Freeze                  COMPLETE
-V1-02  Persistence Compatibility Contract      IN PROGRESS
-V1-03  Platform, Warning and Security Gates    PLANNED
+V1-02  Persistence Compatibility Contract      COMPLETE
+V1-03  Platform, Warning and Security Gates    NEXT
 V1-04  Consumer and Stable-Release Rehearsal   PLANNED
 V1-05  Final GO/NO-GO and 1.0.0 Activation     PLANNED
 ```
@@ -70,7 +70,7 @@ V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
 V1-02.F  Backup / Rollback / Operations Contract     COMPLETE
-V1-02.G  Final Persistence Compatibility Review      NEXT
+V1-02.G  Final Persistence Compatibility Review      COMPLETE
 ```
 
 [V1-02.A](./V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) freezes the 1.x minimum
@@ -98,6 +98,9 @@ reader/writer compatibility.
 backup/restore/rollback operations contract: SQLite backup/restore and interrupted-migration
 atomicity are executable, PostgreSQL pg_dump/pg_restore rehearsals run on 16/17/18, rollback
 means restoring a known-good pre-upgrade backup, and GO/ABORT criteria are explicit.
+[V1-02.G](./V1-02G_FINAL_PERSISTENCE_COMPATIBILITY_REVIEW.md) performs the
+cross-contract audit, closes readiness finding V1-F04, records V1-02 as GO/COMPLETE and
+advances stabilization to V1-03 without changing any persistence format or release identity.
 
 ## Operating rules
 
@@ -117,4 +120,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-02.F backup / rollback / operations contract complete. V1-02.G Final Persistence Compatibility Review is next.
+**Status:** V1-02 persistence compatibility contract complete. V1-03 Platform, Warning and Security Gates is next. Overall `v1.0.0` remains NO-GO.

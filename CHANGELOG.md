@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-02.G Final Persistence Compatibility Review: cross-contract architecture
+  evidence now verifies readable floors versus current writers, required persistence artifacts,
+  PostgreSQL rollout/operations policies and final navigation; V1-F04 is marked CLOSED,
+  V1-02 records GO/COMPLETE, and stabilization advances to V1-03 without changing any schema,
+  codec, package version, tag or publication state.
+
 - Added V1-02.F Backup / Rollback / Operations Contract: SQLite online-backup restore
   rehearsal and injected v7→v8 interruption now prove backup viability and transactional
   rollback; PostgreSQL CI performs pg_dump/pg_restore restore rehearsals on 16/17/18 using

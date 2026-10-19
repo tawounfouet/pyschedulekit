@@ -74,7 +74,7 @@ Règle de bouclage : un échec de test renvoie en **Build** ; une CI rouge renvo
 
 ---
 
-## 4. État courant — V1-02 Persistence Compatibility Contract
+## 4. État courant — V1-03 Platform, Warning and Security Gates
 
 Le snapshot détaillé de l'audit du 2026-10-08 est archivé sous
 [`docs/audit/2026-10-08/`](./audit/2026-10-08/README.md). Le statut faisant foi des
@@ -115,14 +115,14 @@ V1-01 Public Contract Freeze                    ✅ COMPLETE
   V1-01.F Compatibility & Deprecation Policy        ✅
   V1-01.G Executable Contract Snapshots             ✅
   V1-01.H Final Public Contract Review               ✅
-V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
+V1-02 Persistence Compatibility Contract             ✅ COMPLETE
   V1-02.A Persistence Version Floor & Policy          ✅
   V1-02.B Immutable Golden Compatibility Fixtures      ✅
   V1-02.C SQLite Forward Migration Qualification      ✅
   V1-02.D Codec Migration & Semantic Equivalence      ✅
   V1-02.E PostgreSQL Evolution / Rolling Upgrade      ✅
   V1-02.F Backup / Rollback / Operations Contract     ✅
-  V1-02.G Final Persistence Compatibility Review      ⏭ NEXT
+  V1-02.G Final Persistence Compatibility Review      ✅
 ```
 
 - **Dernière version publique PyPI** : `0.1.0a3`.
@@ -152,7 +152,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 - **V1-02.D** : ScheduleDefinition v1/v2 → v3 est qualifié sans dérive de domaine ni de comportement ; SQL values, Trigger envelopes et calendriers v1 conservent leurs sémantiques après round-trip. Voir [Codec Migration & Semantic Equivalence](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md).
 - **V1-02.E** : overlap PostgreSQL same-contract qualifié en live sur 16/17/18, bootstrap concurrent sérialisé, fencing monotone, stale owner rejeté, future schema fail-closed ; toute paire N/N+1 exige une preuve explicite ou un drain complet. Voir [PostgreSQL Evolution / Rolling Upgrade](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md).
 - **V1-02.F** : backup/restore SQLite qualifié, rollback transactionnel v7→v8 injecté, restore rehearsal PostgreSQL via pg_dump/pg_restore sur 16/17/18, critères GO/ABORT et frontière RPO/RTO documentés. Voir [Backup / Rollback / Operations Contract](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md).
-- **Étape active** : V1-02.G Final Persistence Compatibility Review.
+- **V1-02.G** : revue finale persistence complète ; floors, writers, fixtures, migrations, équivalence sémantique, rolling PostgreSQL et opérations backup/restore sont cohérents ; V1-F04 est CLOSED.
+- **Étape active** : V1-03 Platform, Warning and Security Gates.
 
 ---
 
@@ -189,8 +190,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 13. V1-02.D — Codec Migration & Semantic Equivalence ✅ ;
 14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ✅ ;
 15. V1-02.F — Backup / Rollback / Operations Contract ✅ ;
-16. V1-02.G — Final Persistence Compatibility Review ⏭ ;
-17. V1-03 — Platform, Warning and Security Gates ;
+16. V1-02.G — Final Persistence Compatibility Review ✅ ;
+17. V1-03 — Platform, Warning and Security Gates ⏭ ;
 18. V1-04 — Consumer and Stable-Release Rehearsal ;
 19. V1-05 — Final GO/NO-GO and `1.0.0` Activation.
 
@@ -233,8 +234,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`V1-02.D Codec Migration & Semantic Equivalence`](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) — migration JSON v1/v2→v3 et invariance comportementale des codecs 1.x.
 - [`V1-02.E PostgreSQL Evolution / Rolling Upgrade`](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) — overlap same-contract, fencing et protocole N/N+1.
 - [`V1-02.F Backup / Rollback / Operations Contract`](./v1/V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) — backup vérifié, restore rehearsal, rollback boundary et critères GO/ABORT.
+- [`V1-02.G Final Persistence Compatibility Review`](./v1/V1-02G_FINAL_PERSISTENCE_COMPATIBILITY_REVIEW.md) — audit transversal, V1-F04 fermé, V1-02 GO/COMPLETE.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-02.F Backup / Rollback / Operations Contract ; V1-02.G next.*
+*Dernière mise à jour : 2026-10-19 — V1-02.G Final Persistence Compatibility Review ; V1-03 next.*

@@ -182,9 +182,11 @@ split is applied by [V1-01.H](../v1/V1-01H_FINAL_PUBLIC_CONTRACT_REVIEW.md).
 [V1-02.A](../v1/V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) now freezes the 1.x
 persistence read floors at v1 for every currently versioned surface.
 [V1-02.B](../v1/V1-02B_IMMUTABLE_GOLDEN_COMPATIBILITY_FIXTURES.md) adds immutable released
-and pre-1.0 serialization fixtures with executable SHA-256 protection. SQLite database
-migration, codec semantic-equivalence, rollback/operations qualification, platform/security
-gates and stable GitHub Release behavior remain open.
+and pre-1.0 serialization fixtures with executable SHA-256 protection.
+[V1-02.C](../v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) now qualifies physical
+SQLite schemas v1 through v7 migrating to v8 with integrity and durable-state preservation.
+Codec semantic-equivalence, PostgreSQL evolution, rollback/operations qualification,
+platform/security gates and stable GitHub Release behavior remain open.
 
 Closure is organized as V1-01 through V1-05 in the
 [1.0 readiness roadmap](../v1/README.md).

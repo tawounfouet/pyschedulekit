@@ -45,9 +45,7 @@ def test_v1_02e_rolling_upgrade_policy_is_exact() -> None:
 
 
 def test_v1_02e_policy_is_documented_on_canonical_surfaces() -> None:
-    canonical = (
-        REPO_ROOT / "docs" / "v1" / "V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md"
-    )
+    canonical = REPO_ROOT / "docs" / "v1" / "V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md"
     support = REPO_ROOT / "docs" / "postgres" / "SUPPORT_AND_MIGRATION.md"
     v1_readme = REPO_ROOT / "docs" / "v1" / "README.md"
     agents = REPO_ROOT / "AGENTS.md"

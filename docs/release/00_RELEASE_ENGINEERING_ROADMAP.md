@@ -185,10 +185,12 @@ persistence read floors at v1 for every currently versioned surface.
 and pre-1.0 serialization fixtures with executable SHA-256 protection.
 [V1-02.C](../v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) qualifies physical
 SQLite schemas v1 through v7 migrating to v8 with integrity and durable-state preservation.
-[V1-02.D](../v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) now proves legacy/current
+[V1-02.D](../v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) proves legacy/current
 persisted JSON preserves domain and behavioral semantics through migration/round-trip.
-PostgreSQL evolution, rollback/operations qualification, platform/security gates and stable
-GitHub Release behavior remain open.
+[V1-02.E](../v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) now freezes the PostgreSQL
+rolling-upgrade contract and live-qualifies same-contract overlap/fencing on 16/17/18.
+Backup/rollback/operations qualification, platform/security gates and stable GitHub Release
+behavior remain open.
 
 Closure is organized as V1-01 through V1-05 in the
 [1.0 readiness roadmap](../v1/README.md).

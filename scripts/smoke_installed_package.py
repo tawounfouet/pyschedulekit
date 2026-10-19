@@ -21,7 +21,15 @@ def main() -> None:
     assert pyschedulekit.IntervalTrigger is public_api.IntervalTrigger
     assert "AnyOfTrigger" in pyschedulekit.__all__
     assert "Scheduler" in pyschedulekit.__all__
+    assert len(pyschedulekit.__all__) == 64  # 63 stable conveniences + __version__
+    assert len(public_api.__all__) == 104
+    assert "ExecutorRegistry" in public_api.__all__
+    assert "ExecutorRegistry" not in pyschedulekit.__all__
+    assert not hasattr(pyschedulekit, "ExecutorRegistry")
     assert "ExecutionClaim" not in pyschedulekit.__all__
+    assert not hasattr(pyschedulekit, "ExecutionClaim")
+    experimental = import_module("pyschedulekit.experimental")
+    assert hasattr(experimental, "ExecutionClaim")
     assert "PostgresUnitOfWorkFactory" not in pyschedulekit.__all__
     assert not hasattr(pyschedulekit, "PostgresUnitOfWorkFactory")
 

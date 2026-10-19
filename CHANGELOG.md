@@ -8,6 +8,11 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.F Compatibility & Deprecation Policy: the 1.x SemVer promise, public
+  typing compatibility, stable deprecation lifecycle, next-major-only breaking removals and
+  persistence-floor protection rule are now canonical, machine-readable and enforced by
+  architecture tests. Runtime behavior, package version and release state are unchanged.
+
 - Added V1-01.E Protocol / Enum / Exception Freeze: exported Protocol members, 14 public
   Enum name/value sets and public exception catch categories are now architecture-tested.
   Error-named operational diagnostic records are explicitly preserved as non-exceptions.

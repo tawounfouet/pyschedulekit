@@ -228,8 +228,8 @@ V1-02.A  Persistence Version Floor & Policy          COMPLETE
 V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
 V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
-V1-02.E  PostgreSQL Evolution / Rolling Upgrade      NEXT
-V1-02.F  Backup / Rollback / Operations Contract     PLANNED
+V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
+V1-02.F  Backup / Rollback / Operations Contract     NEXT
 V1-02.G  Final Persistence Compatibility Review      PLANNED
 ```
 
@@ -248,4 +248,4 @@ V1-02.C does not:
 ---
 
 **Status:** V1-02.C physical migration evidence is qualified and V1-02.D semantic codec
-equivalence is complete. Next: **V1-02.E — PostgreSQL Evolution / Rolling Upgrade**.
+equivalence is complete. Next: **V1-02.F — Backup / Rollback / Operations Contract**.

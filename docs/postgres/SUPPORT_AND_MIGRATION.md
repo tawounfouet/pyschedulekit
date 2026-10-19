@@ -217,6 +217,36 @@ Before `SCHEMA_VERSION` may increase, the same change must provide:
 
 A schema-version bump without those artifacts is not releaseable.
 
+## V1-02.E rolling-upgrade contract
+
+[V1-02.E PostgreSQL Evolution / Rolling Upgrade](../v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md)
+defines the stable 1.x deployment contract.
+
+Current evidence qualifies **same-contract workers** sharing PostgreSQL schema v1. It does not
+blanket-approve arbitrary adjacent PyScheduleKit releases.
+
+A future N → N+1 overlap requires explicit release-pair evidence proving bidirectional
+readability of every representation written during the overlap window.
+
+Without that evidence, the required sequence is:
+
+```text
+backup → drain → migrate → deploy → verify → resume
+```
+
+If a future schema change is explicitly designed for zero-downtime overlap, it must follow:
+
+```text
+expand → migrate → contract
+```
+
+with contract/destructive DDL delayed until old workers are fully drained.
+
+PostgreSQL schema bootstrap itself is safe for concurrent same-contract startup because
+PyScheduleKit serializes bootstrap with a transaction-scoped advisory lock. Live qualification
+on PostgreSQL 16/17/18 also proves cross-worker read/write visibility, monotonic fencing
+takeover, stale-owner rejection and fail-closed handling of unknown future schema versions.
+
 ## PostgreSQL major upgrades
 
 Database-server major upgrades are infrastructure operations outside PyScheduleKit.
@@ -293,4 +323,4 @@ No credentials belong in PyScheduleKit source or repository configuration.
 
 ---
 
-**Status:** PG-05 production hardening contract.
+**Status:** PG-05 production hardening contract + V1-02.E rolling-upgrade policy.

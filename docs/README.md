@@ -22,6 +22,7 @@ SNAPSHOT / HISTORY
 | [Architecture](./ARCHITECTURE.md) | Current system structure, flows, invariants and limitations |
 | [SDLC](./SDLC.md) | Current development, testing, review and maintenance workflow |
 | [1.0 readiness](./v1/README.md) | Current GO/NO-GO status, findings and stabilization sequence |
+| [1.x compatibility policy](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) | Canonical SemVer, typing and deprecation contract |
 | [AGENTS.md](../AGENTS.md) | Operational guidance for humans and agents working in the repository |
 | [CHANGELOG](../CHANGELOG.md) | Version history and unreleased changes |
 | [POST-00 remediation status](./audit/2026-10-08/POST_00_REMEDIATION_STATUS.md) | Authoritative disposition of audit findings B1–B12 |
@@ -107,7 +108,7 @@ POST-06 Chaos / Fault Injection       ✅
         ↓
 1.0 Readiness
   V1-00 Readiness Audit              ✅ NO-GO recorded
-  V1-01 Public Contract Freeze       ⬜ planned
+  V1-01 Public Contract Freeze       🚧 A-F complete; G next
   V1-02 Persistence Compatibility    ⬜ planned
   V1-03 Platform/Security Gates      ⬜ planned
   V1-04 Consumer/Release Rehearsal   ⬜ planned
@@ -155,6 +156,7 @@ This keeps pre-1.0 work focused on framework maturity rather than release ceremo
 | inspect deterministic fault-injection qualification | [Chaos](./chaos/README.md) |
 | follow PostgreSQL adapter delivery | [PostgreSQL 0.2.x](./postgres/README.md) |
 | inspect the current 1.0 GO/NO-GO and findings | [1.0 Readiness](./v1/README.md) |
+| understand the future 1.x compatibility promise | [V1-01.F Compatibility Policy](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) |
 | understand release safety / fix-forward rules | [Release docs](./release/) |
 
 ## Documentation rule
@@ -168,4 +170,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-09 — V1-00 readiness audit complete; current `v1.0.0` verdict is NO-GO.
+**Last refreshed:** 2026-10-19 — V1-01.F compatibility/deprecation policy complete; V1-01.G is next and the `v1.0.0` verdict remains NO-GO.

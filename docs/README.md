@@ -126,7 +126,9 @@ POST-06 Chaos / Fault Injection       ✅
     V1-02.E PostgreSQL Evolution      ✅
     V1-02.F Backup / Rollback         ✅
     V1-02.G Persistence Review        ✅
-  V1-03 Platform/Security Gates      ⏭ next
+  V1-03 Platform/Security Gates      🚧 in progress
+    V1-03.A Python 3.14 / Window      ✅
+    V1-03.B Warning Cleanliness       ⏭ next
   V1-04 Consumer/Release Rehearsal   ⬜ planned
   V1-05 Final GO/NO-GO               ⬜ planned
         ↓
@@ -194,4 +196,4 @@ When behavior changes:
 
 ---
 
-**Last refreshed:** 2026-10-19 — V1-02 persistence compatibility contract complete; V1-03 platform, warning and security gates are next and the `v1.0.0` verdict remains NO-GO.
+**Last refreshed:** 2026-10-19 — V1-03.A Python 3.14/support-window qualification complete; V1-03.B warning cleanliness is next and the `v1.0.0` verdict remains NO-GO.

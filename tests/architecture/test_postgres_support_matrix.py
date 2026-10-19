@@ -14,3 +14,6 @@ def test_postgres_ci_qualifies_supported_major_versions() -> None:
     assert "postgres:${{ matrix.postgres }}-alpine" in workflow
     assert "PostgreSQL ${{ matrix.postgres }} adapter qualification" in workflow
     assert '"tests/integration/infrastructure/test_adapter_parity.py"' in workflow
+    assert '"src/pyschedulekit/infrastructure/persistence_versions.py"' in workflow
+    assert '"tests/architecture/test_v1_postgres_rolling_upgrade_policy.py"' in workflow
+    assert "tests/architecture/test_v1_postgres_rolling_upgrade_policy.py \\" in workflow

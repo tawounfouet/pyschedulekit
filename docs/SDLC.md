@@ -120,8 +120,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
   V1-02.B Immutable Golden Compatibility Fixtures      ✅
   V1-02.C SQLite Forward Migration Qualification      ✅
   V1-02.D Codec Migration & Semantic Equivalence      ✅
-  V1-02.E PostgreSQL Evolution / Rolling Upgrade      ⏭ NEXT
-  V1-02.F Backup / Rollback / Operations Contract     ⬜
+  V1-02.E PostgreSQL Evolution / Rolling Upgrade      ✅
+  V1-02.F Backup / Rollback / Operations Contract     ⏭ NEXT
   V1-02.G Final Persistence Compatibility Review      ⬜
 ```
 
@@ -150,7 +150,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 - **V1-02.B** : sept fixtures golden append-only couvrent le format public `v0.1.0a3` et le checkpoint pre-1.0 `945ec173…`; leurs SHA-256 sont figés par manifest + test, les anciens codecs restent lisibles et les writers inchangés doivent reproduire exactement les mêmes bytes. Voir [Immutable Golden Compatibility Fixtures](./v1/V1-02B_IMMUTABLE_GOLDEN_COMPATIBILITY_FIXTURES.md).
 - **V1-02.C** : sept bases SQLite physiques immuables couvrent les schémas v1 à v7 ; hashes compressés/bruts, intégrité SQLite, FK, migration réelle vers v8 et préservation du graphe durable sont vérifiés. Voir [SQLite Forward Migration Qualification](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md).
 - **V1-02.D** : ScheduleDefinition v1/v2 → v3 est qualifié sans dérive de domaine ni de comportement ; SQL values, Trigger envelopes et calendriers v1 conservent leurs sémantiques après round-trip. Voir [Codec Migration & Semantic Equivalence](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md).
-- **Étape active** : V1-02.E PostgreSQL Evolution / Rolling Upgrade.
+- **V1-02.E** : overlap PostgreSQL same-contract qualifié en live sur 16/17/18, bootstrap concurrent sérialisé, fencing monotone, stale owner rejeté, future schema fail-closed ; toute paire N/N+1 exige une preuve explicite ou un drain complet. Voir [PostgreSQL Evolution / Rolling Upgrade](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md).
+- **Étape active** : V1-02.F Backup / Rollback / Operations Contract.
 
 ---
 
@@ -185,8 +186,8 @@ V1-02 Persistence Compatibility Contract             🚧 IN PROGRESS
 11. V1-02.B — Immutable Golden Compatibility Fixtures ✅ ;
 12. V1-02.C — SQLite Forward Migration Qualification ✅ ;
 13. V1-02.D — Codec Migration & Semantic Equivalence ✅ ;
-14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ⏭ ;
-15. V1-02.F — Backup / Rollback / Operations Contract ;
+14. V1-02.E — PostgreSQL Evolution / Rolling Upgrade ✅ ;
+15. V1-02.F — Backup / Rollback / Operations Contract ⏭ ;
 16. V1-02.G — Final Persistence Compatibility Review ;
 17. V1-03 — Platform, Warning and Security Gates ;
 18. V1-04 — Consumer and Stable-Release Rehearsal ;
@@ -229,8 +230,9 @@ Raccourci outil : `check-ci`. Pièges connus : `pytest` doit tourner depuis la r
 - [`V1-02.B Immutable Golden Compatibility Fixtures`](./v1/V1-02B_IMMUTABLE_GOLDEN_COMPATIBILITY_FIXTURES.md) — fixtures historiques append-only, provenance et hashes.
 - [`V1-02.C SQLite Forward Migration Qualification`](./v1/V1-02C_SQLITE_FORWARD_MIGRATION_QUALIFICATION.md) — bases physiques v1-v7, migration vers v8 et préservation sémantique.
 - [`V1-02.D Codec Migration & Semantic Equivalence`](./v1/V1-02D_CODEC_MIGRATION_AND_SEMANTIC_EQUIVALENCE.md) — migration JSON v1/v2→v3 et invariance comportementale des codecs 1.x.
+- [`V1-02.E PostgreSQL Evolution / Rolling Upgrade`](./v1/V1-02E_POSTGRES_EVOLUTION_AND_ROLLING_UPGRADE.md) — overlap same-contract, fencing et protocole N/N+1.
 - [`AGENTS.md`](../AGENTS.md) — commandes et gotchas pour les agents.
 
 ---
 
-*Dernière mise à jour : 2026-10-19 — V1-02.D Codec Migration & Semantic Equivalence ; V1-02.E next.*
+*Dernière mise à jour : 2026-10-19 — V1-02.E PostgreSQL Evolution / Rolling Upgrade ; V1-02.F next.*

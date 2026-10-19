@@ -8,6 +8,13 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-02.E PostgreSQL Evolution / Rolling Upgrade: machine-readable rollout policy
+  now distinguishes same-contract schema-v1 overlap from explicit N/N+1 release-pair overlap,
+  requires bidirectional reader/writer compatibility for rolling deployment, defaults schema
+  changes to backup/drain/migrate/deploy/verify/resume, and live-qualifies concurrent bootstrap,
+  cross-worker writes, monotonic fencing takeover, stale-owner rejection and unknown-schema
+  fail-closed behavior on PostgreSQL 16/17/18.
+
 - Added V1-02.D Codec Migration & Semantic Equivalence: compatibility tests now prove
   ScheduleDefinition v1/v2 payloads migrate to canonical v3 without changing domain values or
   occurrence behavior; current Trigger envelopes, SQL value codecs and BusinessCalendar

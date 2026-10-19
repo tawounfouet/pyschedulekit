@@ -69,8 +69,8 @@ V1-02.B  Immutable Golden Compatibility Fixtures     COMPLETE
 V1-02.C  SQLite Forward Migration Qualification      COMPLETE
 V1-02.D  Codec Migration & Semantic Equivalence      COMPLETE
 V1-02.E  PostgreSQL Evolution / Rolling Upgrade      COMPLETE
-V1-02.F  Backup / Rollback / Operations Contract     NEXT
-V1-02.G  Final Persistence Compatibility Review      PLANNED
+V1-02.F  Backup / Rollback / Operations Contract     COMPLETE
+V1-02.G  Final Persistence Compatibility Review      NEXT
 ```
 
 [V1-02.A](./V1-02A_PERSISTENCE_VERSION_FLOOR_AND_POLICY.md) freezes the 1.x minimum
@@ -94,6 +94,10 @@ PostgreSQL 1.x rollout contract: same-contract schema-v1 overlap is live-qualifi
 N/N+1 overlap requires explicit release-pair evidence, schema-changing upgrades drain by
 default, and any overlap-safe change must follow expand/migrate/contract with bidirectional
 reader/writer compatibility.
+[V1-02.F](./V1-02F_BACKUP_ROLLBACK_OPERATIONS_CONTRACT.md) freezes the
+backup/restore/rollback operations contract: SQLite backup/restore and interrupted-migration
+atomicity are executable, PostgreSQL pg_dump/pg_restore rehearsals run on 16/17/18, rollback
+means restoring a known-good pre-upgrade backup, and GO/ABORT criteria are explicit.
 
 ## Operating rules
 
@@ -113,4 +117,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-02.E PostgreSQL evolution / rolling-upgrade contract complete. V1-02.F Backup / Rollback / Operations Contract is next.
+**Status:** V1-02.F backup / rollback / operations contract complete. V1-02.G Final Persistence Compatibility Review is next.

@@ -273,7 +273,9 @@ Les limites encore structurelles sont différentes :
    `945ec173…`, protégées par SHA-256 et relues à chaque CI. V1-02.C ajoute en parallèle
    sept bases SQLite physiques compressées couvrant les schémas v1 à v7 ; chacune est migrée
    par la chaîne de production jusqu'au v8 puis contrôlée pour intégrité, FK et préservation
-   du graphe durable.
+   du graphe durable. V1-02.D qualifie ensuite la couche JSON : ScheduleDefinition v1/v2 est
+   normalisé en v3 sans dérive de valeur ou d'occurrence, et les codecs SQL/Trigger/calendrier
+   v1 conservent leurs comportements observables après round-trip.
 8. **Adapters de calendriers** — CAL-05 ajoute `FileCalendarProvider` et
    `SqliteCalendarProvider` au port existant. Les deux reconstruisent des
    `BusinessCalendar` immutables via un codec JSON strict et versionné. Le provider File
@@ -285,8 +287,8 @@ Les limites encore structurelles sont différentes :
    [V1-01.F Compatibility & Deprecation Policy](./v1/V1-01F_COMPATIBILITY_DEPRECATION_POLICY.md) :
    l'API stable et le typing sont protégés par SemVer sur la major, et les suppressions
    incompatibles sont réservées à la major suivante. La promesse `1.0.0` complète reste
-   cependant inactive tant que l'équivalence codec, PostgreSQL et les opérations persistence
-   restantes de V1-02 ainsi que les gates de release V1-03 → V1-05 ne sont pas fermés. Le
+   cependant inactive tant que PostgreSQL et les opérations persistence restantes de V1-02,
+   ainsi que les gates de release V1-03 → V1-05, ne sont pas fermés. Le
    [V1-00 Readiness Audit](./v1/V1-00_READINESS_AUDIT.md) inventorie ces blockers.
 
 Ces limites appartiennent à la trajectoire pré-1.0 / Phase II et seront traitées par lots dédiés. Leur traitement n'est plus lié à une publication intermédiaire `0.x`.

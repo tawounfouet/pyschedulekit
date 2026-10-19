@@ -8,6 +8,12 @@ The project follows Semantic Versioning once public contracts begin to stabilize
 
 ### Added
 
+- Added V1-01.H Final Public Contract Review: the runtime now applies the final
+  63-name package root while preserving all 104 stable names in `pyschedulekit.api`; the
+  41 advanced contracts are API-only, the 11 pre-1.0 legacy root redirects are physically
+  removed, primary namespaces are classified stable, and the public contract is marked
+  frozen. Repository consumers and current documentation are aligned with the final split.
+
 - Added V1-01.G Executable Contract Snapshots: 21 stable public operation-result types
   now have exact field-order snapshots, with public computed result properties protected as
   well. The transitive output closure covers run-pending, execution, recovery,

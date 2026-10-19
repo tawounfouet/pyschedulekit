@@ -26,7 +26,7 @@ The evidence and findings are recorded in the
 V1-00  Readiness Audit                         COMPLETE
 V1-01  Public Contract Freeze                  COMPLETE
 V1-02  Persistence Compatibility Contract      COMPLETE
-V1-03  Platform, Warning and Security Gates    NEXT
+V1-03  Platform, Warning and Security Gates    IN PROGRESS
 V1-04  Consumer and Stable-Release Rehearsal   PLANNED
 V1-05  Final GO/NO-GO and 1.0.0 Activation     PLANNED
 ```
@@ -102,6 +102,20 @@ means restoring a known-good pre-upgrade backup, and GO/ABORT criteria are expli
 cross-contract audit, closes readiness finding V1-F04, records V1-02 as GO/COMPLETE and
 advances stabilization to V1-03 without changing any persistence format or release identity.
 
+## V1-03 breakdown
+
+```text
+V1-03.A  Python 3.14 & Support Window               COMPLETE
+V1-03.B  Warning-Clean Runtime / Tests              NEXT
+V1-03.C  Dependency Vulnerability Gate              PLANNED
+V1-03.D  GitHub Actions / Runner Deprecation Gate   PLANNED
+V1-03.E  Final Platform & Security Review           PLANNED
+```
+
+[V1-03.A](./V1-03A_PYTHON_314_SUPPORT_WINDOW.md) freezes the initial stable Python support
+window at 3.11 through 3.14, constrains package metadata to `>=3.11,<3.15`, adds 3.14 to
+the normal CI and wheel/sdist clean-install matrices, and closes readiness finding V1-F06.
+
 ## Operating rules
 
 - do not bump the package to `1.0.0` before V1-05;
@@ -120,4 +134,4 @@ post-1.0 additive feature.
 
 ---
 
-**Status:** V1-02 persistence compatibility contract complete. V1-03 Platform, Warning and Security Gates is next. Overall `v1.0.0` remains NO-GO.
+**Status:** V1-03.A Python 3.14/support-window qualification complete. V1-03.B Warning-Clean Runtime / Tests is next. Overall `v1.0.0` remains NO-GO.

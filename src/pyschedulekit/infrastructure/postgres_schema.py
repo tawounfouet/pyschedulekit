@@ -6,7 +6,9 @@ from typing import cast
 
 from psycopg import Connection
 
-SCHEMA_VERSION = 1
+from pyschedulekit.infrastructure.persistence_versions import POSTGRES_RUNTIME_SCHEMA_VERSION
+
+SCHEMA_VERSION = POSTGRES_RUNTIME_SCHEMA_VERSION
 
 # Stable project-specific transaction advisory lock. It serializes first-time schema
 # bootstrap without keeping any session-level lock after commit/rollback.
